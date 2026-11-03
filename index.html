@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WealthFlow Pro</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script>
+tailwind.config = { theme: { extend: { fontFamily: { sans: ['Prompt', 'sans-serif'] } } } }
+</script>
+</head>
+<body class="bg-slate-50 font-sans text-slate-800 antialiased min-h-screen flex flex-col">
+
+<!-- Header -->
+<header class="bg-white border-b border-slate-200 sticky top-0 z-40">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+    <div class="flex items-center space-x-3">
+      <div class="bg-blue-600 text-white p-2 rounded-xl shadow-md"><i class="fa-solid fa-wallet text-xl"></i></div>
+      <div>
+        <h1 class="font-bold text-lg text-slate-900 leading-tight">WealthFlow Pro</h1>
+        <p class="text-xs text-slate-500">ระบบบริหารการเงิน & ซิงก์คลาวด์</p>
+      </div>
+    </div>
+    <div class="flex items-center space-x-3">
+      <div id="sync-status" class="text-xs text-slate-400 hidden sm:block"></div>
+      <div id="auth-status" class="text-sm font-medium text-slate-600 hidden sm:block">กำลังตรวจสอบ...</div>
+      <button id="logout-btn" onclick="logoutUser()" class="hidden bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-xl text-sm font-medium transition items-center space-x-1" title="ออกจากระบบ">
+        <i class="fa-solid fa-right-from-bracket"></i><span class="hidden sm:inline ml-1">ออก</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- Login screen -->
+<section id="login-screen" class="flex-grow flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 max-w-sm w-full text-center space-y-5">
+    <div class="bg-blue-600 text-white w-14 h-14 rounded-2xl flex items-center justify-center mx-auto shadow-md"><i class="fa-solid fa-wallet text-2xl"></i></div>
+    <div>
+      <h2 class="text-xl font-bold text-slate-900">เข้าสู่ระบบ</h2>
+      <p class="text-sm text-slate-500 mt-1">ข้อมูลของแต่ละบัญชีแยกกัน และซิงก์ข้ามอุปกรณ์อัตโนมัติ</p>
+    </div>
+    <button id="login-btn" onclick="loginWithGoogle()" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-xl text-sm font-medium transition shadow-sm flex items-center justify-center space-x-2">
+      <i class="fa-brands fa-google"></i><span class="ml-2">เข้าสู่ระบบด้วย Google</span>
+    </button>
+    <p id="login-error" class="text-xs text-rose-600 hidden"></p>
+  </div>
+</section>
+
+<!-- App -->
+<main id="app-main" class="hidden flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+  <div class="flex overflow-x-auto space-x-2 pb-2 border-b border-slate-200">
+    <button onclick="switchTab('dashboard')" class="tab-btn px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition bg-blue-600 text-white shadow-sm" data-target="dashboard"><i class="fa-solid fa-chart-pie mr-2"></i> ภาพรวม</button>
+    <button onclick="switchTab('salary')" class="tab-btn px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition bg-white text-slate-600 hover:bg-slate-100" data-target="salary"><i class="fa-solid fa-money-check-dollar mr-2"></i> เงินเดือน & Payslip</button>
+    <button onclick="switchTab('transactions')" class="tab-btn px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition bg-white text-slate-600 hover:bg-slate-100" data-target="transactions"><i class="fa-solid fa-receipt mr-2"></i> บันทึกรับ-จ่าย</button>
+    <button onclick="switchTab('calendar')" class="tab-btn px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition bg-white text-slate-600 hover:bg-slate-100" data-target="calendar"><i class="fa-solid fa-calendar-days mr-2"></i> ปฏิทินการเงิน</button>
+    <button onclick="switchTab('savings')" class="tab-btn px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition bg-white text-slate-600 hover:bg-slate-100" data-target="savings"><i class="fa-solid fa-piggy-bank mr-2"></i> เงินออม & เป้าหมาย</button>
+    <button onclick="switchTab('wallets')" class="tab-btn px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition bg-white text-slate-600 hover:bg-slate-100" data-target="wallets"><i class="fa-solid fa-vault mr-2"></i> กระเป๋า & ซองเงิน</button>
+    <button onclick="switchTab('tools')" class="tab-btn px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition bg-white text-slate-600 hover:bg-slate-100" data-target="tools"><i class="fa-solid fa-toolbox mr-2"></i> เครื่องมือ & ส่งออก</button>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="tab-dashboard" class="tab-content space-y-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div><p class="text-xs font-medium text-slate-500">สินทรัพย์สุทธิ (Net Worth)</p><h3 id="kpi-networth" class="text-2xl font-bold text-slate-900 mt-1">฿0.00</h3></div>
+        <div class="bg-blue-50 text-blue-600 p-3 rounded-xl"><i class="fa-solid fa-wallet text-xl"></i></div>
+      </div>
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div><p class="text-xs font-medium text-slate-500">รายรับเดือนนี้</p><h3 id="kpi-income" class="text-2xl font-bold text-emerald-600 mt-1">฿0.00</h3></div>
+        <div class="bg-emerald-50 text-emerald-600 p-3 rounded-xl"><i class="fa-solid fa-arrow-trend-up text-xl"></i></div>
+      </div>
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div><p class="text-xs font-medium text-slate-500">รายจ่ายเดือนนี้</p><h3 id="kpi-expense" class="text-2xl font-bold text-rose-600 mt-1">฿0.00</h3></div>
+        <div class="bg-rose-50 text-rose-600 p-3 rounded-xl"><i class="fa-solid fa-arrow-trend-down text-xl"></i></div>
+      </div>
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div><p class="text-xs font-medium text-slate-500">เงินออมสุทธิเดือนนี้</p><h3 id="kpi-savings" class="text-2xl font-bold text-purple-600 mt-1">฿0.00</h3></div>
+        <div class="bg-purple-50 text-purple-600 p-3 rounded-xl"><i class="fa-solid fa-piggy-bank text-xl"></i></div>
+      </div>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <h3 class="font-bold text-slate-800 flex items-center"><i class="fa-solid fa-bell text-amber-500 mr-2"></i> ข้อสังเกตจากข้อมูลของคุณ</h3>
+        <div id="insights" class="space-y-3"></div>
+      </div>
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <h3 class="font-bold text-slate-800 flex items-center"><i class="fa-solid fa-chart-line text-blue-600 mr-2"></i> เทียบกับเดือนก่อน</h3>
+        <div id="mom-comparison" class="space-y-3 text-sm"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SALARY -->
+  <div id="tab-salary" class="tab-content hidden space-y-6">
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-4">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">คำนวณเงินเดือนสุทธิ (Salary & Payslip)</h2>
+          <p class="text-xs text-slate-500">เพิ่ม ลบ หรือแก้ไขรายการรายรับและรายการหักได้เอง</p>
+        </div>
+        <div class="flex space-x-2">
+          <button onclick="addSalaryItem('income')" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-xl text-xs font-semibold transition"><i class="fa-solid fa-plus mr-1"></i> เพิ่มรายรับ</button>
+          <button onclick="addSalaryItem('deduction')" class="bg-rose-50 hover:bg-rose-100 text-rose-700 px-3 py-1.5 rounded-xl text-xs font-semibold transition"><i class="fa-solid fa-plus mr-1"></i> เพิ่มรายการหัก</button>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="space-y-3"><h3 class="font-semibold text-emerald-700 text-sm">รายรับทั้งหมด (Earnings)</h3><div id="salary-incomes-list" class="space-y-2"></div></div>
+        <div class="space-y-3"><h3 class="font-semibold text-rose-700 text-sm">รายการหัก (Deductions)</h3><div id="salary-deductions-list" class="space-y-2"></div></div>
+      </div>
+      <div class="p-4 bg-slate-50 rounded-xl flex flex-col sm:flex-row items-center justify-between border border-slate-200 gap-4">
+        <div>
+          <span class="text-sm font-medium text-slate-600">เงินสุทธิเข้าบัญชี (Net Take-Home Pay):</span>
+          <h3 id="salary-net-total" class="text-2xl font-bold text-emerald-600">฿0.00</h3>
+        </div>
+        <button onclick="syncSalaryToTransactions()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium shadow-sm transition"><i class="fa-solid fa-cloud-arrow-down mr-2"></i> บันทึกยอดสุทธิลงรายรับ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRANSACTIONS -->
+  <div id="tab-transactions" class="tab-content hidden space-y-6">
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-4">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">บันทึกรายการประจำวัน</h2>
+          <p class="text-xs text-slate-500">บันทึกรายรับ รายจ่าย หรือโอนเงิน ยอดในกระเป๋าจะปรับให้อัตโนมัติ</p>
+        </div>
+        <button onclick="openTransactionModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-medium shadow-sm transition"><i class="fa-solid fa-plus mr-2"></i> เพิ่มรายการใหม่</button>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm text-slate-600">
+          <thead class="bg-slate-50 text-slate-700 text-xs font-semibold border-b border-slate-200">
+            <tr><th class="p-3">วันที่</th><th class="p-3">ประเภท</th><th class="p-3">บัญชี</th><th class="p-3">หมวดหมู่ / ซองเงิน</th><th class="p-3 text-right">จำนวนเงิน</th><th class="p-3">หมายเหตุ</th><th class="p-3 text-center">ลบ</th></tr>
+          </thead>
+          <tbody id="transactions-table-body" class="divide-y divide-slate-100"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- CALENDAR -->
+  <div id="tab-calendar" class="tab-content hidden space-y-6">
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-4">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">ปฏิทินการเงิน</h2>
+          <p class="text-xs text-slate-500">ดูรายรับ-รายจ่ายรายวัน รายเดือน รายปี</p>
+        </div>
+        <div class="flex items-center space-x-2">
+          <select id="calendar-mode" onchange="renderCalendar()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-medium text-slate-700">
+            <option value="month">มุมมองรายเดือน</option>
+            <option value="year">มุมมองรายปี</option>
+          </select>
+          <div class="flex items-center space-x-1">
+            <button onclick="changeCalendarPeriod(-1)" class="p-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-700 transition"><i class="fa-solid fa-chevron-left"></i></button>
+            <span id="calendar-period-label" class="text-sm font-semibold px-3"></span>
+            <button onclick="changeCalendarPeriod(1)" class="p-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-700 transition"><i class="fa-solid fa-chevron-right"></i></button>
+          </div>
+        </div>
+      </div>
+      <div id="calendar-container" class="overflow-x-auto"></div>
+    </div>
+  </div>
+
+  <!-- SAVINGS -->
+  <div id="tab-savings" class="tab-content hidden space-y-6">
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-4">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">เป้าหมายเงินออม & การลงทุน</h2>
+          <p class="text-xs text-slate-500">เพิ่มและจัดการเป้าหมายการเงินของคุณ</p>
+        </div>
+        <button onclick="openSavingsModal()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl text-sm font-medium shadow-sm transition"><i class="fa-solid fa-plus mr-2"></i> เพิ่มเป้าหมายออม</button>
+      </div>
+      <div id="savings-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+    </div>
+  </div>
+
+  <!-- WALLETS -->
+  <div id="tab-wallets" class="tab-content hidden space-y-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+          <h3 class="font-bold text-slate-900"><i class="fa-solid fa-vault text-blue-600 mr-2"></i> กระเป๋าเงิน & บัญชี</h3>
+          <button onclick="openWalletModal()" class="bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-1.5 rounded-xl text-xs font-semibold transition"><i class="fa-solid fa-plus mr-1"></i> เพิ่มบัญชี</button>
+        </div>
+        <div id="wallets-list" class="space-y-3"></div>
+      </div>
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+          <h3 class="font-bold text-slate-900"><i class="fa-solid fa-jar text-amber-500 mr-2"></i> ซองเงินใช้จ่าย (เดือนนี้)</h3>
+          <button onclick="openJarModal()" class="bg-amber-50 hover:bg-amber-100 text-amber-700 px-3 py-1.5 rounded-xl text-xs font-semibold transition"><i class="fa-solid fa-plus mr-1"></i> เพิ่มซองเงิน</button>
+        </div>
+        <div id="jars-list" class="space-y-3"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOOLS -->
+  <div id="tab-tools" class="tab-content hidden space-y-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <h3 class="font-bold text-slate-900"><i class="fa-solid fa-calculator text-blue-600 mr-2"></i> จำลองสถานการณ์ซื้อของ</h3>
+        <p class="text-xs text-slate-500">ลองคำนวณก่อนซื้อของชิ้นใหญ่ว่ากระทบเงินสดไหม</p>
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">ราคาสินค้า (บาท)</label>
+            <input type="number" id="sim-price" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm" placeholder="เช่น 25000">
+          </div>
+          <button onclick="runSimulator()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-xl text-sm font-medium transition shadow-sm">คำนวณผลกระทบ</button>
+          <div id="sim-result" class="p-3 bg-slate-50 rounded-xl text-sm text-slate-700 hidden"></div>
+        </div>
+      </div>
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <h3 class="font-bold text-slate-900"><i class="fa-solid fa-file-arrow-down text-emerald-600 mr-2"></i> ส่งออกข้อมูล</h3>
+        <p class="text-xs text-slate-500">ดาวน์โหลดข้อมูลเพื่อเปิดใน Google Sheets / Excel</p>
+        <div class="space-y-3">
+          <button onclick="exportToCSV()" class="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-800 py-2.5 rounded-xl text-sm font-semibold transition"><i class="fa-solid fa-file-csv mr-2"></i> ส่งออกไฟล์ CSV</button>
+          <button onclick="exportToJSON()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 py-2.5 rounded-xl text-sm font-semibold transition"><i class="fa-solid fa-code mr-2"></i> สำรองข้อมูล JSON</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- MODAL: TRANSACTION -->
+<div id="tx-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+  <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl max-h-[90vh] overflow-y-auto">
+    <h3 class="font-bold text-lg text-slate-900">เพิ่มรายการรับ-จ่ายใหม่</h3>
+    <div class="space-y-3 text-sm">
+      <div><label class="block text-xs font-medium text-slate-600 mb-1">วันที่</label><input type="date" id="tx-date" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2"></div>
+      <div>
+        <label class="block text-xs font-medium text-slate-600 mb-1">ประเภท</label>
+        <select id="tx-type" onchange="onTxTypeChange()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+          <option value="รายจ่าย">รายจ่าย</option>
+          <option value="รายรับ">รายรับ</option>
+          <option value="โอนเงิน">โอนระหว่างบัญชี</option>
+        </select>
+      </div>
+      <div>
+        <label id="tx-from-label" class="block text-xs font-medium text-slate-600 mb-1">บัญชี / กระเป๋า</label>
+        <select id="tx-from" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2"></select>
+      </div>
+      <div id="tx-to-wrap" class="hidden">
+        <label class="block text-xs font-medium text-slate-600 mb-1">โอนไปยังบัญชี</label>
+        <select id="tx-to" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2"></select>
+      </div>
+      <div id="tx-jar-wrap">
+        <label class="block text-xs font-medium text-slate-600 mb-1">ซองเงิน / หมวดหมู่</label>
+        <select id="tx-jar" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2"></select>
+      </div>
+      <div><label class="block text-xs font-medium text-slate-600 mb-1">จำนวนเงิน (บาท)</label><input type="number" id="tx-amount" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2" placeholder="0.00"></div>
+      <div><label class="block text-xs font-medium text-slate-600 mb-1">แท็ก / หมายเหตุ</label><input type="text" id="tx-note" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2" placeholder="เช่น #ทริปเที่ยว กาแฟสด"></div>
+    </div>
+    <div class="flex space-x-2 pt-2">
+      <button onclick="closeTransactionModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 rounded-xl font-medium transition">ยกเลิก</button>
+      <button onclick="saveTransaction()" class="flex-1 ml-2 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-xl font-medium transition shadow-sm">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAuth, signInWithPopup, signInWithRedirect, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyD3xXHoXEVEkMdvMdQOWoDwEBGmSmhuJNs",
+  authDomain: "wealthflow-652a9.firebaseapp.com",
+  projectId: "wealthflow-652a9",
+  storageBucket: "wealthflow-652a9.firebasestorage.app",
+  messagingSenderId: "320087102316",
+  appId: "1:320087102316:web:4ac63f72ac110a756d5949",
+  measurementId: "G-QJNCP39LVV"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+let currentUser = null;
+let unsubscribe = null;
+let saveTimer = null;
+let loaded = false; // ห้ามบันทึกจนกว่าจะโหลดข้อมูลจากคลาวด์เสร็จ
+
+// ---------- ค่าเริ่มต้นสำหรับบัญชีใหม่ ----------
+const defaultState = () => ({
+  salary: {
+    incomes: [{ id: 1, name: "เงินเดือนพื้นฐาน", amount: 0 }],
+    deductions: [{ id: 1, name: "ประกันสังคม (SSO)", amount: 0 }]
+  },
+  wallets: [{ id: 1, name: "เงินสด", type: "Asset", balance: 0 }],
+  jars: [
+    { id: 1, name: "🍔 ซองค่ากิน & ของใช้", budget: 8000 },
+    { id: 2, name: "🚗 ซองการเดินทาง", budget: 3000 },
+    { id: 3, name: "🏠 ซองค่าใช้จ่ายประจำ", budget: 7500 },
+    { id: 4, name: "🛍️ ซองตามใจ / ท่องเที่ยว", budget: 4000 }
+  ],
+  transactions: [],
+  savings: []
+});
+window.appState = defaultState();
+
+// ---------- ตัวช่วย ----------
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money = (n) => '฿' + Number(n).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const sum = (arr, f) => arr.reduce((a, x) => a + Number(f(x) || 0), 0);
+const monthKey = (d) => d.slice(0, 7);
+const nowKey = () => new Date().toISOString().slice(0, 7);
+const prevKey = () => { const d = new Date(); d.setMonth(d.getMonth() - 1); return d.toISOString().slice(0, 7); };
+const S = () => window.appState;
+
+function setSyncStatus(text) { document.getElementById('sync-status').innerText = text; }
+
+// ---------- บันทึกขึ้นคลาวด์ ----------
+window.saveData = () => {
+  if (!currentUser || !loaded) return;
+  setSyncStatus('กำลังบันทึก...');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    try {
+      await setDoc(doc(db, "users", currentUser.uid), S());
+      setSyncStatus('บันทึกแล้ว ✓');
+    } catch (e) {
+      console.error("Sync error:", e);
+      setSyncStatus('บันทึกไม่สำเร็จ');
+      alert("บันทึกขึ้นคลาวด์ไม่สำเร็จ: " + e.message);
+    }
+  }, 400);
+};
+const commit = () => { renderAll(); saveData(); };
+
+// ---------- ล็อกอิน ----------
+window.loginWithGoogle = async () => {
+  const err = document.getElementById('login-error');
+  const show = (m) => { err.innerText = m; err.classList.remove('hidden'); };
+  err.classList.add('hidden');
+  // เบราว์เซอร์ในแอป (LINE/Facebook ฯลฯ) ล็อกอิน Google ไม่ได้
+  if (/Line\/|FBAN|FBAV|Instagram|MicroMessenger|; wv\)/i.test(navigator.userAgent || '')) {
+    show('เบราว์เซอร์ในแอป (เช่น LINE, Facebook) ล็อกอิน Google ไม่ได้ กรุณาเปิดลิงก์นี้ใน Safari หรือ Chrome โดยตรง');
+    return;
+  }
+  try {
+    await signInWithPopup(auth, provider);
+  } catch (e) {
+    if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') return;
+    if (e.code === 'auth/popup-blocked') show('เบราว์เซอร์บล็อกหน้าต่างล็อกอิน กรุณาอนุญาต Pop-ups สำหรับเว็บนี้ แล้วลองใหม่');
+    else if (e.code === 'auth/unauthorized-domain') show('โดเมนนี้ยังไม่ได้อนุญาตใน Firebase (Authentication → Settings → Authorized domains)');
+    else show('เข้าสู่ระบบไม่สำเร็จ: ' + e.message);
+  }
+};
+window.logoutUser = () => signOut(auth);
+
+onAuthStateChanged(auth, (user) => {
+  currentUser = user;
+  if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+  loaded = false;
+  if (user) {
+    document.getElementById('auth-status').innerText = user.displayName || user.email;
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('app-main').classList.remove('hidden');
+    document.getElementById('logout-btn').classList.remove('hidden');
+    document.getElementById('logout-btn').classList.add('flex');
+    setSyncStatus('กำลังโหลดข้อมูล...');
+    unsubscribe = onSnapshot(doc(db, "users", user.uid), (snap) => {
+      if (snap.metadata.hasPendingWrites) return; // เปลี่ยนจากเครื่องนี้เอง ไม่ต้องโหลดทับ
+      if (snap.exists()) {
+        window.appState = { ...defaultState(), ...snap.data() };
+      } else {
+        window.appState = defaultState();
+        loaded = true;
+        saveData(); // บัญชีใหม่: สร้างเอกสารครั้งแรก
+      }
+      loaded = true;
+      setSyncStatus('ซิงก์แล้ว ✓');
+      renderAll();
+    }, (e) => {
+      console.error(e);
+      setSyncStatus('โหลดไม่สำเร็จ');
+      alert("โหลดข้อมูลไม่สำเร็จ: " + e.message + "\nตรวจสอบว่าสร้าง Firestore และตั้ง Rules แล้ว");
+    });
+  } else {
+    // ล็อกเอาต์: ล้างข้อมูลบนหน้าจอ
+    window.appState = defaultState();
+    document.getElementById('auth-status').innerText = 'ยังไม่ได้เข้าสู่ระบบ';
+    document.getElementById('login-screen').classList.remove('hidden');
+    document.getElementById('app-main').classList.add('hidden');
+    document.getElementById('logout-btn').classList.add('hidden');
+    document.getElementById('logout-btn').classList.remove('flex');
+    setSyncStatus('');
+  }
+});
+
+// ---------- แท็บ ----------
+window.switchTab = (tabId) => {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.classList.remove('bg-blue-600', 'text-white', 'shadow-sm');
+    btn.classList.add('bg-white', 'text-slate-600', 'hover:bg-slate-100');
+  });
+  document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+  const activeBtn = document.querySelector(`[data-target="${tabId}"]`);
+  activeBtn.classList.add('bg-blue-600', 'text-white', 'shadow-sm');
+  activeBtn.classList.remove('bg-white', 'text-slate-600', 'hover:bg-slate-100');
+  if (tabId === 'calendar') renderCalendar();
+};
+
+window.renderAll = () => {
+  renderDashboard(); renderSalary(); renderTransactions();
+  renderWalletsAndJars(); renderSavings();
+  if (!document.getElementById('tab-calendar').classList.contains('hidden')) renderCalendar();
+};
+
+// ---------- Dashboard ----------
+function monthTotals(key) {
+  const tx = S().transactions.filter(t => monthKey(t.date) === key);
+  return {
+    income: sum(tx.filter(t => t.type === 'รายรับ'), t => t.amount),
+    expense: sum(tx.filter(t => t.type === 'รายจ่าย'), t => t.amount)
+  };
+}
+function renderDashboard() {
+  const assets = sum(S().wallets.filter(w => w.type === 'Asset'), w => w.balance);
+  const liab = sum(S().wallets.filter(w => w.type === 'Liability'), w => w.balance);
+  const cur = monthTotals(nowKey()), prev = monthTotals(prevKey());
+  const net = cur.income - cur.expense;
+
+  document.getElementById('kpi-networth').innerText = money(assets - liab);
+  document.getElementById('kpi-income').innerText = money(cur.income);
+  document.getElementById('kpi-expense').innerText = money(cur.expense);
+  document.getElementById('kpi-savings').innerText = money(net);
+
+  const pct = (a, b) => b > 0 ? ((a - b) / b * 100) : null;
+  const expChg = pct(cur.expense, prev.expense);
+  const expTxt = expChg === null ? 'ยังไม่มีข้อมูลเดือนก่อน'
+    : `${expChg > 0 ? '+' : ''}${expChg.toFixed(1)}% ${expChg > 0 ? '(จ่ายมากขึ้น)' : '(ประหยัดขึ้น)'}`;
+  const expCls = expChg === null ? 'text-slate-400' : expChg > 0 ? 'text-rose-600' : 'text-emerald-600';
+  const rate = cur.income > 0 ? (net / cur.income * 100).toFixed(1) : '0.0';
+  document.getElementById('mom-comparison').innerHTML = `
+    <div class="flex justify-between items-center py-2 border-b border-slate-100"><span class="text-slate-600">รายจ่ายเทียบเดือนที่แล้ว</span><span class="font-bold ${expCls}">${expTxt}</span></div>
+    <div class="flex justify-between items-center py-2"><span class="text-slate-600">อัตราการออม (Savings Rate)</span><span class="font-bold text-blue-600">${rate}%</span></div>`;
+
+  // ข้อสังเกต
+  const tips = [];
+  if (!S().transactions.length) tips.push(['blue', 'ยังไม่มีรายการ เริ่มจากแท็บ "บันทึกรับ-จ่าย" แล้วกดเพิ่มรายการใหม่']);
+  S().jars.forEach(j => {
+    const used = sum(S().transactions.filter(t => t.type === 'รายจ่าย' && t.jar === j.name && monthKey(t.date) === nowKey()), t => t.amount);
+    if (j.budget > 0 && used > j.budget) tips.push(['rose', `${esc(j.name)} ใช้เกินงบ ${money(used - j.budget)}`]);
+    else if (j.budget > 0 && used >= j.budget * 0.8) tips.push(['amber', `${esc(j.name)} ใช้ไปแล้ว ${(used / j.budget * 100).toFixed(0)}% ของงบ`]);
+  });
+  if (cur.income > 0 && net < 0) tips.push(['rose', 'เดือนนี้รายจ่ายมากกว่ารายรับ']);
+  if (!tips.length && S().transactions.length) tips.push(['emerald', 'เดือนนี้ทุกซองยังอยู่ในงบ']);
+  document.getElementById('insights').innerHTML = tips.map(([c, t]) =>
+    `<div class="p-3 bg-${c}-50 border border-${c}-100 rounded-xl text-sm text-${c}-800">${t}</div>`).join('');
+}
+
+// ---------- เงินเดือน ----------
+function salaryRows(type) {
+  return S().salary[type].map((item, idx) => `
+    <div class="flex items-center space-x-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+      <input type="text" value="${esc(item.name)}" onchange="updateSalaryItem('${type}', ${idx}, 'name', this.value)" class="flex-1 min-w-0 bg-white border border-slate-200 rounded-lg px-2 py-1 text-sm">
+      <input type="number" value="${Number(item.amount)}" onchange="updateSalaryItem('${type}', ${idx}, 'amount', this.value)" class="w-28 bg-white border border-slate-200 rounded-lg px-2 py-1 text-sm text-right">
+      <button onclick="removeSalaryItem('${type}', ${idx})" class="text-rose-500 hover:text-rose-700 px-2"><i class="fa-solid fa-trash"></i></button>
+    </div>`).join('');
+}
+function salaryNet() { return sum(S().salary.incomes, i => i.amount) - sum(S().salary.deductions, i => i.amount); }
+function renderSalary() {
+  document.getElementById('salary-incomes-list').innerHTML = salaryRows('incomes');
+  document.getElementById('salary-deductions-list').innerHTML = salaryRows('deductions');
+  document.getElementById('salary-net-total').innerText = money(salaryNet());
+}
+window.addSalaryItem = (type) => {
+  S().salary[type === 'income' ? 'incomes' : 'deductions'].push({ id: Date.now(), name: "รายการใหม่", amount: 0 });
+  commit();
+};
+window.updateSalaryItem = (type, idx, field, val) => {
+  S().salary[type][idx][field] = field === 'amount' ? Number(val) : val;
+  commit();
+};
+window.removeSalaryItem = (type, idx) => { S().salary[type].splice(idx, 1); commit(); };
+
+window.syncSalaryToTransactions = () => {
+  const net = salaryNet();
+  if (net <= 0) { alert("ยอดสุทธิต้องมากกว่า 0"); return; }
+  const wallet = S().wallets.find(w => w.type === 'Asset');
+  if (!wallet) { alert("กรุณาเพิ่มบัญชีในแท็บ กระเป๋า & ซองเงิน ก่อน"); return; }
+  const t = { id: Date.now(), date: new Date().toISOString().split('T')[0], type: "รายรับ", from: wallet.name, to: "", jar: "เงินเดือนสุทธิ", amount: net, note: "เงินเดือนสุทธิประจำเดือน" };
+  applyTx(t, 1);
+  S().transactions.unshift(t);
+  commit();
+  alert(`บันทึกยอดสุทธิเข้า "${wallet.name}" แล้ว`);
+};
+
+// ---------- ผลของรายการต่อยอดบัญชี ----------
+function walletByName(n) { return S().wallets.find(w => w.name === n); }
+function applyTx(t, sign) { // sign = 1 บันทึก, -1 ย้อนกลับ
+  const from = walletByName(t.from), amt = Number(t.amount) * sign;
+  if (t.type === 'รายรับ' && from) from.balance = Number(from.balance) + (from.type === 'Liability' ? -amt : amt);
+  if (t.type === 'รายจ่าย' && from) from.balance = Number(from.balance) + (from.type === 'Liability' ? amt : -amt);
+  if (t.type === 'โอนเงิน') {
+    const to = walletByName(t.to);
+    if (from) from.balance = Number(from.balance) + (from.type === 'Liability' ? amt : -amt);
+    if (to) to.balance = Number(to.balance) + (to.type === 'Liability' ? -amt : amt);
+  }
+}
+
+// ---------- รายการรับ-จ่าย ----------
+function renderTransactions() {
+  const body = document.getElementById('transactions-table-body');
+  if (!S().transactions.length) {
+    body.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400">ยังไม่มีรายการ กด "เพิ่มรายการใหม่" เพื่อเริ่มบันทึก</td></tr>`;
+    return;
+  }
+  body.innerHTML = S().transactions.map((t, idx) => {
+    const badge = t.type === 'รายรับ' ? 'bg-emerald-50 text-emerald-700' : t.type === 'รายจ่าย' ? 'bg-rose-50 text-rose-700' : 'bg-blue-50 text-blue-700';
+    const sign = t.type === 'รายรับ' ? '+' : t.type === 'รายจ่าย' ? '-' : '';
+    const acc = t.type === 'โอนเงิน' ? `${esc(t.from)} → ${esc(t.to)}` : esc(t.from);
+    return `<tr class="hover:bg-slate-50 transition">
+      <td class="p-3 font-medium whitespace-nowrap">${esc(t.date)}</td>
+      <td class="p-3"><span class="px-2 py-1 rounded-lg text-xs font-semibold ${badge}">${esc(t.type)}</span></td>
+      <td class="p-3">${acc}</td>
+      <td class="p-3">${esc(t.jar)}</td>
+      <td class="p-3 text-right font-semibold whitespace-nowrap ${t.type === 'รายรับ' ? 'text-emerald-600' : 'text-slate-800'}">${sign}${money(t.amount)}</td>
+      <td class="p-3 text-slate-500">${esc(t.note)}</td>
+      <td class="p-3 text-center"><button onclick="deleteTransaction(${idx})" class="text-rose-400 hover:text-rose-600"><i class="fa-solid fa-trash"></i></button></td>
+    </tr>`;
+  }).join('');
+}
+window.deleteTransaction = (idx) => {
+  if (!confirm("ลบรายการนี้? ยอดในบัญชีจะถูกปรับย้อนกลับ")) return;
+  applyTx(S().transactions[idx], -1);
+  S().transactions.splice(idx, 1);
+  commit();
+};
+
+window.onTxTypeChange = () => {
+  const type = document.getElementById('tx-type').value;
+  document.getElementById('tx-to-wrap').classList.toggle('hidden', type !== 'โอนเงิน');
+  document.getElementById('tx-jar-wrap').classList.toggle('hidden', type === 'โอนเงิน');
+  document.getElementById('tx-from-label').innerText = type === 'โอนเงิน' ? 'โอนจากบัญชี' : 'บัญชี / กระเป๋า';
+};
+window.openTransactionModal = () => {
+  if (!S().wallets.length) { alert("กรุณาเพิ่มบัญชีในแท็บ กระเป๋า & ซองเงิน ก่อน"); return; }
+  document.getElementById('tx-date').value = new Date().toISOString().split('T')[0];
+  const opts = S().wallets.map(w => `<option value="${esc(w.name)}">${esc(w.name)}</option>`).join('');
+  document.getElementById('tx-from').innerHTML = opts;
+  document.getElementById('tx-to').innerHTML = opts;
+  document.getElementById('tx-jar').innerHTML = S().jars.map(j => `<option value="${esc(j.name)}">${esc(j.name)}</option>`).join('');
+  document.getElementById('tx-type').value = 'รายจ่าย';
+  document.getElementById('tx-amount').value = '';
+  document.getElementById('tx-note').value = '';
+  onTxTypeChange();
+  const m = document.getElementById('tx-modal'); m.classList.remove('hidden'); m.classList.add('flex');
+};
+window.closeTransactionModal = () => {
+  const m = document.getElementById('tx-modal'); m.classList.add('hidden'); m.classList.remove('flex');
+};
+window.saveTransaction = () => {
+  const type = document.getElementById('tx-type').value;
+  const t = {
+    id: Date.now(),
+    date: document.getElementById('tx-date').value,
+    type,
+    from: document.getElementById('tx-from').value,
+    to: type === 'โอนเงิน' ? document.getElementById('tx-to').value : '',
+    jar: type === 'โอนเงิน' ? '-' : document.getElementById('tx-jar').value,
+    amount: Number(document.getElementById('tx-amount').value),
+    note: document.getElementById('tx-note').value
+  };
+  if (!t.date) { alert("กรุณาเลือกวันที่"); return; }
+  if (!t.amount || t.amount <= 0) { alert("กรุณาระบุจำนวนเงินให้ถูกต้อง"); return; }
+  if (type === 'โอนเงิน' && t.from === t.to) { alert("บัญชีต้นทางและปลายทางต้องไม่ซ้ำกัน"); return; }
+  applyTx(t, 1);
+  S().transactions.unshift(t);
+  S().transactions.sort((a, b) => b.date.localeCompare(a.date));
+  closeTransactionModal();
+  commit();
+};
+
+// ---------- ปฏิทิน ----------
+let calDate = new Date();
+calDate.setDate(1);
+window.changeCalendarPeriod = (dir) => {
+  if (document.getElementById('calendar-mode').value === 'month') calDate.setMonth(calDate.getMonth() + dir);
+  else calDate.setFullYear(calDate.getFullYear() + dir);
+  renderCalendar();
+};
+window.renderCalendar = () => {
+  const container = document.getElementById('calendar-container');
+  const mode = document.getElementById('calendar-mode').value;
+  const label = document.getElementById('calendar-period-label');
+  const year = calDate.getFullYear(), month = calDate.getMonth();
+  const tot = (tx, type) => sum(tx.filter(t => t.type === type), t => t.amount);
+
+  if (mode === 'month') {
+    label.innerText = calDate.toLocaleDateString('th-TH', { month: 'long', year: 'numeric' });
+    let html = '<div class="min-w-[560px]"><div class="grid grid-cols-7 gap-2 text-center font-semibold text-xs text-slate-400 mb-2">';
+    ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'].forEach(d => html += `<div>${d}</div>`);
+    html += '</div><div class="grid grid-cols-7 gap-2">';
+    const firstDay = new Date(year, month, 1).getDay();
+    const days = new Date(year, month + 1, 0).getDate();
+    for (let i = 0; i < firstDay; i++) html += `<div class="bg-slate-50/50 rounded-xl h-24"></div>`;
+    for (let d = 1; d <= days; d++) {
+      const key = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const tx = S().transactions.filter(t => t.date === key);
+      const inc = tot(tx, 'รายรับ'), exp = tot(tx, 'รายจ่าย');
+      html += `<div class="bg-slate-50 border border-slate-200 rounded-xl p-2 h-24 flex flex-col justify-between overflow-hidden">
+        <span class="font-bold text-xs text-slate-700">${d}</span>
+        <div class="text-[10px] space-y-0.5">
+          ${inc > 0 ? `<div class="text-emerald-600 font-semibold">+฿${inc.toLocaleString()}</div>` : ''}
+          ${exp > 0 ? `<div class="text-rose-600 font-semibold">-฿${exp.toLocaleString()}</div>` : ''}
+        </div></div>`;
+    }
+    container.innerHTML = html + '</div></div>';
+  } else {
+    label.innerText = `ปี ${year + 543}`;
+    let html = '<div class="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-4">';
+    for (let m = 0; m < 12; m++) {
+      const tx = S().transactions.filter(t => monthKey(t.date) === `${year}-${String(m + 1).padStart(2, '0')}`);
+      const name = new Date(year, m, 1).toLocaleDateString('th-TH', { month: 'long' });
+      html += `<div class="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-2">
+        <h4 class="font-bold text-slate-800 text-sm">${name}</h4>
+        <div class="text-xs space-y-1">
+          <div class="flex justify-between text-emerald-600"><span>รับ:</span><span>+฿${tot(tx, 'รายรับ').toLocaleString()}</span></div>
+          <div class="flex justify-between text-rose-600"><span>จ่าย:</span><span>-฿${tot(tx, 'รายจ่าย').toLocaleString()}</span></div>
+        </div></div>`;
+    }
+    container.innerHTML = html + '</div>';
+  }
+};
+
+// ---------- กระเป๋า & ซองเงิน ----------
+function renderWalletsAndJars() {
+  document.getElementById('wallets-list').innerHTML = S().wallets.length ? S().wallets.map((w, idx) => `
+    <div class="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-xl">
+      <div><h4 class="font-bold text-sm text-slate-800">${esc(w.name)}</h4><span class="text-xs text-slate-500">${w.type === 'Asset' ? 'สินทรัพย์' : 'หนี้สิน'}</span></div>
+      <div class="flex items-center space-x-3">
+        <span class="font-bold text-sm ${w.type === 'Liability' ? 'text-rose-600' : 'text-slate-900'}">${money(w.balance)}</span>
+        <button onclick="removeWallet(${idx})" class="text-rose-400 hover:text-rose-600 text-xs"><i class="fa-solid fa-trash"></i></button>
+      </div>
+    </div>`).join('') : '<p class="text-sm text-slate-400">ยังไม่มีบัญชี กด "เพิ่มบัญชี"</p>';
+
+  document.getElementById('jars-list').innerHTML = S().jars.map((j, idx) => {
+    const used = sum(S().transactions.filter(t => t.type === 'รายจ่าย' && t.jar === j.name && monthKey(t.date) === nowKey()), t => t.amount);
+    const pct = j.budget > 0 ? Math.min(used / j.budget * 100, 100) : 0;
+    const over = used > j.budget;
+    return `<div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+      <div class="flex items-center justify-between">
+        <h4 class="font-bold text-sm text-slate-800">${esc(j.name)}</h4>
+        <button onclick="removeJar(${idx})" class="text-rose-400 hover:text-rose-600 text-xs"><i class="fa-solid fa-trash"></i></button>
+      </div>
+      <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden"><div class="${over ? 'bg-rose-500' : 'bg-amber-500'} h-full rounded-full" style="width:${pct}%"></div></div>
+      <div class="flex justify-between text-xs text-slate-500">
+        <span>งบ: ฿${Number(j.budget).toLocaleString()}</span>
+        <span class="${over ? 'text-rose-600 font-semibold' : ''}">ใช้แล้ว: ฿${used.toLocaleString()}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+window.openWalletModal = () => {
+  const name = prompt("ระบุชื่อบัญชี / กระเป๋าเงิน:");
+  if (!name) return;
+  const isDebt = confirm("เป็นหนี้สิน (เช่น บัตรเครดิต) ใช่ไหม?\nกด OK = หนี้สิน, Cancel = สินทรัพย์");
+  const bal = Number(prompt(isDebt ? "ระบุยอดหนี้ปัจจุบัน:" : "ระบุยอดเงินเริ่มต้น:", "0")) || 0;
+  S().wallets.push({ id: Date.now(), name, type: isDebt ? "Liability" : "Asset", balance: bal });
+  commit();
+};
+window.removeWallet = (idx) => {
+  if (!confirm("ลบบัญชีนี้?")) return;
+  S().wallets.splice(idx, 1); commit();
+};
+window.openJarModal = () => {
+  const name = prompt("ระบุชื่อซองเงิน (เช่น ☕ ซองกาแฟ):");
+  if (!name) return;
+  const budget = Number(prompt("ระบุงบประมาณประจำเดือน:", "3000")) || 0;
+  S().jars.push({ id: Date.now(), name, budget });
+  commit();
+};
+window.removeJar = (idx) => {
+  if (!confirm("ลบซองเงินนี้?")) return;
+  S().jars.splice(idx, 1); commit();
+};
+
+// ---------- เงินออม ----------
+function renderSavings() {
+  const g = document.getElementById('savings-grid');
+  if (!S().savings.length) { g.innerHTML = '<p class="text-sm text-slate-400">ยังไม่มีเป้าหมาย กด "เพิ่มเป้าหมายออม"</p>'; return; }
+  g.innerHTML = S().savings.map((s, idx) => {
+    const pct = s.goal > 0 ? (s.current / s.goal) * 100 : 0;
+    return `<div class="bg-slate-50 border border-slate-200 p-5 rounded-xl space-y-3">
+      <div class="flex justify-between items-start">
+        <div><h4 class="font-bold text-slate-900 text-sm">${esc(s.name)}</h4><span class="text-xs text-purple-600 font-semibold">${esc(s.type)}</span></div>
+        <div class="flex items-center space-x-3">
+          <button onclick="addToSaving(${idx})" class="text-purple-600 hover:text-purple-800 text-xs font-semibold">+ เติมเงิน</button>
+          <button onclick="removeSaving(${idx})" class="text-rose-400 hover:text-rose-600 text-xs"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      </div>
+      <div class="space-y-1">
+        <div class="flex justify-between text-xs text-slate-600"><span>สะสม: ฿${Number(s.current).toLocaleString()}</span><span>เป้าหมาย: ฿${Number(s.goal).toLocaleString()}</span></div>
+        <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden"><div class="bg-purple-600 h-full rounded-full" style="width:${Math.min(pct, 100)}%"></div></div>
+        <div class="text-right text-xs text-slate-500">${pct.toFixed(1)}%</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+window.openSavingsModal = () => {
+  const name = prompt("ชื่อเป้าหมายเงินออม:");
+  if (!name) return;
+  const goal = Number(prompt("ยอดเงินเป้าหมาย:", "50000")) || 0;
+  const current = Number(prompt("ยอดเงินสะสมปัจจุบัน:", "0")) || 0;
+  S().savings.push({ id: Date.now(), name, type: "เงินออม", goal, current });
+  commit();
+};
+window.addToSaving = (idx) => {
+  const v = Number(prompt("เติมเงินเข้าเป้าหมายนี้ (บาท):", "1000"));
+  if (!v || v <= 0) return;
+  S().savings[idx].current = Number(S().savings[idx].current) + v;
+  commit();
+};
+window.removeSaving = (idx) => {
+  if (!confirm("ลบเป้าหมายนี้?")) return;
+  S().savings.splice(idx, 1); commit();
+};
+
+// ---------- เครื่องมือ ----------
+window.runSimulator = () => {
+  const price = Number(document.getElementById('sim-price').value);
+  const assets = sum(S().wallets.filter(w => w.type === 'Asset'), w => w.balance);
+  const res = document.getElementById('sim-result');
+  res.classList.remove('hidden');
+  if (!price || price <= 0) { res.innerText = "กรุณาใส่ราคาสินค้า"; return; }
+  if (price > assets) {
+    res.innerHTML = `<strong class="text-rose-600">คำเตือน:</strong> สินทรัพย์รวม (${money(assets)}) ไม่พอซื้อสินค้านี้`;
+  } else {
+    res.innerHTML = `<strong class="text-emerald-600">ซื้อได้:</strong> หลังซื้อจะเหลือสินทรัพย์ ${money(assets - price)}`;
+  }
+};
+window.exportToCSV = () => {
+  const q = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  let csv = "Date,Type,Account,To,Jar,Amount,Note\n";
+  S().transactions.forEach(t => { csv += [t.date, t.type, q(t.from), q(t.to), q(t.jar), t.amount, q(t.note)].join(',') + "\n"; });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' }));
+  link.download = "WealthFlow_Transactions.csv";
+  link.click();
+};
+window.exportToJSON = () => {
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(new Blob([JSON.stringify(S(), null, 2)], { type: 'application/json' }));
+  link.download = "WealthFlow_Backup.json";
+  link.click();
+};
+
+renderAll();
+</script>
+</body>
+</html>
