@@ -1,1 +1,1665 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WealthFlow Pro</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script>
+tailwind.config = { theme: { extend: { fontFamily: { sans: ['Prompt', 'sans-serif'] } } } }
+</script>
+<style>
+:root{--c:#f0925f;--c2:#e0793f;--cream:#fff8f0;--ink:#4a3b32}
+body{background:var(--cream)!important;color:var(--ink);background-image:radial-gradient(#f6e3d2 1px,transparent 1px);background-size:22px 22px}
+.bg-blue-600,.bg-purple-600{background:var(--c)!important}.hover\:bg-blue-700:hover,.hover\:bg-purple-700:hover{background:var(--c2)!important}
+.text-blue-600,.text-purple-600,.text-blue-700{color:var(--c2)!important}.bg-blue-50{background:#fff0e4!important}
+.border-slate-200{border-color:#f3e3d5!important}.bg-white{border-radius:1.25rem}.rounded-2xl{border-radius:1.5rem!important}
+.shadow-sm{box-shadow:0 2px 0 #f3e3d5!important}.bg-slate-50{background:#fffaf5!important}
+header.bg-white{background:#fff!important;border-bottom:2px dashed #f3d9c3!important}
+.tab-btn{border-radius:999px!important}.tab-btn.bg-white{background:#fff!important;border:1px solid #f3e3d5}
+.cat-bubble{background:#fff;border:2px solid #f3d9c3;border-radius:1.25rem;position:relative}
+.cat-bubble:before{content:"";position:absolute;left:-9px;top:22px;border:8px solid transparent;border-right-color:#f3d9c3;border-left:0}
+.paw{opacity:.5;font-size:.7rem;text-align:center;padding:1rem}
+@keyframes tail{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}.wag{display:inline-block;animation:tail 2s infinite;transform-origin:70% 80%}
+</style>
+</head>
+<body class="bg-slate-50 font-sans text-slate-800 antialiased min-h-screen flex flex-col">
 
+<!-- Header -->
+<header class="bg-white border-b border-slate-200 sticky top-0 z-40">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+    <div class="flex items-center space-x-3">
+      <div class="bg-blue-600 text-white w-10 h-10 flex items-center justify-center rounded-2xl shadow-md text-xl wag">🐱</div>
+      <div>
+        <h1 class="font-bold text-lg text-slate-900 leading-tight">WealthFlow Pro</h1>
+        <p class="text-xs text-slate-500">แมวเหมียวช่วยดูแลเงินของคุณ 🐾</p>
+      </div>
+    </div>
+    <div class="flex items-center space-x-3">
+      <div id="sync-status" class="text-xs text-slate-400 hidden sm:block"></div>
+      <div id="auth-status" class="text-sm font-medium text-slate-600 hidden sm:block">กำลังตรวจสอบ...</div>
+      <button id="logout-btn" onclick="logoutUser()" class="hidden bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-xl text-sm font-medium transition items-center space-x-1" title="ออกจากระบบ">
+        <i class="fa-solid fa-right-from-bracket"></i><span class="hidden sm:inline ml-1">ออก</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- Login screen -->
+<section id="login-screen" class="flex-grow flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 max-w-sm w-full text-center space-y-5">
+    <div class="bg-blue-600 text-white w-16 h-16 rounded-3xl flex items-center justify-center mx-auto shadow-md text-3xl wag">🐱</div>
+    <div>
+      <h2 class="text-xl font-bold text-slate-900">เข้าสู่ระบบ</h2>
+      <p class="text-sm text-slate-500 mt-1">ข้อมูลของแต่ละบัญชีแยกกัน และซิงก์ข้ามอุปกรณ์อัตโนมัติ</p>
+    </div>
+    <button id="login-btn" onclick="loginWithGoogle()" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-xl text-sm font-medium transition shadow-sm flex items-center justify-center space-x-2">
+      <i class="fa-brands fa-google"></i><span class="ml-2">เข้าสู่ระบบด้วย Google</span>
+    </button>
+    <p id="login-error" class="text-xs text-rose-600 hidden"></p>
+  </div>
+</section>
+
+<!-- App -->
+<main id="app-main" class="hidden flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+  <div class="flex overflow-x-auto space-x-2 pb-2 border-b border-slate-200">
+    <button onclick="switchTab('dashboard')" class="tab-btn px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition bg-blue-600 text-white shadow-sm" data-target="dashboard"><span class="mr-1">🐾 </span><i class="hidden"></i> ภาพรวม</button>
+    <button onclick="switchTab('salary')" class="tab-btn px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition bg-white text-slate-600 hover:bg-slate-100" data-target="salary"><span class="mr-1">💌 </span><i class="hidden"></i> เงินเดือน & Payslip</button>
+    <button onclick="switchTab('transactions')" class="tab-btn px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition bg-white text-slate-600 hover:bg-slate-100" data-target="transactions"><span class="mr-1">🧾 </span><i class="hidden"></i> บันทึกรับ-จ่าย</button>
+    <button onclick="switchTab('calendar')" class="tab-btn px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition bg-white text-slate-600 hover:bg-slate-100" data-target="calendar"><span class="mr-1">📅 </span><i class="hidden"></i> ปฏิทินการเงิน</button>
+    <button onclick="switchTab('savings')" class="tab-btn px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition bg-white text-slate-600 hover:bg-slate-100" data-target="savings"><span class="mr-1">🐟 </span><i class="hidden"></i> เงินออม & เป้าหมาย</button>
+    <button onclick="switchTab('wallets')" class="tab-btn px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition bg-white text-slate-600 hover:bg-slate-100" data-target="wallets"><span class="mr-1">👛 </span><i class="hidden"></i> กระเป๋า & ซองเงิน</button>
+    <button onclick="switchTab('tools')" class="tab-btn px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition bg-white text-slate-600 hover:bg-slate-100" data-target="tools"><span class="mr-1">🧶 </span><i class="hidden"></i> เครื่องมือ & ส่งออก</button>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="tab-dashboard" class="tab-content space-y-6">
+    <div class="flex items-start gap-3"><div class="text-4xl wag">🐱</div><div id="cat-say" class="cat-bubble px-4 py-3 text-sm flex-1"></div></div>
+    <div id="health-row" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div onclick="showKpi('networth')" class="cursor-pointer hover:border-blue-300 hover:shadow-md transition bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div><p class="text-xs font-medium text-slate-500">สินทรัพย์รวม</p><h3 id="kpi-networth" class="text-2xl font-bold text-slate-900 mt-1">฿0.00</h3></div>
+        <div class="bg-blue-50 text-blue-600 p-3 rounded-xl"><i class="fa-solid fa-wallet text-xl"></i></div>
+      </div>
+      <div onclick="showKpi('debts')" class="cursor-pointer hover:border-rose-300 hover:shadow-md transition bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div><p class="text-xs font-medium text-slate-500">ยอดหนี้รวม</p><h3 id="kpi-debts" class="text-2xl font-bold text-rose-600 mt-1">฿0.00</h3></div>
+        <div class="bg-rose-50 text-rose-600 p-3 rounded-xl text-xl">💸</div>
+      </div>
+      <div onclick="showKpi('income')" class="cursor-pointer hover:border-blue-300 hover:shadow-md transition bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div><p class="text-xs font-medium text-slate-500">รายรับเดือนนี้</p><h3 id="kpi-income" class="text-2xl font-bold text-emerald-600 mt-1">฿0.00</h3></div>
+        <div class="bg-emerald-50 text-emerald-600 p-3 rounded-xl"><i class="fa-solid fa-arrow-trend-up text-xl"></i></div>
+      </div>
+      <div onclick="showKpi('expense')" class="cursor-pointer hover:border-blue-300 hover:shadow-md transition bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div><p class="text-xs font-medium text-slate-500">รายจ่ายเดือนนี้</p><h3 id="kpi-expense" class="text-2xl font-bold text-rose-600 mt-1">฿0.00</h3></div>
+        <div class="bg-rose-50 text-rose-600 p-3 rounded-xl"><i class="fa-solid fa-arrow-trend-down text-xl"></i></div>
+      </div>
+      <div onclick="showKpi('savings')" class="cursor-pointer hover:border-blue-300 hover:shadow-md transition bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div><p class="text-xs font-medium text-slate-500">เงินออมสุทธิเดือนนี้</p><h3 id="kpi-savings" class="text-2xl font-bold text-purple-600 mt-1">฿0.00</h3></div>
+        <div class="bg-purple-50 text-purple-600 p-3 rounded-xl"><i class="fa-solid fa-piggy-bank text-xl"></i></div>
+      </div>
+    </div>
+    <!-- ภาพรวมเงินในบัญชี -->
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-5">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h3 class="font-bold text-slate-900"><i class="fa-solid fa-chart-pie text-blue-600 mr-2"></i> เงินทั้งหมดและแยกตามบัญชี</h3>
+          <p class="text-xs text-slate-500">เลือกดูทั้งหมด หรือเลือกเฉพาะบัญชีที่ต้องการ (เลือกได้หลายบัญชี) แตะกราฟ/รายการเพื่อดูรายละเอียด</p>
+        </div>
+      </div>
+      <div id="acct-chips" class="flex flex-wrap gap-2"></div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div class="p-3 rounded-xl bg-blue-50 border border-blue-100"><p class="text-xs text-blue-700">สินทรัพย์รวม</p><p id="acct-total-assets" class="text-lg font-bold text-blue-900">฿0</p></div>
+        <div class="p-3 rounded-xl bg-rose-50 border border-rose-100"><p class="text-xs text-rose-700">หนี้สินรวม</p><p id="acct-total-liab" class="text-lg font-bold text-rose-900">฿0</p></div>
+        <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-100"><p class="text-xs text-emerald-700">คงเหลือสุทธิ</p><p id="acct-total-net" class="text-lg font-bold text-emerald-900">฿0</p></div>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="space-y-2">
+          <h4 class="text-sm font-semibold text-slate-700">สัดส่วนเงินในแต่ละบัญชี</h4>
+          <div id="acct-donut" class="flex justify-center"></div>
+        </div>
+        <div class="space-y-2">
+          <h4 class="text-sm font-semibold text-slate-700">รายละเอียดแต่ละบัญชี</h4>
+          <div id="acct-list" class="space-y-2 max-h-80 overflow-y-auto pr-1"></div>
+        </div>
+      </div>
+      <div class="space-y-2 pt-2 border-t border-slate-100">
+        <div class="flex items-center justify-between">
+          <h4 class="text-sm font-semibold text-slate-700">รายรับ-รายจ่าย 6 เดือนล่าสุด <span id="acct-flow-scope" class="text-xs font-normal text-slate-400"></span></h4>
+          <div class="flex items-center space-x-3 text-xs text-slate-500">
+            <span><span class="inline-block w-2.5 h-2.5 rounded-sm bg-emerald-500 mr-1"></span>รายรับ</span>
+            <span><span class="inline-block w-2.5 h-2.5 rounded-sm bg-rose-500 mr-1"></span>รายจ่าย</span>
+          </div>
+        </div>
+        <div id="acct-flow"></div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <h3 class="font-bold text-slate-800 flex items-center"><i class="fa-solid fa-bell text-amber-500 mr-2"></i> ข้อสังเกตจากข้อมูลของคุณ</h3>
+        <div id="insights" class="space-y-3"></div>
+      </div>
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <h3 class="font-bold text-slate-800 flex items-center"><i class="fa-solid fa-chart-line text-blue-600 mr-2"></i> เทียบกับเดือนก่อน</h3>
+        <div id="mom-comparison" onclick="showKpi('expense')" class="space-y-3 text-sm cursor-pointer" title="แตะเพื่อดูรายละเอียด"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SALARY -->
+  <div id="tab-salary" class="tab-content hidden space-y-6">
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-4">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">คำนวณเงินเดือนสุทธิ (Salary & Payslip)</h2>
+          <p class="text-xs text-slate-500">เพิ่ม ลบ หรือแก้ไขรายการรายรับและรายการหักได้เอง</p>
+        </div>
+        <div class="flex space-x-2">
+          <button onclick="addSalaryItem('income')" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-xl text-xs font-semibold transition"><i class="fa-solid fa-plus mr-1"></i> เพิ่มรายรับ</button>
+          <button onclick="addSalaryItem('deduction')" class="bg-rose-50 hover:bg-rose-100 text-rose-700 px-3 py-1.5 rounded-xl text-xs font-semibold transition"><i class="fa-solid fa-plus mr-1"></i> เพิ่มรายการหัก</button>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="space-y-3"><h3 class="font-semibold text-emerald-700 text-sm">รายรับทั้งหมด (Earnings)</h3><div id="salary-incomes-list" class="space-y-2"></div></div>
+        <div class="space-y-3"><h3 class="font-semibold text-rose-700 text-sm">รายการหัก (Deductions)</h3><div id="salary-deductions-list" class="space-y-2"></div></div>
+      </div>
+      <div class="p-4 bg-slate-50 rounded-xl flex flex-col sm:flex-row items-center justify-between border border-slate-200 gap-4">
+        <div>
+          <span class="text-sm font-medium text-slate-600">เงินสุทธิเข้าบัญชี (Net Take-Home Pay):</span>
+          <h3 id="salary-net-total" class="text-2xl font-bold text-emerald-600">฿0.00</h3>
+        </div>
+        <button onclick="syncSalaryToTransactions()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium shadow-sm transition"><i class="fa-solid fa-cloud-arrow-down mr-2"></i> บันทึกยอดสุทธิลงรายรับ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRANSACTIONS -->
+  <div id="tab-transactions" class="tab-content hidden space-y-6">
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-4">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">บันทึกรายการประจำวัน</h2>
+          <p class="text-xs text-slate-500">บันทึกรายรับ รายจ่าย หรือโอนเงิน ยอดในกระเป๋าจะปรับให้อัตโนมัติ</p>
+        </div>
+        <button onclick="openTransactionModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-medium shadow-sm transition"><i class="fa-solid fa-plus mr-2"></i> เพิ่มรายการใหม่</button>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm text-slate-600">
+          <thead class="bg-slate-50 text-slate-700 text-xs font-semibold border-b border-slate-200">
+            <tr><th class="p-3">วันที่</th><th class="p-3">ประเภท</th><th class="p-3">บัญชี</th><th class="p-3">หมวดหมู่ / ซองเงิน</th><th class="p-3 text-right">จำนวนเงิน</th><th class="p-3">หมายเหตุ</th><th class="p-3 text-center">ลบ</th></tr>
+          </thead>
+          <tbody id="transactions-table-body" class="divide-y divide-slate-100"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- CALENDAR -->
+  <div id="tab-calendar" class="tab-content hidden space-y-6">
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-4">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">ปฏิทินการเงิน</h2>
+          <p class="text-xs text-slate-500">ดูรายรับ-รายจ่ายรายวัน รายเดือน รายปี</p>
+        </div>
+        <div class="flex items-center space-x-2">
+          <select id="calendar-mode" onchange="renderCalendar()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-medium text-slate-700">
+            <option value="month">มุมมองรายเดือน</option>
+            <option value="year">มุมมองรายปี</option>
+          </select>
+          <div class="flex items-center space-x-1">
+            <button onclick="changeCalendarPeriod(-1)" class="p-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-700 transition"><i class="fa-solid fa-chevron-left"></i></button>
+            <span id="calendar-period-label" class="text-sm font-semibold px-3"></span>
+            <button onclick="changeCalendarPeriod(1)" class="p-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-700 transition"><i class="fa-solid fa-chevron-right"></i></button>
+          </div>
+        </div>
+      </div>
+      <div id="calendar-container" class="overflow-x-auto"></div>
+    </div>
+  </div>
+
+  <!-- SAVINGS -->
+  <div id="tab-savings" class="tab-content hidden space-y-6">
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-4">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">เป้าหมายเงินออม & การลงทุน</h2>
+          <p class="text-xs text-slate-500">เพิ่มและจัดการเป้าหมายการเงินของคุณ เติม/ถอนเงินแล้วเลือกตัดจากบัญชีได้</p>
+        </div>
+        <button onclick="openSavingsModal()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl text-sm font-medium shadow-sm transition"><i class="fa-solid fa-plus mr-2"></i> เพิ่มเป้าหมายออม</button>
+      </div>
+      <div id="savings-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+    </div>
+
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-4">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900"><i class="fa-solid fa-file-invoice-dollar text-rose-500 mr-2"></i>หนี้สิน</h2>
+          <p class="text-xs text-slate-500">บันทึกหนี้ที่มี เลือกบัญชีที่ใช้จ่าย ระบบหักยอดบัญชีให้ทันที</p>
+        </div>
+        <div class="flex flex-wrap gap-2"><button onclick="openDebtModal()" class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-xl text-sm font-medium shadow-sm transition"><i class="fa-solid fa-plus mr-2"></i> เพิ่มหนี้สิน</button>
+          <button onclick="openLoanWizard('student')" class="bg-amber-100 hover:bg-amber-200 text-amber-800 px-3 py-2 rounded-xl text-sm font-medium">🎓 กยศ.</button>
+          <button onclick="openLoanWizard('car')" class="bg-amber-100 hover:bg-amber-200 text-amber-800 px-3 py-2 rounded-xl text-sm font-medium">🚗 ผ่อนรถ/ของ</button>
+          <button onclick="openLoanWizard('loan')" class="bg-amber-100 hover:bg-amber-200 text-amber-800 px-3 py-2 rounded-xl text-sm font-medium">🏠 สินเชื่อ</button></div>
+      </div>
+      <div id="debt-summary" class="grid grid-cols-1 sm:grid-cols-3 gap-3"></div>
+      <div id="debts-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+    </div>
+  </div>
+
+  <!-- WALLETS -->
+  <div id="tab-wallets" class="tab-content hidden space-y-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+          <h3 class="font-bold text-slate-900"><i class="fa-solid fa-vault text-blue-600 mr-2"></i> กระเป๋าเงิน & บัญชี</h3>
+          <button onclick="openWalletModal()" class="bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-1.5 rounded-xl text-xs font-semibold transition"><i class="fa-solid fa-plus mr-1"></i> เพิ่มบัญชี</button>
+        </div>
+        <div id="wallets-list" class="space-y-3"></div>
+      </div>
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+          <h3 class="font-bold text-slate-900"><i class="fa-solid fa-jar text-amber-500 mr-2"></i> ซองเงินใช้จ่าย (เดือนนี้)</h3>
+          <button onclick="openJarModal()" class="bg-amber-50 hover:bg-amber-100 text-amber-700 px-3 py-1.5 rounded-xl text-xs font-semibold transition"><i class="fa-solid fa-plus mr-1"></i> เพิ่มซองเงิน</button>
+        </div>
+        <div id="jars-list" class="space-y-3"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOOLS -->
+  <div id="tab-tools" class="tab-content hidden space-y-6">
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+      <div class="flex items-center justify-between"><h3 class="font-bold text-slate-900">🔁 รายการประจำอัตโนมัติ</h3><button onclick="openRecurring()" class="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-xl text-xs font-semibold">+ เพิ่ม</button></div>
+      <p class="text-xs text-slate-500">เงินเดือนเข้า ค่าเช่า ออมเข้าเป้าหมาย ฯลฯ ระบบสร้างรายการให้เองทุกเดือนเมื่อถึงวันที่กำหนด (ตอนเปิดแอป)</p>
+      <div id="recurring-list" class="space-y-2"></div>
+    </div>
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+      <h3 class="font-bold text-slate-900">⚔️ เทียบวิธีปลดหนี้</h3>
+      <p class="text-xs text-slate-500">ใช้ยอดค่างวดรวมของทุกหนี้ เมื่อปิดหนี้ก้อนหนึ่งได้ เงินงวดนั้นจะไปช่วยก้อนถัดไป</p>
+      <div id="debt-compare" class="text-sm"></div>
+    </div>
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+      <h3 class="font-bold text-slate-900">♻️ รีเซ็ตข้อมูล</h3>
+      <p class="text-xs text-slate-500">แนะนำให้กด "สำรองข้อมูล JSON" ก่อนรีเซ็ต การรีเซ็ตเฉพาะส่วนจะไม่ปรับยอดบัญชีให้</p>
+      <div class="grid grid-cols-2 gap-2 text-xs font-semibold">
+        <button onclick="resetPart('transactions')" class="bg-slate-100 hover:bg-slate-200 py-2 rounded-xl">🧾 ล้างรายการรับ-จ่าย</button>
+        <button onclick="resetPart('wallets0')" class="bg-slate-100 hover:bg-slate-200 py-2 rounded-xl">👛 ยอดทุกบัญชี = 0</button>
+        <button onclick="resetPart('savings')" class="bg-slate-100 hover:bg-slate-200 py-2 rounded-xl">🐟 ล้างเป้าหมายออม</button>
+        <button onclick="resetPart('debts')" class="bg-slate-100 hover:bg-slate-200 py-2 rounded-xl">💸 ล้างหนี้สิน</button>
+        <button onclick="resetPart('jars')" class="bg-slate-100 hover:bg-slate-200 py-2 rounded-xl">🫙 ซองเงินกลับค่าเริ่มต้น</button>
+        <button onclick="resetPart('recurring')" class="bg-slate-100 hover:bg-slate-200 py-2 rounded-xl">🔁 ล้างรายการประจำ</button>
+        <button onclick="resetPart('salary')" class="bg-slate-100 hover:bg-slate-200 py-2 rounded-xl">💌 รีเซ็ตเงินเดือน</button>
+        <button onclick="resetPart('nwHistory')" class="bg-slate-100 hover:bg-slate-200 py-2 rounded-xl">📈 ล้างกราฟแนวโน้ม</button>
+      </div>
+      <button onclick="resetPart('all')" class="w-full bg-rose-50 hover:bg-rose-100 text-rose-700 py-2.5 rounded-xl text-sm font-semibold">⚠️ รีเซ็ตทั้งหมด (เริ่มใหม่ทั้งแอป)</button>
+    </div>
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+      <h3 class="font-bold text-slate-900">📥 นำเข้าข้อมูลสำรอง (JSON)</h3>
+      <input type="file" id="import-file" accept=".json,application/json" onchange="importJSON(this)" class="text-xs">
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <h3 class="font-bold text-slate-900"><i class="fa-solid fa-calculator text-blue-600 mr-2"></i> จำลองสถานการณ์ซื้อของ</h3>
+        <p class="text-xs text-slate-500">ลองคำนวณก่อนซื้อของชิ้นใหญ่ว่ากระทบเงินสดไหม</p>
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">ราคาสินค้า (บาท)</label>
+            <input type="number" id="sim-price" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm" placeholder="เช่น 25000">
+          </div>
+          <button onclick="runSimulator()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-xl text-sm font-medium transition shadow-sm">คำนวณผลกระทบ</button>
+          <div id="sim-result" class="p-3 bg-slate-50 rounded-xl text-sm text-slate-700 hidden"></div>
+        </div>
+      </div>
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <h3 class="font-bold text-slate-900"><i class="fa-solid fa-file-arrow-down text-emerald-600 mr-2"></i> ส่งออกข้อมูล</h3>
+        <p class="text-xs text-slate-500">ดาวน์โหลดข้อมูลเพื่อเปิดใน Google Sheets / Excel</p>
+        <div class="space-y-3">
+          <button onclick="exportToCSV()" class="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-800 py-2.5 rounded-xl text-sm font-semibold transition"><i class="fa-solid fa-file-csv mr-2"></i> ส่งออกไฟล์ CSV</button>
+          <button onclick="exportToJSON()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 py-2.5 rounded-xl text-sm font-semibold transition"><i class="fa-solid fa-code mr-2"></i> สำรองข้อมูล JSON</button>
+        </div>
+      </div>
+    </div>
+  </div>
+<p class="paw">🐾 meow · made with love 🐾</p></main>
+
+<!-- MODAL: TRANSACTION -->
+<div id="tx-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+  <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl max-h-[90vh] overflow-y-auto">
+    <h3 class="font-bold text-lg text-slate-900">เพิ่มรายการรับ-จ่ายใหม่</h3>
+    <div class="space-y-3 text-sm">
+      <div><label class="block text-xs font-medium text-slate-600 mb-1">วันที่</label><input type="date" id="tx-date" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2"></div>
+      <div>
+        <label class="block text-xs font-medium text-slate-600 mb-1">ประเภท</label>
+        <select id="tx-type" onchange="onTxTypeChange()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+          <option value="รายจ่าย">รายจ่าย</option>
+          <option value="รายรับ">รายรับ</option>
+          <option value="โอนเงิน">โอนระหว่างบัญชี</option>
+        </select>
+      </div>
+      <div>
+        <label id="tx-from-label" class="block text-xs font-medium text-slate-600 mb-1">บัญชี / กระเป๋า</label>
+        <select id="tx-from" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2"></select>
+      </div>
+      <div id="tx-to-wrap" class="hidden">
+        <label class="block text-xs font-medium text-slate-600 mb-1">โอนไปยังบัญชี</label>
+        <select id="tx-to" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2"></select>
+      </div>
+      <div id="tx-jar-wrap">
+        <label class="block text-xs font-medium text-slate-600 mb-1">ซองเงิน / หมวดหมู่</label>
+        <select id="tx-jar" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2"></select>
+      </div>
+      <div><label class="block text-xs font-medium text-slate-600 mb-1">จำนวนเงิน (บาท)</label><input type="number" id="tx-amount" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2" placeholder="0.00"></div>
+      <div id="tx-link-wrap"><label class="block text-xs font-medium text-slate-600 mb-1">นำรายจ่ายนี้ไปเติม/จ่าย (ไม่บังคับ)</label>
+        <select id="tx-link" onchange="onTxLinkChange()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2"><option value="">— ไม่ผูก (รายจ่ายทั่วไป) —</option><option value="saving">🐟 เติมเป้าหมายเงินออม/ลงทุน</option><option value="debt">💸 จ่ายหนี้สิน</option></select>
+        <select id="tx-link-target" class="hidden mt-2 w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2"></select></div>
+      <div><label class="block text-xs font-medium text-slate-600 mb-1">แท็ก / หมายเหตุ</label><input type="text" id="tx-note" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2" placeholder="เช่น #ทริปเที่ยว กาแฟสด"></div>
+    </div>
+    <div class="flex space-x-2 pt-2">
+      <button onclick="closeTransactionModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 rounded-xl font-medium transition">ยกเลิก</button>
+      <button onclick="saveTransaction()" class="flex-1 ml-2 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-xl font-medium transition shadow-sm">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: DETAIL -->
+<div id="detail-modal" onclick="if(event.target===this)closeDetail()" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+  <div class="bg-white rounded-2xl max-w-lg w-full shadow-xl max-h-[90vh] flex flex-col">
+    <div class="flex items-start justify-between p-5 pb-3 border-b border-slate-100">
+      <div class="min-w-0"><h3 id="detail-title" class="font-bold text-lg text-slate-900"></h3><p id="detail-sub" class="text-xs text-slate-500 mt-0.5"></p></div>
+      <button onclick="closeDetail()" class="text-slate-400 hover:text-slate-700 p-1 ml-3"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+    <div id="detail-body" class="p-5 overflow-y-auto space-y-4"></div>
+  </div>
+</div>
+
+<!-- MODAL: FORM (แก้ไข/เพิ่ม บัญชี ซองเงิน เป้าหมายออม) -->
+<div id="form-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+  <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl max-h-[90vh] overflow-y-auto">
+    <h3 id="form-title" class="font-bold text-lg text-slate-900"></h3>
+    <div id="form-fields" class="space-y-3 text-sm"></div>
+    <div class="flex space-x-2 pt-2">
+      <button onclick="closeForm()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 rounded-xl font-medium transition">ยกเลิก</button>
+      <button onclick="submitForm()" class="flex-1 ml-2 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-xl font-medium transition shadow-sm">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAuth, signInWithPopup, signInWithRedirect, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyD3xXHoXEVEkMdvMdQOWoDwEBGmSmhuJNs",
+  authDomain: "wealthflow-652a9.firebaseapp.com",
+  projectId: "wealthflow-652a9",
+  storageBucket: "wealthflow-652a9.firebasestorage.app",
+  messagingSenderId: "320087102316",
+  appId: "1:320087102316:web:4ac63f72ac110a756d5949",
+  measurementId: "G-QJNCP39LVV"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+let currentUser = null;
+let unsubscribe = null;
+let saveTimer = null;
+let loaded = false; // ห้ามบันทึกจนกว่าจะโหลดข้อมูลจากคลาวด์เสร็จ
+
+// ---------- ค่าเริ่มต้นสำหรับบัญชีใหม่ ----------
+const defaultState = () => ({
+  salary: {
+    incomes: [{ id: 1, name: "เงินเดือนพื้นฐาน", amount: 0 }],
+    deductions: [{ id: 1, name: "ประกันสังคม (SSO)", amount: 0 }]
+  },
+  wallets: [{ id: 1, name: "เงินสด", type: "Asset", balance: 0 }],
+  jars: [
+    { id: 1, name: "🍔 ซองค่ากิน & ของใช้", budget: 8000 },
+    { id: 2, name: "🚗 ซองการเดินทาง", budget: 3000 },
+    { id: 3, name: "🏠 ซองค่าใช้จ่ายประจำ", budget: 7500 },
+    { id: 4, name: "🛍️ ซองตามใจ / ท่องเที่ยว", budget: 4000 }
+  ],
+  transactions: [],
+  savings: [],
+  debts: [],
+  recurring: [],
+  nwHistory: {}
+});
+window.appState = defaultState();
+
+// ---------- ตัวช่วย ----------
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money = (n) => '฿' + Number(n).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const sum = (arr, f) => arr.reduce((a, x) => a + Number(f(x) || 0), 0);
+const monthKey = (d) => d.slice(0, 7);
+const pad = (n) => String(n).padStart(2, '0');
+const localISO = (d = new Date()) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const nowKey = () => localISO().slice(0, 7);
+const prevKey = () => { const d = new Date(); return localISO(new Date(d.getFullYear(), d.getMonth() - 1, 1)).slice(0, 7); };
+const S = () => window.appState;
+
+function setSyncStatus(text) { document.getElementById('sync-status').innerText = text; }
+
+// ---------- บันทึกขึ้นคลาวด์ ----------
+window.saveData = () => {
+  if (!currentUser || !loaded) return;
+  setSyncStatus('กำลังบันทึก...');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    try {
+      await setDoc(doc(db, "users", currentUser.uid), S());
+      setSyncStatus('บันทึกแล้ว ✓');
+    } catch (e) {
+      console.error("Sync error:", e);
+      setSyncStatus('บันทึกไม่สำเร็จ');
+      alert("บันทึกขึ้นคลาวด์ไม่สำเร็จ: " + e.message);
+    }
+  }, 400);
+};
+const commit = () => { recordNW(); renderAll(); saveData(); };
+
+// ---------- ล็อกอิน ----------
+window.loginWithGoogle = async () => {
+  const err = document.getElementById('login-error');
+  const show = (m) => { err.innerText = m; err.classList.remove('hidden'); };
+  err.classList.add('hidden');
+  // เบราว์เซอร์ในแอป (LINE/Facebook ฯลฯ) ล็อกอิน Google ไม่ได้
+  if (/Line\/|FBAN|FBAV|Instagram|MicroMessenger|; wv\)/i.test(navigator.userAgent || '')) {
+    show('เบราว์เซอร์ในแอป (เช่น LINE, Facebook) ล็อกอิน Google ไม่ได้ กรุณาเปิดลิงก์นี้ใน Safari หรือ Chrome โดยตรง');
+    return;
+  }
+  try {
+    await signInWithPopup(auth, provider);
+  } catch (e) {
+    if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') return;
+    if (e.code === 'auth/popup-blocked') show('เบราว์เซอร์บล็อกหน้าต่างล็อกอิน กรุณาอนุญาต Pop-ups สำหรับเว็บนี้ แล้วลองใหม่');
+    else if (e.code === 'auth/unauthorized-domain') show('โดเมนนี้ยังไม่ได้อนุญาตใน Firebase (Authentication → Settings → Authorized domains)');
+    else show('เข้าสู่ระบบไม่สำเร็จ: ' + e.message);
+  }
+};
+window.logoutUser = () => signOut(auth);
+
+onAuthStateChanged(auth, (user) => {
+  currentUser = user;
+  if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+  loaded = false;
+  if (user) {
+    document.getElementById('auth-status').innerText = user.displayName || user.email;
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('app-main').classList.remove('hidden');
+    document.getElementById('logout-btn').classList.remove('hidden');
+    document.getElementById('logout-btn').classList.add('flex');
+    setSyncStatus('กำลังโหลดข้อมูล...');
+    unsubscribe = onSnapshot(doc(db, "users", user.uid), (snap) => {
+      if (snap.metadata.hasPendingWrites) return; // เปลี่ยนจากเครื่องนี้เอง ไม่ต้องโหลดทับ
+      if (snap.exists()) {
+        window.appState = { ...defaultState(), ...snap.data() };
+      } else {
+        window.appState = defaultState();
+        loaded = true;
+        saveData(); // บัญชีใหม่: สร้างเอกสารครั้งแรก
+      }
+      loaded = true;
+      setSyncStatus('ซิงก์แล้ว ✓');
+      if (runRecurring()) saveData();
+      recordNW();
+      renderAll();
+    }, (e) => {
+      console.error(e);
+      setSyncStatus('โหลดไม่สำเร็จ');
+      alert("โหลดข้อมูลไม่สำเร็จ: " + e.message + "\nตรวจสอบว่าสร้าง Firestore และตั้ง Rules แล้ว");
+    });
+  } else {
+    // ล็อกเอาต์: ล้างข้อมูลบนหน้าจอ
+    window.appState = defaultState();
+    document.getElementById('auth-status').innerText = 'ยังไม่ได้เข้าสู่ระบบ';
+    document.getElementById('login-screen').classList.remove('hidden');
+    document.getElementById('app-main').classList.add('hidden');
+    document.getElementById('logout-btn').classList.add('hidden');
+    document.getElementById('logout-btn').classList.remove('flex');
+    setSyncStatus('');
+  }
+});
+
+// ---------- แท็บ ----------
+window.switchTab = (tabId) => {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.classList.remove('bg-blue-600', 'text-white', 'shadow-sm');
+    btn.classList.add('bg-white', 'text-slate-600', 'hover:bg-slate-100');
+  });
+  document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+  const activeBtn = document.querySelector(`[data-target="${tabId}"]`);
+  activeBtn.classList.add('bg-blue-600', 'text-white', 'shadow-sm');
+  activeBtn.classList.remove('bg-white', 'text-slate-600', 'hover:bg-slate-100');
+  if (tabId === 'calendar') renderCalendar();
+};
+
+window.renderAll = () => {
+  renderDashboard(); renderSalary(); renderTransactions();
+  renderWalletsAndJars(); renderSavings(); renderDebts(); renderRecurring(); renderDebtCompare();
+  if (!document.getElementById('tab-calendar').classList.contains('hidden')) renderCalendar();
+};
+
+// ---------- Dashboard ----------
+function monthTotals(key) {
+  const tx = S().transactions.filter(t => monthKey(t.date) === key);
+  return {
+    income: sum(tx.filter(t => t.type === 'รายรับ'), t => t.amount),
+    expense: sum(tx.filter(t => t.type === 'รายจ่าย'), t => t.amount)
+  };
+}
+function renderDashboard() {
+  const assets = sum(S().wallets.filter(w => w.type === 'Asset'), w => w.balance);
+  const liab = sum(S().wallets.filter(w => w.type === 'Liability'), w => w.balance);
+  const cur = monthTotals(nowKey()), prev = monthTotals(prevKey());
+  const net = cur.income - cur.expense;
+
+  document.getElementById('kpi-networth').innerText = money(assets);
+  document.getElementById('kpi-debts').innerText = money(liab + debtRemaining());
+  document.getElementById('kpi-income').innerText = money(cur.income);
+  document.getElementById('kpi-expense').innerText = money(cur.expense);
+  document.getElementById('kpi-savings').innerText = money(net);
+
+  const pct = (a, b) => b > 0 ? ((a - b) / b * 100) : null;
+  const expChg = pct(cur.expense, prev.expense);
+  const expTxt = expChg === null ? 'ยังไม่มีข้อมูลเดือนก่อน'
+    : `${expChg > 0 ? '+' : ''}${expChg.toFixed(1)}% ${expChg > 0 ? '(จ่ายมากขึ้น)' : '(ประหยัดขึ้น)'}`;
+  const expCls = expChg === null ? 'text-slate-400' : expChg > 0 ? 'text-rose-600' : 'text-emerald-600';
+  const rate = cur.income > 0 ? (net / cur.income * 100).toFixed(1) : '0.0';
+  document.getElementById('mom-comparison').innerHTML = `
+    <div class="flex justify-between items-center py-2 border-b border-slate-100"><span class="text-slate-600">รายจ่ายเทียบเดือนที่แล้ว</span><span class="font-bold ${expCls}">${expTxt}</span></div>
+    <div class="flex justify-between items-center py-2"><span class="text-slate-600">อัตราการออม (Savings Rate)</span><span class="font-bold text-blue-600">${rate}%</span></div>`;
+
+  // ข้อสังเกต
+  const tips = [];
+  if (!S().transactions.length) tips.push(['blue', 'ยังไม่มีรายการ เริ่มจากแท็บ "บันทึกรับ-จ่าย" แล้วกดเพิ่มรายการใหม่']);
+  S().jars.forEach((j, ji) => {
+    const used = sum(S().transactions.filter(t => t.type === 'รายจ่าย' && t.jar === j.name && monthKey(t.date) === nowKey()), t => t.amount);
+    if (j.budget > 0 && used > j.budget) tips.push(['rose', `${esc(j.name)} ใช้เกินงบ ${money(used - j.budget)}`, `showJar(${ji})`]);
+    else if (j.budget > 0 && used >= j.budget * 0.8) tips.push(['amber', `${esc(j.name)} ใช้ไปแล้ว ${(used / j.budget * 100).toFixed(0)}% ของงบ`, `showJar(${ji})`]);
+  });
+  if (cur.income > 0 && net < 0) tips.push(['rose', 'เดือนนี้รายจ่ายมากกว่ารายรับ', `showKpi('savings')`]);
+  if (!tips.length && S().transactions.length) tips.push(['emerald', 'เดือนนี้ทุกซองยังอยู่ในงบ']);
+  document.getElementById('insights').innerHTML = tips.map(([c, t, act]) =>
+    `<div ${act ? `onclick="${act}"` : ''} class="p-3 bg-${c}-50 border border-${c}-100 rounded-xl text-sm text-${c}-800 ${act ? 'cursor-pointer hover:shadow-sm transition flex items-center justify-between' : ''}"><span>${t}</span>${act ? '<i class="fa-solid fa-chevron-right text-xs opacity-60"></i>' : ''}</div>`).join('');
+  renderAccountOverview();
+  renderCatHealth(cur, net);
+}
+
+// ---------- เงินเดือน ----------
+function salaryRows(type) {
+  return S().salary[type].map((item, idx) => `
+    <div class="flex items-center space-x-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+      <input type="text" value="${esc(item.name)}" onchange="updateSalaryItem('${type}', ${idx}, 'name', this.value)" class="flex-1 min-w-0 bg-white border border-slate-200 rounded-lg px-2 py-1 text-sm">
+      <input type="number" value="${Number(item.amount)}" onchange="updateSalaryItem('${type}', ${idx}, 'amount', this.value)" class="w-28 bg-white border border-slate-200 rounded-lg px-2 py-1 text-sm text-right">
+      <button onclick="removeSalaryItem('${type}', ${idx})" class="text-rose-500 hover:text-rose-700 px-2"><i class="fa-solid fa-trash"></i></button>
+    </div>`).join('');
+}
+function salaryNet() { return sum(S().salary.incomes, i => i.amount) - sum(S().salary.deductions, i => i.amount); }
+function renderSalary() {
+  document.getElementById('salary-incomes-list').innerHTML = salaryRows('incomes');
+  document.getElementById('salary-deductions-list').innerHTML = salaryRows('deductions');
+  document.getElementById('salary-net-total').innerText = money(salaryNet());
+}
+window.addSalaryItem = (type) => {
+  S().salary[type === 'income' ? 'incomes' : 'deductions'].push({ id: Date.now(), name: "รายการใหม่", amount: 0 });
+  commit();
+};
+window.updateSalaryItem = (type, idx, field, val) => {
+  S().salary[type][idx][field] = field === 'amount' ? Number(val) : val;
+  commit();
+};
+window.removeSalaryItem = (type, idx) => { S().salary[type].splice(idx, 1); commit(); };
+
+window.syncSalaryToTransactions = () => {
+  const net = salaryNet();
+  if (net <= 0) { alert("ยอดสุทธิต้องมากกว่า 0"); return; }
+  const wallet = S().wallets.find(w => w.type === 'Asset');
+  if (!wallet) { alert("กรุณาเพิ่มบัญชีในแท็บ กระเป๋า & ซองเงิน ก่อน"); return; }
+  const t = { id: Date.now(), date: localISO(), type: "รายรับ", from: wallet.name, to: "", jar: "เงินเดือนสุทธิ", amount: net, note: "เงินเดือนสุทธิประจำเดือน" };
+  if (editTxId !== null) {
+    const old = S().transactions.find(x => x.id === editTxId);
+    if (old) { applyTx(old, -1); Object.assign(old, t, { id: old.id }); applyTx(old, 1); }
+    editTxId = null; S().transactions.sort((a, b) => b.date.localeCompare(a.date));
+    closeTransactionModal(); commit(); return;
+  }
+  const link = type === 'รายจ่าย' ? document.getElementById('tx-link').value : '';
+  if (link) {
+    const w = walletByName(t.from), ti = Number(document.getElementById('tx-link-target').value), note = t.note || undefined;
+    if (link === 'saving') { const sv = S().savings[ti]; sv.history = sv.history || []; sv.history.push(savingApply(sv, w, t.amount, t.date, true, note)); }
+    else doDebtPay(S().debts[ti], w, t.amount, t.date, note, true);
+    closeTransactionModal(); commit(); return;
+  }
+  applyTx(t, 1);
+  S().transactions.unshift(t);
+  commit();
+  alert(`บันทึกยอดสุทธิเข้า "${wallet.name}" แล้ว`);
+};
+
+// ---------- ผลของรายการต่อยอดบัญชี ----------
+function walletByName(n) { return S().wallets.find(w => w.name === n); }
+function applyTx(t, sign) { // sign = 1 บันทึก, -1 ย้อนกลับ
+  const from = walletByName(t.from), amt = Number(t.amount) * sign;
+  if (t.type === 'รายรับ' && from) from.balance = Number(from.balance) + (from.type === 'Liability' ? -amt : amt);
+  if (t.type === 'รายจ่าย' && from) from.balance = Number(from.balance) + (from.type === 'Liability' ? amt : -amt);
+  if (t.type === 'โอนเงิน') {
+    const to = walletByName(t.to);
+    if (from) from.balance = Number(from.balance) + (from.type === 'Liability' ? amt : -amt);
+    if (to) to.balance = Number(to.balance) + (to.type === 'Liability' ? -amt : amt);
+  }
+}
+
+// ---------- รายการรับ-จ่าย ----------
+function renderTransactions() {
+  const body = document.getElementById('transactions-table-body');
+  if (!S().transactions.length) {
+    body.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400">ยังไม่มีรายการ กด "เพิ่มรายการใหม่" เพื่อเริ่มบันทึก</td></tr>`;
+    return;
+  }
+  body.innerHTML = S().transactions.map((t, idx) => {
+    const badge = t.type === 'รายรับ' ? 'bg-emerald-50 text-emerald-700' : t.type === 'รายจ่าย' ? 'bg-rose-50 text-rose-700' : 'bg-blue-50 text-blue-700';
+    const sign = t.type === 'รายรับ' ? '+' : t.type === 'รายจ่าย' ? '-' : '';
+    const acc = t.type === 'โอนเงิน' ? `${esc(t.from)} → ${esc(t.to)}` : esc(t.from);
+    return `<tr class="hover:bg-slate-50 transition">
+      <td class="p-3 font-medium whitespace-nowrap">${esc(t.date)}</td>
+      <td class="p-3"><span class="px-2 py-1 rounded-lg text-xs font-semibold ${badge}">${esc(t.type)}</span></td>
+      <td class="p-3">${acc}</td>
+      <td class="p-3">${esc(t.jar)}</td>
+      <td class="p-3 text-right font-semibold whitespace-nowrap ${t.type === 'รายรับ' ? 'text-emerald-600' : 'text-slate-800'}">${sign}${money(t.amount)}</td>
+      <td class="p-3 text-slate-500">${esc(t.note)}</td>
+      <td class="p-3 text-center whitespace-nowrap"><button onclick="editTransaction(${t.id})" class="text-slate-400 hover:text-blue-600 mr-2" title="แก้ไข"><i class="fa-solid fa-pen"></i></button><button onclick="deleteTransaction(${idx})" class="text-rose-400 hover:text-rose-600"><i class="fa-solid fa-trash"></i></button></td>
+    </tr>`;
+  }).join('');
+}
+window.deleteTransaction = (idx) => {
+  const tx = S().transactions[idx];
+  for (const sv of S().savings) { const ei = (sv.history || []).findIndex(e => e.txId === tx.id); if (ei >= 0) { if (confirm(`รายการนี้เติมเข้าเป้าหมาย "${sv.name}" ลบแล้วยอดเป้าหมายจะลดลงและเงินคืนเข้าบัญชี ต้องการลบ?`)) { savingRevert(sv, sv.history[ei]); sv.history.splice(ei, 1); commit(); } return; } }
+  for (const d of S().debts) { const pi = (d.payments || []).findIndex(p => p.txId === tx.id); if (pi >= 0) { if (confirm(`รายการนี้ชำระหนี้ "${d.name}" ลบแล้วหนี้คงเหลือจะเพิ่มกลับและเงินคืนเข้าบัญชี ต้องการลบ?`)) { debtRevert(d, pi); commit(); } return; } }
+  if (!confirm("ลบรายการนี้? ยอดในบัญชีจะถูกปรับย้อนกลับ")) return;
+  applyTx(S().transactions[idx], -1);
+  S().transactions.splice(idx, 1);
+  commit();
+};
+
+window.onTxTypeChange = () => {
+  const type = document.getElementById('tx-type').value;
+  document.getElementById('tx-to-wrap').classList.toggle('hidden', type !== 'โอนเงิน');
+  document.getElementById('tx-jar-wrap').classList.toggle('hidden', type === 'โอนเงิน');
+  document.getElementById('tx-link-wrap').classList.toggle('hidden', type !== 'รายจ่าย');
+  if (type !== 'รายจ่าย') { document.getElementById('tx-link').value = ''; onTxLinkChange(); }
+  document.getElementById('tx-from-label').innerText = type === 'โอนเงิน' ? 'โอนจากบัญชี' : 'บัญชี / กระเป๋า';
+};
+window.onTxLinkChange = () => {
+  const k = document.getElementById('tx-link').value, t = document.getElementById('tx-link-target');
+  if (!k) { t.classList.add('hidden'); t.innerHTML = ''; return; }
+  const list = k === 'saving' ? S().savings.map((x, i) => [i, x.name]) : S().debts.map((x, i) => [i, `${x.name} (คงเหลือ ${fmt0(x.remaining)})`]).filter((_, i) => S().debts[i].remaining > 0);
+  if (!list.length) { alert(k === 'saving' ? 'ยังไม่มีเป้าหมายออม' : 'ยังไม่มีหนี้ที่ค้างอยู่'); document.getElementById('tx-link').value = ''; t.classList.add('hidden'); return; }
+  t.innerHTML = list.map(([i, n]) => `<option value="${i}">${esc(n)}</option>`).join(''); t.classList.remove('hidden');
+};
+let editTxId = null;
+window.openTransactionModal = (presetDate) => {
+  editTxId = null; { const h = document.querySelector('#tx-modal h3'); if (h) h.innerText = 'เพิ่มรายการใหม่'; }
+  if (!S().wallets.length) { alert("กรุณาเพิ่มบัญชีในแท็บ กระเป๋า & ซองเงิน ก่อน"); return; }
+  document.getElementById('tx-date').value = (typeof presetDate === 'string' && presetDate) ? presetDate : localISO();
+  const opts = S().wallets.map(w => `<option value="${esc(w.name)}">${esc(w.name)}</option>`).join('');
+  document.getElementById('tx-from').innerHTML = opts;
+  document.getElementById('tx-to').innerHTML = opts;
+  document.getElementById('tx-jar').innerHTML = S().jars.map(j => `<option value="${esc(j.name)}">${esc(j.name)}</option>`).join('');
+  document.getElementById('tx-type').value = 'รายจ่าย';
+  document.getElementById('tx-amount').value = '';
+  document.getElementById('tx-note').value = '';
+  document.getElementById('tx-link').value = '';
+  onTxTypeChange(); onTxLinkChange();
+  const m = document.getElementById('tx-modal'); m.classList.remove('hidden'); m.classList.add('flex');
+};
+window.editTransaction = (id) => {
+  const t = S().transactions.find(x => x.id === id); if (!t) return;
+  for (const [si, sv] of S().savings.entries()) { const ei = (sv.history || []).findIndex(e => e.txId === id); if (ei >= 0) { editSavingEntry(si, ei); return; } }
+  for (const [di, d] of S().debts.entries()) { const p = (d.payments || []).find(e => e.txId === id); if (p) { editDebtPayment(di, p.id); return; } }
+  openTransactionModal(t.date);
+  const set = (k, v) => { document.getElementById(k).value = v; };
+  set('tx-type', t.type); onTxTypeChange(); set('tx-from', t.from); set('tx-to', t.to || '');
+  const jar = document.getElementById('tx-jar');
+  if (t.type !== 'โอนเงิน' && t.jar && ![...jar.options].some(o => o.value === t.jar)) jar.insertAdjacentHTML('beforeend', `<option value="${esc(t.jar)}">${esc(t.jar)}</option>`);
+  if (t.type !== 'โอนเงิน') set('tx-jar', t.jar);
+  set('tx-amount', t.amount); set('tx-note', t.note || '');
+  document.getElementById('tx-link-wrap').classList.add('hidden');
+  const h = document.querySelector('#tx-modal h3'); if (h) h.innerText = 'แก้ไขรายการ';
+  editTxId = id;
+};
+window.closeTransactionModal = () => {
+  const m = document.getElementById('tx-modal'); m.classList.add('hidden'); m.classList.remove('flex');
+};
+window.saveTransaction = () => {
+  const type = document.getElementById('tx-type').value;
+  const t = {
+    id: Date.now(),
+    date: document.getElementById('tx-date').value,
+    type,
+    from: document.getElementById('tx-from').value,
+    to: type === 'โอนเงิน' ? document.getElementById('tx-to').value : '',
+    jar: type === 'โอนเงิน' ? '-' : document.getElementById('tx-jar').value,
+    amount: Number(document.getElementById('tx-amount').value),
+    note: document.getElementById('tx-note').value
+  };
+  if (!t.date) { alert("กรุณาเลือกวันที่"); return; }
+  if (!t.amount || t.amount <= 0) { alert("กรุณาระบุจำนวนเงินให้ถูกต้อง"); return; }
+  if (type === 'โอนเงิน' && t.from === t.to) { alert("บัญชีต้นทางและปลายทางต้องไม่ซ้ำกัน"); return; }
+  applyTx(t, 1);
+  S().transactions.unshift(t);
+  S().transactions.sort((a, b) => b.date.localeCompare(a.date));
+  closeTransactionModal();
+  commit();
+};
+
+// ---------- ปฏิทิน ----------
+let calDate = new Date();
+calDate.setDate(1);
+window.changeCalendarPeriod = (dir) => {
+  if (document.getElementById('calendar-mode').value === 'month') calDate.setMonth(calDate.getMonth() + dir);
+  else calDate.setFullYear(calDate.getFullYear() + dir);
+  renderCalendar();
+};
+window.renderCalendar = () => {
+  const container = document.getElementById('calendar-container');
+  const mode = document.getElementById('calendar-mode').value;
+  const label = document.getElementById('calendar-period-label');
+  const year = calDate.getFullYear(), month = calDate.getMonth();
+  const tot = (tx, type) => sum(tx.filter(t => t.type === type), t => t.amount);
+
+  if (mode === 'month') {
+    label.innerText = calDate.toLocaleDateString('th-TH', { month: 'long', year: 'numeric' });
+    let html = '<div class="min-w-[560px]"><div class="grid grid-cols-7 gap-2 text-center font-semibold text-xs text-slate-400 mb-2">';
+    ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'].forEach(d => html += `<div>${d}</div>`);
+    html += '</div><div class="grid grid-cols-7 gap-2">';
+    const firstDay = new Date(year, month, 1).getDay();
+    const days = new Date(year, month + 1, 0).getDate();
+    for (let i = 0; i < firstDay; i++) html += `<div class="bg-slate-50/50 rounded-xl h-24"></div>`;
+    for (let d = 1; d <= days; d++) {
+      const key = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const tx = S().transactions.filter(t => t.date === key);
+      const inc = tot(tx, 'รายรับ'), exp = tot(tx, 'รายจ่าย');
+      const isToday = key === localISO();
+      html += `<div onclick="showDay('${key}')" class="cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 transition bg-slate-50 border ${isToday ? 'border-blue-500 ring-1 ring-blue-500' : 'border-slate-200'} rounded-xl p-2 h-24 flex flex-col justify-between overflow-hidden">
+        <span class="font-bold text-xs ${isToday ? 'text-blue-600' : 'text-slate-700'}">${d}${tx.length ? ` <span class="font-normal text-slate-400">· ${tx.length}</span>` : ''}</span>
+        <div class="text-[10px] space-y-0.5">
+          ${inc > 0 ? `<div class="text-emerald-600 font-semibold">+฿${inc.toLocaleString()}</div>` : ''}
+          ${exp > 0 ? `<div class="text-rose-600 font-semibold">-฿${exp.toLocaleString()}</div>` : ''}
+          ${tx.length && !inc && !exp ? `<div class="text-blue-500">โอนเงิน</div>` : ''}${dueBadge(year, month, d, days)}
+        </div></div>`;
+    }
+    container.innerHTML = html + '</div></div>';
+  } else {
+    label.innerText = `ปี ${year + 543}`;
+    let html = '<div class="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-4">';
+    for (let m = 0; m < 12; m++) {
+      const tx = S().transactions.filter(t => monthKey(t.date) === `${year}-${String(m + 1).padStart(2, '0')}`);
+      const name = new Date(year, m, 1).toLocaleDateString('th-TH', { month: 'long' });
+      const mk = `${year}-${pad(m + 1)}`;
+      html += `<div onclick="showMonth('${mk}', false, true)" class="cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 transition bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-2">
+        <h4 class="font-bold text-slate-800 text-sm flex justify-between"><span>${name}</span><i class="fa-solid fa-chevron-right text-xs text-slate-400 mt-1"></i></h4>
+        <div class="text-xs space-y-1">
+          <div class="flex justify-between text-emerald-600"><span>รับ:</span><span>+฿${tot(tx, 'รายรับ').toLocaleString()}</span></div>
+          <div class="flex justify-between text-rose-600"><span>จ่าย:</span><span>-฿${tot(tx, 'รายจ่าย').toLocaleString()}</span></div>
+          <div class="flex justify-between text-slate-500 pt-1 border-t border-slate-200"><span>${tx.length} รายการ</span><span class="font-semibold">${tot(tx, 'รายรับ') - tot(tx, 'รายจ่าย') >= 0 ? '+' : '-'}฿${Math.abs(tot(tx, 'รายรับ') - tot(tx, 'รายจ่าย')).toLocaleString()}</span></div>
+        </div></div>`;
+    }
+    container.innerHTML = html + '</div>';
+  }
+};
+
+// ---------- กระเป๋า & ซองเงิน ----------
+function renderWalletsAndJars() {
+  document.getElementById('wallets-list').innerHTML = S().wallets.length ? S().wallets.map((w, idx) => {
+    const c = walletColor(w, idx);
+    return `
+    <div onclick="showWallet(${w.id})" class="cursor-pointer hover:border-blue-300 hover:shadow-sm transition flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-xl">
+      <div class="flex items-center space-x-3 min-w-0">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0" style="background:${c}26">${esc(walletIcon(w))}</div>
+        <div class="min-w-0"><h4 class="font-bold text-sm text-slate-800 truncate">${esc(w.name)}</h4><span class="text-xs text-slate-500">${w.type === 'Asset' ? 'สินทรัพย์' : 'หนี้สิน'}</span></div>
+      </div>
+      <div class="flex items-center space-x-3">
+        <span class="font-bold text-sm ${w.type === 'Liability' ? 'text-rose-600' : 'text-slate-900'}">${money(w.balance)}</span>
+        <button onclick="event.stopPropagation(); openWalletModal(${idx})" class="text-slate-400 hover:text-blue-600 text-xs" title="แก้ไข"><i class="fa-solid fa-pen"></i></button>
+        <button onclick="event.stopPropagation(); removeWallet(${idx})" class="text-rose-400 hover:text-rose-600 text-xs" title="ลบ"><i class="fa-solid fa-trash"></i></button>
+      </div>
+    </div>`;
+  }).join('') : '<p class="text-sm text-slate-400">ยังไม่มีบัญชี กด "เพิ่มบัญชี"</p>';
+
+  document.getElementById('jars-list').innerHTML = S().jars.map((j, idx) => {
+    const used = sum(S().transactions.filter(t => t.type === 'รายจ่าย' && t.jar === j.name && monthKey(t.date) === nowKey()), t => t.amount);
+    const pct = j.budget > 0 ? Math.min(used / j.budget * 100, 100) : 0;
+    const over = used > j.budget;
+    return `<div onclick="showJar(${idx})" class="cursor-pointer hover:border-amber-300 hover:shadow-sm transition p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+      <div class="flex items-center justify-between">
+        <h4 class="font-bold text-sm text-slate-800">${esc(j.name)}</h4>
+        <div class="flex items-center space-x-3">
+          <button onclick="event.stopPropagation(); openJarModal(${idx})" class="text-slate-400 hover:text-amber-600 text-xs" title="แก้ไข"><i class="fa-solid fa-pen"></i></button>
+          <button onclick="event.stopPropagation(); removeJar(${idx})" class="text-rose-400 hover:text-rose-600 text-xs" title="ลบ"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      </div>
+      <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden"><div class="${over ? 'bg-rose-500' : 'bg-amber-500'} h-full rounded-full" style="width:${pct}%"></div></div>
+      <div class="flex justify-between text-xs text-slate-500">
+        <span>งบ: ฿${Number(j.budget).toLocaleString()}</span>
+        <span class="${over ? 'text-rose-600 font-semibold' : ''}">ใช้แล้ว: ฿${used.toLocaleString()}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.openWalletModal = (idx) => {
+  const isEdit = typeof idx === 'number';
+  const w = isEdit ? S().wallets[idx] : null;
+  openForm({
+    title: isEdit ? 'แก้ไขบัญชี / กระเป๋าเงิน' : 'เพิ่มบัญชี / กระเป๋าเงิน',
+    fields: [
+      { id: 'icon', label: 'ไอคอน', type: 'emoji', value: w ? walletIcon(w) : '💵', options: ['💵', '🏦', '💳', '📱', '👛', '🪙', '📈', '🏠'] },
+      { id: 'name', label: 'ชื่อบัญชี', type: 'text', value: w ? w.name : '', required: true, placeholder: 'เช่น กสิกร, เงินสด, บัตรเครดิต' },
+      { id: 'type', label: 'ประเภท', type: 'select', value: w ? w.type : 'Asset', options: [{ value: 'Asset', label: 'สินทรัพย์ (เงินสด / บัญชีธนาคาร / ลงทุน)' }, { value: 'Liability', label: 'หนี้สิน (บัตรเครดิต / เงินกู้)' }] },
+      { id: 'balance', label: 'ยอดคงเหลือ / ยอดหนี้ปัจจุบัน (บาท) – แก้ไขตรงๆ ได้', type: 'number', value: w ? Number(w.balance) : 0 },
+      { id: 'color', label: 'สีประจำบัญชี (ใช้ในกราฟ)', type: 'color', value: w ? walletColor(w, idx) : PALETTE[S().wallets.length % PALETTE.length] }
+    ],
+    onSave: (v) => {
+      if (S().wallets.some((x, k) => k !== idx && x.name === v.name)) { alert('มีบัญชีชื่อนี้อยู่แล้ว กรุณาใช้ชื่ออื่น'); return false; }
+      if (isEdit) {
+        const old = w.name;
+        Object.assign(w, { name: v.name, type: v.type, balance: v.balance, color: v.color, icon: v.icon || walletIcon({ type: v.type }) });
+        if (old !== v.name) S().transactions.forEach(t => { if (t.from === old) t.from = v.name; if (t.to === old) t.to = v.name; });
+      } else {
+        S().wallets.push({ id: Date.now(), name: v.name, type: v.type, balance: v.balance, color: v.color, icon: v.icon || walletIcon({ type: v.type }) });
+      }
+      commit();
+    }
+  });
+};
+window.removeWallet = (idx) => {
+  const w = S().wallets[idx];
+  const n = S().transactions.filter(t => t.from === w.name || t.to === w.name).length;
+  if (!confirm(n ? `ลบบัญชี "${w.name}"?\nมี ${n} รายการที่เกี่ยวข้อง (รายการจะยังอยู่ แต่จะไม่ผูกกับยอดบัญชีอีก)` : `ลบบัญชี "${w.name}"?`)) return;
+  S().wallets.splice(idx, 1); selAccts.delete(w.id); commit();
+};
+window.openJarModal = (idx) => {
+  const isEdit = typeof idx === 'number';
+  const j = isEdit ? S().jars[idx] : null;
+  openForm({
+    title: isEdit ? 'แก้ไขซองเงิน' : 'เพิ่มซองเงิน',
+    fields: [
+      { id: 'name', label: 'ชื่อซองเงิน (ใส่อีโมจิหน้าชื่อได้ เช่น ☕ ซองกาแฟ)', type: 'text', value: j ? j.name : '', required: true },
+      { id: 'budget', label: 'งบประมาณประจำเดือน (บาท)', type: 'number', value: j ? Number(j.budget) : 3000 }
+    ],
+    onSave: (v) => {
+      if (v.budget < 0) { alert('งบประมาณต้องไม่ติดลบ'); return false; }
+      if (S().jars.some((x, k) => k !== idx && x.name === v.name)) { alert('มีซองเงินชื่อนี้อยู่แล้ว'); return false; }
+      if (isEdit) {
+        const old = j.name;
+        j.name = v.name; j.budget = v.budget;
+        if (old !== v.name) S().transactions.forEach(t => { if (t.jar === old) t.jar = v.name; });
+      } else {
+        S().jars.push({ id: Date.now(), name: v.name, budget: v.budget });
+      }
+      commit();
+    }
+  });
+};
+window.removeJar = (idx) => {
+  if (!confirm("ลบซองเงินนี้?")) return;
+  S().jars.splice(idx, 1); commit();
+};
+
+// ---------- เงินออม ----------
+function renderSavings() {
+  const g = document.getElementById('savings-grid');
+  if (!S().savings.length) { g.innerHTML = '<p class="text-sm text-slate-400">ยังไม่มีเป้าหมาย กด "เพิ่มเป้าหมายออม"</p>'; return; }
+  g.innerHTML = S().savings.map((s, idx) => {
+    const pct = s.goal > 0 ? (s.current / s.goal) * 100 : 0;
+    return `<div class="bg-slate-50 border border-slate-200 p-5 rounded-xl space-y-3">
+      <div class="flex justify-between items-start">
+        <div><h4 class="font-bold text-slate-900 text-sm">${esc(s.name)}</h4><span class="text-xs text-purple-600 font-semibold">${esc(s.type)}</span></div>
+        <div class="flex items-center space-x-3">
+          <button onclick="addToSaving(${idx})" class="text-purple-600 hover:text-purple-800 text-xs font-semibold">+ เติมเงิน</button>
+          <button onclick="openSavingsModal(${idx})" class="text-slate-400 hover:text-purple-600 text-xs" title="แก้ไข"><i class="fa-solid fa-pen"></i></button>
+          <button onclick="removeSaving(${idx})" class="text-rose-400 hover:text-rose-600 text-xs"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      </div>
+      <div class="space-y-1">
+        <div class="flex justify-between text-xs text-slate-600"><span>สะสม: ฿${Number(s.current).toLocaleString()}</span><span>เป้าหมาย: ฿${Number(s.goal).toLocaleString()}</span></div>
+        <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden"><div class="bg-purple-600 h-full rounded-full" style="width:${Math.min(pct, 100)}%"></div></div>
+        <div class="text-right text-xs text-slate-500">${pct.toFixed(1)}%</div>
+      </div>
+      ${savingExtra(s, idx)}
+    </div>`;
+  }).join('');
+}
+window.openSavingsModal = (idx) => {
+  const isEdit = typeof idx === 'number';
+  const s = isEdit ? S().savings[idx] : null;
+  openForm({
+    title: isEdit ? 'แก้ไขเป้าหมายเงินออม' : 'เพิ่มเป้าหมายเงินออม',
+    fields: [
+      { id: 'name', label: 'ชื่อเป้าหมาย', type: 'text', value: s ? s.name : '', required: true },
+      { id: 'type', label: 'ประเภท (พิมพ์เอง เช่น เงินออม, กองทุน, หุ้น)', type: 'text', value: s ? s.type : 'เงินออม' },
+      { id: 'goal', label: 'ยอดเงินเป้าหมาย (บาท)', type: 'number', value: s ? Number(s.goal) : 50000 },
+      { id: 'current', label: 'ยอดเงินสะสมปัจจุบัน (บาท)', type: 'number', value: s ? Number(s.current) : 0 },
+      { id: 'target', label: 'อยากได้ถึงเป้าภายในเดือน (YYYY-MM เว้นว่างได้)', type: 'text', value: s ? (s.target || '') : '' },
+      { id: 'market', label: 'มูลค่าตลาดปัจจุบัน (เฉพาะกองทุน/หุ้น, 0 = ไม่ใช้)', type: 'number', value: s ? Number(s.market || 0) : 0 }
+    ],
+    onSave: (v) => {
+      if (v.goal < 0 || v.current < 0) { alert('ยอดเงินต้องไม่ติดลบ'); return false; }
+      if (isEdit) Object.assign(s, { name: v.name, type: v.type || 'เงินออม', goal: v.goal, current: v.current, target: v.target, market: v.market });
+      else S().savings.push({ id: Date.now(), name: v.name, type: v.type || 'เงินออม', goal: v.goal, current: v.current, target: v.target, market: v.market, history: [] });
+      commit();
+    }
+  });
+};
+function savingExtra(s, idx) {
+  let h = '';
+  if (/^\d{4}-\d{2}$/.test(s.target || '')) {
+    const t = new Date(); const m = (Number(s.target.slice(0, 4)) - t.getFullYear()) * 12 + Number(s.target.slice(5)) - (t.getMonth() + 1);
+    const left = Number(s.goal) - Number(s.current);
+    h += left <= 0 ? '<div class="text-xs text-emerald-700">ถึงเป้าแล้ว 🎉</div>' : m > 0 ? `<div class="text-xs text-slate-600">🎯 ต้องออมเดือนละ <b>${fmt0(left / m)}</b> (อีก ${m} เดือน)</div>` : '<div class="text-xs text-rose-600">เลยกำหนดแล้ว</div>';
+  }
+  if (Number(s.market) > 0) { const pl = Number(s.market) - Number(s.current); h += `<div class="text-xs ${pl >= 0 ? 'text-emerald-600' : 'text-rose-600'}">📈 มูลค่าตลาด ${fmt0(s.market)} · ${pl >= 0 ? 'กำไร +' : 'ขาดทุน '}${fmt0(pl)} (${s.current > 0 ? (pl / s.current * 100).toFixed(1) : 0}%)</div>`; }
+  const hs = s.history || [];
+  if (hs.length) h += `<details class="pt-1 border-t border-slate-200"><summary class="text-xs font-semibold text-slate-500 cursor-pointer">ประวัติเติม/ถอน (${hs.length})</summary><div class="space-y-1 mt-1">${hs.map((e, ei) => [e, ei]).reverse().map(([e, ei]) => `
+    <div class="flex items-center justify-between text-xs text-slate-600"><span>${esc(e.date)}${e.wallet ? ' · ' + esc(e.wallet) : ''}</span>
+    <span class="flex items-center space-x-2"><b class="${e.amount < 0 ? 'text-rose-600' : ''}">${e.amount > 0 ? '+' : ''}${fmt0(e.amount)}</b><button onclick="editSavingEntry(${idx}, ${ei})" class="text-slate-400 hover:text-blue-600" title="แก้ไข"><i class="fa-solid fa-pen"></i></button><button onclick="cancelSavingEntry(${idx}, ${ei})" class="text-slate-400 hover:text-rose-600" title="ยกเลิก (คืนเงินเข้าบัญชี)"><i class="fa-solid fa-rotate-left"></i></button></span></div>`).join('')}</div></details>`;
+  return h;
+}
+const savingWallet = (e) => S().wallets.find(x => x.id === e.walletId) || (e.wallet ? S().wallets.find(x => x.name === e.wallet) : null);
+function savingApply(sv, w, amount, date, asTx, note) {
+  if (w) walletMove(w, -amount);
+  sv.current = Number(sv.current) + amount;
+  let txId = null;
+  if (w && asTx) {
+    txId = Date.now() + Math.random();
+    S().transactions.push({ id: txId, date, type: amount > 0 ? 'รายจ่าย' : 'รายรับ', from: w.name, to: '', jar: '', amount: Math.abs(amount), note: note || ('ออม/ลงทุน: ' + sv.name) });
+    S().transactions.sort((a, b) => b.date.localeCompare(a.date));
+  }
+  return { date, amount, walletId: w ? w.id : null, wallet: w ? w.name : '', txId };
+}
+function savingRevert(sv, e) {
+  const w = savingWallet(e);
+  if (w) walletMove(w, Number(e.amount));
+  sv.current = Number(sv.current) - Number(e.amount);
+  if (e.txId) S().transactions = S().transactions.filter(t => t.id !== e.txId);
+}
+const walletOpts = () => [{ value: '', label: '— ไม่เกี่ยวกับบัญชี —' }, ...S().wallets.map(w => ({ value: String(w.id), label: `${walletIcon(w)} ${w.name} (${money(w.balance)})` }))];
+const txOpts = [{ value: 'n', label: 'ไม่บันทึก' }, { value: 'y', label: 'บันทึกในรายรับ-จ่ายด้วย' }];
+function savingForm(idx, ei) {
+  const sv = S().savings[idx], isEdit = typeof ei === 'number', e = isEdit ? sv.history[ei] : null, ow = e ? savingWallet(e) : null;
+  openForm({
+    title: isEdit ? `แก้ไขรายการ: ${sv.name}` : `เติม/ถอนเงิน: ${sv.name}`,
+    fields: [
+      { id: 'amount', label: 'จำนวนเงิน (บาท) — ใส่ค่าติดลบเพื่อถอน', type: 'number', value: e ? Number(e.amount) : 1000 },
+      { id: 'wallet', label: 'ตัด/คืนเงินจากบัญชี', type: 'select', value: ow ? String(ow.id) : '', options: walletOpts() },
+      { id: 'date', label: 'วันที่ (YYYY-MM-DD)', type: 'text', value: e ? e.date : localISO() },
+      { id: 'asTx', label: 'บันทึกเป็นรายรับ-จ่าย', type: 'select', value: e && e.txId ? 'y' : 'n', options: txOpts }
+    ],
+    onSave: (v) => {
+      if (!v.amount || !/^\d{4}-\d{2}-\d{2}$/.test(v.date)) { alert('ตรวจสอบจำนวนเงินและวันที่'); return false; }
+      const w = v.wallet ? S().wallets.find(x => String(x.id) === v.wallet) : null;
+      const note = e && e.txId ? (S().transactions.find(t => t.id === e.txId) || {}).note : undefined;
+      if (isEdit) savingRevert(sv, e);
+      const ne = savingApply(sv, w, v.amount, v.date, v.asTx === 'y', note);
+      sv.history = sv.history || [];
+      if (isEdit) sv.history[ei] = ne; else sv.history.push(ne);
+      commit();
+    }
+  });
+}
+window.addToSaving = (idx) => savingForm(idx);
+window.editSavingEntry = (idx, ei) => savingForm(idx, ei);
+window.cancelSavingEntry = (idx, ei) => {
+  const sv = S().savings[idx], e = sv.history[ei];
+  if (!confirm(`ยกเลิกรายการ ${e.amount > 0 ? '+' : ''}${fmt0(e.amount)}? ${savingWallet(e) ? `เงินจะ${e.amount > 0 ? 'คืนเข้า' : 'หักจาก'}บัญชี "${savingWallet(e).name}"` : ''}และยอดสะสมจะปรับย้อนกลับ`)) return;
+  savingRevert(sv, e); sv.history.splice(ei, 1); commit();
+};
+window.removeSaving = (idx) => {
+  if (!confirm("ลบเป้าหมายนี้?")) return;
+  S().savings.splice(idx, 1); commit();
+};
+
+
+// ---------- หนี้สิน ----------
+// walletMove: delta > 0 = เงินเข้าบัญชี, delta < 0 = เงินออกจากบัญชี (บัตร/หนี้ในกระเป๋า Liability กลับด้าน)
+function walletMove(w, delta) {
+  w.balance = Number(w.balance) + (w.type === 'Liability' ? -delta : delta);
+}
+function debtRemaining() { return sum(S().debts || [], d => d.remaining); }
+function renderDebts() {
+  const g = document.getElementById('debts-grid'), sm = document.getElementById('debt-summary');
+  if (!g) return;
+  const list = S().debts || [];
+  const totalRem = debtRemaining(), totalAll = sum(list, d => d.total);
+  sm.innerHTML = list.length ? `
+    <div class="bg-rose-50 border border-rose-100 rounded-xl p-3"><p class="text-xs text-rose-700">หนี้คงเหลือรวม</p><p class="font-bold text-rose-700">${money(totalRem)}</p></div>
+    <div class="bg-slate-50 border border-slate-200 rounded-xl p-3"><p class="text-xs text-slate-500">ยอดหนี้ทั้งหมด</p><p class="font-bold text-slate-800">${money(totalAll)}</p></div>
+    <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-3"><p class="text-xs text-emerald-700">ชำระแล้ว</p><p class="font-bold text-emerald-700">${money(Math.max(0, totalAll - totalRem))}</p></div>` : '';
+  if (!list.length) { g.innerHTML = '<p class="text-sm text-slate-400">ยังไม่มีหนี้สิน กด "เพิ่มหนี้สิน"</p>'; return; }
+  g.innerHTML = list.map((d, idx) => {
+    const paid = Math.max(0, Number(d.total) - Number(d.remaining));
+    const pct = d.total > 0 ? Math.min(100, paid / d.total * 100) : 0;
+    const pays = (d.payments || []).slice().reverse().slice(0, 5);
+    return `<div class="bg-slate-50 border border-slate-200 p-5 rounded-xl space-y-3">
+      <div class="flex justify-between items-start gap-2">
+        <div><h4 class="font-bold text-slate-900 text-sm">${kindIcon(d)} ${esc(d.name)}</h4>${d.note ? `<p class="text-xs text-slate-500">${esc(d.note)}</p>` : ''}</div>
+        <div class="flex items-center space-x-3 shrink-0">
+          <button onclick="openDebtModal(${idx})" class="text-slate-400 hover:text-rose-600 text-xs" title="แก้ไข"><i class="fa-solid fa-pen"></i></button>
+          <button onclick="removeDebt(${idx})" class="text-rose-400 hover:text-rose-600 text-xs" title="ลบ"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      </div>
+      <div class="space-y-1">
+        <div class="flex justify-between text-xs text-slate-600"><span>คงเหลือ: <b class="text-rose-600">${money(d.remaining)}</b></span><span>ทั้งหมด: ${money(d.total)}</span></div>
+        <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden"><div class="bg-emerald-500 h-full rounded-full" style="width:${pct}%"></div></div>
+        <div class="text-right text-xs text-slate-500">ชำระแล้ว ${pct.toFixed(1)}%</div>
+      </div>
+      <div class="text-xs text-slate-600 space-y-0.5">
+        ${metaLines(d)}${d.rate ? `<div>ดอกเบี้ย ${d.rate}% ต่อปี</div>` : ''}${d.monthly ? `<div>ค่างวด ${money(d.monthly)} / เดือน</div>` : ''}
+        ${nextDue(d) && Number(d.remaining) > 0 ? `<div class="${nextDue(d).days <= 3 ? 'text-rose-600 font-semibold' : ''}">📅 ครบกำหนดทุกวันที่ ${d.dueDay} (อีก ${nextDue(d).days} วัน)</div>` : ''}
+        <div class="${payoffInfo(d).bad ? 'text-rose-600' : 'text-emerald-700'}">${payoffInfo(d).txt}</div>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        ${d.monthly && d.walletId ? `<button onclick="quickPay(${idx})" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold">🐟 จ่ายงวดนี้ ${fmt0(d.monthly)}</button>` : ''}<button onclick="payDebt(${idx})" class="bg-rose-500 hover:bg-rose-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold">จ่ายหนี้</button>
+        <button onclick="adjustDebt(${idx}, 1)" class="bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold">+ เพิ่มหนี้</button>
+        <button onclick="adjustDebt(${idx}, -1)" class="bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold">− ลดหนี้</button>
+      </div>
+      ${(d.payments || []).length ? `<details class="pt-2 border-t border-slate-200"><summary class="text-xs font-semibold text-slate-500 cursor-pointer">ประวัติการจ่าย (${d.payments.length})</summary><div class="space-y-1 mt-1">${d.payments.slice().reverse().map(p => `
+        <div class="flex items-center justify-between text-xs text-slate-600"><span>${esc(p.date)} · ${esc(p.walletName || 'ไม่ระบุบัญชี')}</span>
+        <span class="flex items-center space-x-2"><b>${money(p.amount)}</b><button onclick="editDebtPayment(${idx}, ${p.id})" class="text-slate-400 hover:text-blue-600" title="แก้ไข"><i class="fa-solid fa-pen"></i></button><button onclick="undoDebtPayment(${idx}, ${p.id})" class="text-slate-400 hover:text-rose-600" title="ยกเลิก (คืนเงินเข้าบัญชี)"><i class="fa-solid fa-rotate-left"></i></button></span></div>`).join('')}</div></details>` : ''}
+    </div>`;
+  }).join('');
+}
+const KIND_ICON = { student: '🎓', car: '🚗', phone: '📱', other: '🛍️', house: '🏠', personal: '💼' };
+const kindIcon = (d) => d.meta && KIND_ICON[d.meta.kind] ? KIND_ICON[d.meta.kind] : '';
+const pmt = (P, r, n) => r > 0 ? P * r / (1 - Math.pow(1 + r, -n)) : P / n;
+function metaLines(d) {
+  const m = d.meta; if (!m) return '';
+  const L = [];
+  if (m.kind === 'student') { L.push(`ผ่อนชำระ ${m.years} ปี ดอกเบี้ย ${d.rate}% ต่อปี`); if (m.arrears > 0) L.push(`<span class="text-rose-600">รวมยอดค้างชำระ/เบี้ยปรับ ${money(m.arrears)}</span>`); L.push('💡 ชำระเพิ่มช่วยลดดอกเบี้ย และควรชำระตรงเวลาเพื่อเลี่ยงเบี้ยปรับ'); }
+  else if (m.term) { L.push(`ราคา ${fmt0(m.price)} · ดาวน์ ${fmt0(m.down)} · ดอกเบี้ยคงที่ ${m.flat}% ต่อปี (รวม ${fmt0(m.interest)})`); L.push(`ผ่อนแล้ว ${Number(m.paidCount || 0) + (d.payments || []).length}/${m.term} งวด`); if (m.yearlyCost > 0) L.push(`ค่าประกัน/ภาษี ${fmt0(m.yearlyCost)} ต่อปี (≈ ${fmt0(m.yearlyCost / 12)}/เดือน)`); }
+  else if (m.years) L.push(`ระยะเวลา ${m.years} ปี`);
+  return L.map(x => `<div>${x}</div>`).join('');
+}
+window.openLoanWizard = (type) => {
+  const wopts = [{ value: '', label: '— เลือกตอนจ่าย —' }, ...S().wallets.map(w => ({ value: String(w.id), label: `${walletIcon(w)} ${w.name}` }))];
+  const common = [{ id: 'dueDay', label: 'ครบกำหนดจ่ายทุกวันที่ (1-31)', type: 'number', value: 1 }, { id: 'wallet', label: 'บัญชีที่จ่ายเป็นประจำ', type: 'select', value: '', options: wopts }];
+  const save = (o, meta) => { S().debts.push({ id: Date.now(), payments: [], asExpense: true, note: '', dueDay: Math.round(o.dueDay), walletId: o.wallet ? Number(o.wallet) : null, meta, ...o.debt }); commit(); };
+  if (type === 'student') openForm({ title: '🎓 เพิ่มหนี้ กยศ./กรอ.', fields: [
+    { id: 'name', label: 'ชื่อ', type: 'text', value: 'กยศ.', required: true },
+    { id: 'principal', label: 'ยอดหนี้คงเหลือ (เงินต้น+ดอกเบี้ยที่ค้าง)', type: 'number', value: 100000 },
+    { id: 'arrears', label: 'ยอดค้างชำระ/เบี้ยปรับ (ถ้ามี)', type: 'number', value: 0 },
+    { id: 'rate', label: 'ดอกเบี้ย (% ต่อปี — กยศ. ปัจจุบัน 1%)', type: 'number', value: 1 },
+    { id: 'years', label: 'ระยะเวลาผ่อนที่เหลือ (ปี)', type: 'number', value: 15 },
+    { id: 'monthly', label: 'ค่างวดต่อเดือน (0 = คำนวณให้)', type: 'number', value: 0 }, ...common],
+    onSave: (v) => { if (v.principal <= 0 || v.years <= 0) { alert('ตรวจสอบยอดหนี้และจำนวนปี'); return false; }
+      const rem = v.principal + v.arrears, m = v.monthly > 0 ? v.monthly : Math.ceil(pmt(rem, v.rate / 1200, Math.round(v.years * 12)));
+      save(v, { kind: 'student', years: v.years, arrears: v.arrears });
+      Object.assign(S().debts[S().debts.length - 1], { name: v.name, total: rem, remaining: rem, rate: v.rate, monthly: m }); commit(); } });
+  else if (type === 'car') openForm({ title: '🚗 เพิ่มผ่อนรถ / ผ่อนสินค้า (ดอกเบี้ยคงที่)', fields: [
+    { id: 'kind', label: 'ประเภท', type: 'select', value: 'car', options: [{ value: 'car', label: '🚗 รถ/มอเตอร์ไซค์' }, { value: 'phone', label: '📱 มือถือ/อุปกรณ์' }, { value: 'other', label: '🛍️ สินค้าอื่น' }] },
+    { id: 'name', label: 'ชื่อรายการ (เช่น ผ่อนรถ Yaris)', type: 'text', value: '', required: true },
+    { id: 'price', label: 'ราคา (บาท)', type: 'number', value: 500000 },
+    { id: 'down', label: 'เงินดาวน์ (บาท)', type: 'number', value: 100000 },
+    { id: 'flat', label: 'ดอกเบี้ยคงที่ (% ต่อปี)', type: 'number', value: 2.5 },
+    { id: 'term', label: 'จำนวนงวดทั้งหมด (เดือน)', type: 'number', value: 60 },
+    { id: 'paid', label: 'ผ่อนไปแล้ว (งวด)', type: 'number', value: 0 },
+    { id: 'yearly', label: 'ค่าประกัน+ภาษี ต่อปี (ไม่บังคับ)', type: 'number', value: 0 }, ...common],
+    onSave: (v) => { if (v.price <= v.down || v.term < 1 || v.paid < 0 || v.paid > v.term) { alert('ตรวจสอบราคา เงินดาวน์ และจำนวนงวด'); return false; }
+      const P = v.price - v.down, interest = P * v.flat / 100 * v.term / 12, total = P + interest, monthly = Math.ceil(total / v.term), rem = Math.max(0, total - monthly * v.paid);
+      save(v, { kind: v.kind, price: v.price, down: v.down, flat: v.flat, term: v.term, paidCount: v.paid, yearlyCost: v.yearly, interest });
+      Object.assign(S().debts[S().debts.length - 1], { name: v.name, total, remaining: rem, rate: 0, monthly }); commit(); } });
+  else openForm({ title: '🏠 เพิ่มสินเชื่อ (ดอกเบี้ยลดต้นลดดอก)', fields: [
+    { id: 'kind', label: 'ประเภท', type: 'select', value: 'house', options: [{ value: 'house', label: '🏠 บ้าน/คอนโด' }, { value: 'personal', label: '💼 สินเชื่อส่วนบุคคล' }] },
+    { id: 'name', label: 'ชื่อ', type: 'text', value: '', required: true },
+    { id: 'principal', label: 'ยอดเงินต้นคงเหลือ (บาท)', type: 'number', value: 1000000 },
+    { id: 'rate', label: 'ดอกเบี้ย (% ต่อปี)', type: 'number', value: 5 },
+    { id: 'years', label: 'ระยะเวลาที่เหลือ (ปี)', type: 'number', value: 20 },
+    { id: 'monthly', label: 'ค่างวดต่อเดือน (0 = คำนวณให้)', type: 'number', value: 0 }, ...common],
+    onSave: (v) => { if (v.principal <= 0 || v.years <= 0) { alert('ตรวจสอบยอดหนี้และจำนวนปี'); return false; }
+      const m = v.monthly > 0 ? v.monthly : Math.ceil(pmt(v.principal, v.rate / 1200, Math.round(v.years * 12)));
+      save(v, { kind: v.kind, years: v.years });
+      Object.assign(S().debts[S().debts.length - 1], { name: v.name, total: v.principal, remaining: v.principal, rate: v.rate, monthly: m }); commit(); } });
+};
+window.openDebtModal = (idx) => {
+  const isEdit = typeof idx === 'number';
+  const d = isEdit ? S().debts[idx] : null;
+  openForm({
+    title: isEdit ? 'แก้ไขหนี้สิน' : 'เพิ่มหนี้สิน',
+    fields: [
+      { id: 'name', label: 'ชื่อหนี้ (เช่น ผ่อนมือถือ, กยศ., บัตรเครดิต)', type: 'text', value: d ? d.name : '', required: true },
+      { id: 'total', label: 'ยอดหนี้ทั้งหมด (บาท)', type: 'number', value: d ? Number(d.total) : 0 },
+      { id: 'remaining', label: 'ยอดคงเหลือที่ต้องจ่าย (บาท)', type: 'number', value: d ? Number(d.remaining) : 0 },
+      { id: 'rate', label: 'อัตราดอกเบี้ย (% ต่อปี)', type: 'number', value: d ? Number(d.rate || 0) : 0 },
+      { id: 'monthly', label: 'ค่างวดต่อเดือน (บาท)', type: 'number', value: d ? Number(d.monthly || 0) : 0 },
+      { id: 'dueDay', label: 'ครบกำหนดจ่ายทุกวันที่ (1-31, 0 = ไม่ระบุ)', type: 'number', value: d ? Number(d.dueDay || 0) : 0 },
+      { id: 'wallet', label: 'บัญชีที่จ่ายเป็นประจำ', type: 'select', value: d ? String(d.walletId || '') : '', options: [{ value: '', label: '— เลือกตอนจ่าย —' }, ...S().wallets.map(w => ({ value: String(w.id), label: `${walletIcon(w)} ${w.name}` }))] },
+      { id: 'asExp', label: 'บันทึกการจ่ายเป็นรายจ่ายในบันทึกรับ-จ่ายด้วยไหม', type: 'select', value: d && d.asExpense === false ? 'n' : 'y', options: [{ value: 'y', label: 'บันทึก (นับเป็นรายจ่ายเดือนนี้)' }, { value: 'n', label: 'ไม่บันทึก' }] },
+      { id: 'note', label: 'หมายเหตุ (ไม่บังคับ)', type: 'text', value: d ? (d.note || '') : '' }
+    ],
+    onSave: (v) => {
+      if (v.total < 0 || v.remaining < 0 || v.rate < 0 || v.monthly < 0 || v.dueDay < 0 || v.dueDay > 31) { alert('กรุณาตรวจสอบตัวเลข'); return false; }
+      const o = { name: v.name, total: v.total, remaining: v.remaining, rate: v.rate, monthly: v.monthly, dueDay: Math.round(v.dueDay), walletId: v.wallet ? Number(v.wallet) : null, asExpense: v.asExp === 'y', note: v.note };
+      if (isEdit) Object.assign(d, o); else S().debts.push({ id: Date.now(), payments: [], ...o });
+      commit();
+    }
+  });
+};
+function payoffInfo(d) {
+  const B = Number(d.remaining), P = Number(d.monthly || 0), r = Number(d.rate || 0) / 1200;
+  if (B <= 0) return { txt: 'หมดหนี้แล้ว 🎉' };
+  if (P <= 0) return { txt: 'ใส่ค่างวดเพื่อดูวันหมดหนี้' };
+  if (P <= r * B) return { txt: '⚠️ ค่างวดไม่พอจ่ายดอกเบี้ย', bad: true };
+  const n = r > 0 ? Math.ceil(-Math.log(1 - r * B / P) / Math.log(1 + r)) : Math.ceil(B / P);
+  const dt = new Date(); dt.setMonth(dt.getMonth() + n);
+  const interest = Math.max(0, n * P - B);
+  return { txt: `อีก ${n} งวด (หมดราว ${dt.toLocaleDateString('th-TH', { month: 'short', year: 'numeric' })}) · ดอกเบี้ยรวมประมาณ ${money(interest)}` };
+}
+function nextDue(d) {
+  if (!d.dueDay) return null;
+  const t = new Date(), mk = (y, m) => Math.min(d.dueDay, new Date(y, m + 1, 0).getDate());
+  let dt = new Date(t.getFullYear(), t.getMonth(), mk(t.getFullYear(), t.getMonth()));
+  if (dt < new Date(t.getFullYear(), t.getMonth(), t.getDate())) dt = new Date(t.getFullYear(), t.getMonth() + 1, mk(t.getFullYear(), t.getMonth() + 1));
+  return { date: dt, days: Math.round((dt - new Date(t.getFullYear(), t.getMonth(), t.getDate())) / 864e5) };
+}
+function dueBadge(y, m, day, dim) {
+  const hit = (S().debts || []).filter(d => d.dueDay && Number(d.remaining) > 0 && Math.min(d.dueDay, dim) === day);
+  return hit.length ? `<div class="text-[10px] text-amber-700 bg-amber-100 rounded px-1 truncate">💸 ${esc(hit[0].name)}</div>` : '';
+}
+window.quickPay = (idx) => {
+  const d = S().debts[idx], w = S().wallets.find(x => x.id === d.walletId);
+  if (!w || !d.monthly) { payDebt(idx); return; }
+  doDebtPay(d, w, Math.min(Number(d.monthly), Number(d.remaining)), localISO());
+  commit();
+};
+function doDebtPay(d, w, amount, date, note, forceTx) {
+  walletMove(w, -amount);
+  d.remaining = Math.max(0, Number(d.remaining) - amount);
+  let txId = null;
+  if (d.asExpense !== false || forceTx) { txId = Date.now() + Math.random(); S().transactions.push({ id: txId, date, type: 'รายจ่าย', from: w.name, to: '', jar: '', amount, note: note || ('ชำระหนี้: ' + d.name) }); S().transactions.sort((a, b) => b.date.localeCompare(a.date)); }
+  (d.payments = d.payments || []).push({ id: Date.now(), date, amount, walletId: w.id, walletName: w.name, txId });
+}
+window.payDebt = (idx) => {
+  const d = S().debts[idx];
+  if (!S().wallets.length) { alert('ยังไม่มีบัญชี กรุณาเพิ่มบัญชีในแท็บ "กระเป๋า & ซองเงิน" ก่อน'); return; }
+  openForm({
+    title: `จ่ายหนี้: ${d.name}`,
+    fields: [
+      { id: 'amount', label: `จำนวนที่จ่าย (บาท) — คงเหลือ ${money(d.remaining)}`, type: 'number', value: Math.min(Number(d.remaining), 1000) },
+      { id: 'wallet', label: 'จ่ายจากบัญชี', type: 'select', value: String(d.walletId || S().wallets[0].id), options: S().wallets.map(w => ({ value: String(w.id), label: `${walletIcon(w)} ${w.name} (${money(w.balance)})` })) },
+      { id: 'date', label: 'วันที่ (YYYY-MM-DD)', type: 'text', value: localISO() }
+    ],
+    onSave: (v) => {
+      if (v.amount <= 0) { alert('จำนวนเงินต้องมากกว่า 0'); return false; }
+      const w = S().wallets.find(x => String(x.id) === v.wallet);
+      if (!w) { alert('กรุณาเลือกบัญชี'); return false; }
+      if (w.type !== 'Liability' && v.amount > Number(w.balance) && !confirm(`ยอดในบัญชี "${w.name}" ไม่พอ (${money(w.balance)}) ต้องการจ่ายต่อไหม? ยอดบัญชีจะติดลบ`)) return false;
+      if (v.amount > Number(d.remaining) && !confirm('จำนวนที่จ่ายมากกว่ายอดคงเหลือ ต้องการจ่ายต่อไหม?')) return false;
+      doDebtPay(d, w, v.amount, /^\d{4}-\d{2}-\d{2}$/.test(v.date) ? v.date : localISO());
+      commit();
+    }
+  });
+};
+function debtRevert(d, pi) {
+  const p = d.payments[pi];
+  const w = S().wallets.find(x => x.id === p.walletId) || S().wallets.find(x => x.name === p.walletName);
+  if (w) walletMove(w, p.amount);
+  d.remaining = Number(d.remaining) + Number(p.amount);
+  if (p.txId) S().transactions = S().transactions.filter(t => t.id !== p.txId);
+  d.payments.splice(pi, 1);
+}
+window.undoDebtPayment = (idx, pid) => {
+  const d = S().debts[idx], i = (d.payments || []).findIndex(p => p.id === pid);
+  if (i < 0) return;
+  if (!confirm(`ยกเลิกการจ่าย ${money(d.payments[i].amount)}? เงินจะคืนเข้าบัญชี "${d.payments[i].walletName}" และหนี้คงเหลือเพิ่มกลับ`)) return;
+  debtRevert(d, i); commit();
+};
+window.editDebtPayment = (idx, pid) => {
+  const d = S().debts[idx], i = (d.payments || []).findIndex(p => p.id === pid);
+  if (i < 0) return;
+  const p = d.payments[i];
+  openForm({
+    title: `แก้ไขรายการจ่าย: ${d.name}`,
+    fields: [
+      { id: 'amount', label: 'จำนวนที่จ่าย (บาท)', type: 'number', value: Number(p.amount) },
+      { id: 'wallet', label: 'จ่ายจากบัญชี', type: 'select', value: String(p.walletId), options: S().wallets.map(w => ({ value: String(w.id), label: `${walletIcon(w)} ${w.name}` })) },
+      { id: 'date', label: 'วันที่ (YYYY-MM-DD)', type: 'text', value: p.date }
+    ],
+    onSave: (v) => {
+      const w = S().wallets.find(x => String(x.id) === v.wallet);
+      if (v.amount <= 0 || !w || !/^\d{4}-\d{2}-\d{2}$/.test(v.date)) { alert('ตรวจสอบจำนวนเงิน บัญชี และวันที่'); return false; }
+      const hadTx = !!p.txId, oldNote = hadTx ? (S().transactions.find(t => t.id === p.txId) || {}).note : undefined;
+      debtRevert(d, i); doDebtPay(d, w, v.amount, v.date, oldNote, hadTx);
+      d.payments.sort((a, b) => a.date.localeCompare(b.date)); commit();
+    }
+  });
+};
+window.adjustDebt = (idx, sign) => {
+  const d = S().debts[idx];
+  const v = Number(prompt(sign > 0 ? 'เพิ่มยอดหนี้ (บาท):' : 'ลดยอดหนี้ (บาท) โดยไม่หักบัญชี เช่น ได้รับส่วนลด/ปรับยอด:', '1000'));
+  if (!v || v <= 0) return;
+  d.remaining = Math.max(0, Number(d.remaining) + sign * v);
+  if (sign > 0) d.total = Number(d.total) + v;
+  commit();
+};
+window.removeDebt = (idx) => {
+  if (!confirm('ลบหนี้นี้? (เงินที่เคยจ่ายและหักจากบัญชีไปแล้วจะไม่ถูกคืน)')) return;
+  S().debts.splice(idx, 1); commit();
+};
+
+
+// ---------- รายการประจำ ----------
+function runRecurring() {
+  let changed = false; const t = new Date(), cur = nowKey();
+  (S().recurring || []).forEach(r => {
+    const dim = new Date(t.getFullYear(), t.getMonth() + 1, 0).getDate();
+    const due = Math.min(r.day, dim);
+    if (r.last === cur || t.getDate() < due) return;
+    const w = S().wallets.find(x => x.id === r.walletId); if (!w) return;
+    const date = `${cur}-${pad(due)}`;
+    if (r.kind === 'ออม') {
+      const sv = S().savings.find(x => x.id === r.savingId); if (!sv) return;
+      walletMove(w, -r.amount); sv.current = Number(sv.current) + Number(r.amount);
+      (sv.history = sv.history || []).push({ date, amount: r.amount, wallet: w.name, walletId: w.id });
+    } else {
+      S().transactions.push({ id: Date.now() + Math.random(), date, type: r.kind, from: w.name, to: '', jar: r.jar || '', amount: r.amount, note: 'ประจำ: ' + r.name });
+      walletMove(w, r.kind === 'รายรับ' ? r.amount : -r.amount);
+    }
+    r.last = cur; changed = true;
+  });
+  return changed;
+}
+function renderRecurring() {
+  const el = document.getElementById('recurring-list'); if (!el) return;
+  el.innerHTML = (S().recurring || []).map((r, i) => `<div class="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm"><span>${esc(r.name)} <span class="text-xs text-slate-400">· ${esc(r.kind)} ${fmt0(r.amount)} ทุกวันที่ ${r.day}</span></span><button onclick="removeRecurring(${i})" class="text-rose-400 text-xs"><i class="fa-solid fa-trash"></i></button></div>`).join('') || '<p class="text-sm text-slate-400">ยังไม่มีรายการประจำ</p>';
+}
+window.removeRecurring = (i) => { if (confirm('ลบรายการประจำนี้?')) { S().recurring.splice(i, 1); commit(); } };
+window.openRecurring = () => {
+  if (!S().wallets.length) { alert('เพิ่มบัญชีก่อน'); return; }
+  openForm({
+    title: 'เพิ่มรายการประจำ',
+    fields: [
+      { id: 'name', label: 'ชื่อรายการ', type: 'text', value: '', required: true },
+      { id: 'kind', label: 'ประเภท', type: 'select', value: 'รายจ่าย', options: ['รายรับ', 'รายจ่าย', 'ออม'].map(x => ({ value: x, label: x === 'ออม' ? 'ออมเข้าเป้าหมาย' : x })) },
+      { id: 'amount', label: 'จำนวนเงิน (บาท)', type: 'number', value: 1000 },
+      { id: 'day', label: 'ทุกวันที่ (1-31)', type: 'number', value: 1 },
+      { id: 'wallet', label: 'บัญชี', type: 'select', value: String(S().wallets[0].id), options: S().wallets.map(w => ({ value: String(w.id), label: `${walletIcon(w)} ${w.name}` })) },
+      { id: 'saving', label: 'เป้าหมายออม (เฉพาะประเภทออม)', type: 'select', value: '', options: [{ value: '', label: '—' }, ...S().savings.map(x => ({ value: String(x.id), label: x.name }))] }
+    ],
+    onSave: (v) => {
+      if (v.amount <= 0 || v.day < 1 || v.day > 31) { alert('ตรวจสอบจำนวนเงิน/วันที่'); return false; }
+      if (v.kind === 'ออม' && !v.saving) { alert('เลือกเป้าหมายออม'); return false; }
+      S().recurring.push({ id: Date.now(), name: v.name, kind: v.kind, amount: v.amount, day: Math.round(v.day), walletId: Number(v.wallet), savingId: v.saving ? Number(v.saving) : null, last: '' });
+      runRecurring(); commit();
+    }
+  });
+};
+
+// ---------- เปรียบเทียบวิธีปลดหนี้ ----------
+function simulateDebts(order) {
+  let ds = S().debts.filter(d => d.remaining > 0).map(d => ({ b: Number(d.remaining), r: Number(d.rate || 0) / 1200, p: Number(d.monthly || 0) }));
+  if (!ds.length || ds.some(d => d.p <= 0)) return null;
+  ds.sort(order); const pool = sum(ds, d => d.p); let months = 0, interest = 0;
+  while (ds.some(d => d.b > 0.005) && months < 600) {
+    months++; let avail = pool;
+    ds.forEach(d => { if (d.b > 0) { const i = d.b * d.r; d.b += i; interest += i; } });
+    ds.forEach(d => { if (d.b > 0) { const x = Math.min(d.b, d.p, avail); d.b -= x; avail -= x; } });
+    for (const d of ds) { if (avail <= 0) break; if (d.b > 0) { const x = Math.min(d.b, avail); d.b -= x; avail -= x; } }
+  }
+  return months >= 600 ? null : { months, interest };
+}
+function renderDebtCompare() {
+  const el = document.getElementById('debt-compare'); if (!el) return;
+  const sn = simulateDebts((a, b) => a.b - b.b), av = simulateDebts((a, b) => b.r - a.r);
+  if (!sn || !av) { el.innerHTML = '<p class="text-slate-400">ใส่ยอดคงเหลือและค่างวดของทุกหนี้ก่อน (ค่างวดต้องพอจ่ายดอกเบี้ย)</p>'; return; }
+  const row = (n, x) => `<div class="flex justify-between py-1.5 border-b border-slate-100"><span>${n}</span><span>${x.months} เดือน · ดอกเบี้ย ${fmt0(x.interest)}</span></div>`;
+  el.innerHTML = row('⛄ Snowball (ปิดก้อนเล็กก่อน)', sn) + row('🏔️ Avalanche (ดอกเบี้ยสูงก่อน)', av) +
+    `<p class="pt-2 text-emerald-700">${av.interest < sn.interest - 1 ? `Avalanche ประหยัดดอกเบี้ยกว่า ${fmt0(sn.interest - av.interest)}` : 'ทั้งสองวิธีใกล้เคียงกัน เลือกแบบที่ทำให้มีกำลังใจ'}</p>`;
+}
+
+// ---------- สุขภาพการเงิน + แมวพูด ----------
+function recordNW() {
+  const assets = sum(S().wallets.filter(w => w.type === 'Asset'), w => w.balance), liab = sum(S().wallets.filter(w => w.type === 'Liability'), w => w.balance);
+  (S().nwHistory = S().nwHistory || {})[nowKey()] = Math.round(assets * 100) / 100;
+}
+function renderCatHealth(cur, net) {
+  const liquid = sum(S().wallets.filter(w => w.type === 'Asset'), w => w.balance);
+  const ks = [0, 1, 2].map(i => { const d = new Date(); d.setMonth(d.getMonth() - i); return localISO(new Date(d.getFullYear(), d.getMonth(), 1)).slice(0, 7); });
+  const exps = ks.map(k => monthTotals(k).expense).filter(x => x > 0), avgExp = exps.length ? sum(exps, x => x) / exps.length : 0;
+  const efm = avgExp > 0 ? liquid / avgExp : null;
+  const pay = sum((S().debts || []).filter(d => d.remaining > 0), d => d.monthly);
+  const inc = cur.income || salaryNet(); const dti = inc > 0 ? pay / inc * 100 : null;
+  const hist = Object.entries(S().nwHistory || {}).sort().slice(-6);
+  let spark = '<p class="text-xs text-slate-400">เริ่มเก็บข้อมูลแล้ว กลับมาดูเดือนหน้า</p>';
+  if (hist.length > 1) {
+    const vals = hist.map(h => h[1]), mn = Math.min(...vals), mx = Math.max(...vals), rg = (mx - mn) || 1;
+    spark = `<svg viewBox="0 0 120 40" class="w-full h-12"><polyline fill="none" stroke="#f0925f" stroke-width="2.5" stroke-linecap="round" points="${vals.map((v, i) => `${5 + i * 110 / (vals.length - 1)},${35 - (v - mn) / rg * 28}`).join(' ')}"/></svg><p class="text-[11px] text-slate-400">${hist[0][0]} → ${hist[hist.length - 1][0]}</p>`;
+  }
+  const card = (t, v, sub, c) => `<div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm"><p class="text-xs text-slate-500">${t}</p><p class="text-xl font-bold ${c}">${v}</p><p class="text-xs text-slate-400">${sub}</p></div>`;
+  document.getElementById('health-row').innerHTML =
+    card('🐟 กองทุนฉุกเฉิน', efm === null ? '—' : efm.toFixed(1) + ' เดือน', 'เป้าหมาย 3-6 เดือนของรายจ่าย', efm === null ? 'text-slate-400' : efm >= 3 ? 'text-emerald-600' : 'text-amber-600') +
+    card('💸 หนี้ต่อรายได้ (DTI)', dti === null ? '—' : dti.toFixed(0) + '%', 'ควรไม่เกิน 40%', dti === null ? 'text-slate-400' : dti > 40 ? 'text-rose-600' : 'text-emerald-600') +
+    `<div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm"><p class="text-xs text-slate-500">📈 แนวโน้มสินทรัพย์รวม</p>${spark}</div>`;
+  // แมวพูด
+  const due = (S().debts || []).filter(d => d.remaining > 0 && nextDue(d) && nextDue(d).days <= 7).sort((a, b) => nextDue(a).days - nextDue(b).days);
+  let say = net > 0 ? `เดือนนี้เหลือเก็บ ${fmt0(net)} เก่งมากเลยเหมียว 😸` : cur.expense > 0 ? 'เดือนนี้ใช้เยอะกว่ารายรับนะ ลองดูซองเงินหน่อยเหมียว 🙀' : 'สวัสดีเหมียว~ เริ่มบันทึกรายการวันนี้กันเลย 🐾';
+  if (due.length) say = `⏰ ${esc(due[0].name)} ครบกำหนดอีก ${nextDue(due[0]).days} วัน (${fmt0(due[0].monthly || due[0].remaining)}) อย่าลืมจ่ายนะเหมียว`;
+  document.getElementById('cat-say').innerHTML = say;
+}
+
+window.resetPart = (k) => {
+  const d = defaultState(), names = { transactions: 'รายการรับ-จ่ายทั้งหมด', wallets0: 'ยอดคงเหลือของทุกบัญชี (ตั้งเป็น 0)', savings: 'เป้าหมายเงินออมทั้งหมด', debts: 'หนี้สินทั้งหมด', jars: 'ซองเงิน', recurring: 'รายการประจำ', salary: 'ข้อมูลเงินเดือน', nwHistory: 'ประวัติกราฟแนวโน้ม', all: 'ข้อมูลทั้งหมดในแอป' };
+  if (k === 'all') { if (prompt('การรีเซ็ตทั้งหมดย้อนกลับไม่ได้\nพิมพ์คำว่า รีเซ็ต เพื่อยืนยัน') !== 'รีเซ็ต') return; window.appState = d; commit(); return; }
+  if (!confirm(`ล้าง${names[k]}? ย้อนกลับไม่ได้`)) return;
+  if (k === 'wallets0') S().wallets.forEach(w => { w.balance = 0; }); else S()[k] = d[k];
+  commit();
+};
+window.importJSON = (inp) => {
+  const f = inp.files[0]; if (!f) return;
+  const rd = new FileReader();
+  rd.onload = () => {
+    try {
+      const o = JSON.parse(rd.result);
+      if (!o || !Array.isArray(o.wallets) || !Array.isArray(o.transactions)) throw new Error('รูปแบบไฟล์ไม่ถูกต้อง');
+      if (!confirm('นำเข้าจะแทนที่ข้อมูลปัจจุบันทั้งหมด ต้องการดำเนินการต่อไหม?')) return;
+      window.appState = { ...defaultState(), ...o }; commit(); alert('นำเข้าข้อมูลเรียบร้อย');
+    } catch (e) { alert('นำเข้าไม่สำเร็จ: ' + e.message); }
+    inp.value = '';
+  };
+  rd.readAsText(f);
+};
+
+// ---------- เครื่องมือ ----------
+window.runSimulator = () => {
+  const price = Number(document.getElementById('sim-price').value);
+  const assets = sum(S().wallets.filter(w => w.type === 'Asset'), w => w.balance);
+  const res = document.getElementById('sim-result');
+  res.classList.remove('hidden');
+  if (!price || price <= 0) { res.innerText = "กรุณาใส่ราคาสินค้า"; return; }
+  if (price > assets) {
+    res.innerHTML = `<strong class="text-rose-600">คำเตือน:</strong> สินทรัพย์รวม (${money(assets)}) ไม่พอซื้อสินค้านี้`;
+  } else {
+    res.innerHTML = `<strong class="text-emerald-600">ซื้อได้:</strong> หลังซื้อจะเหลือสินทรัพย์ ${money(assets - price)}`;
+  }
+};
+window.exportToCSV = () => {
+  const q = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  let csv = "Date,Type,Account,To,Jar,Amount,Note\n";
+  S().transactions.forEach(t => { csv += [t.date, t.type, q(t.from), q(t.to), q(t.jar), t.amount, q(t.note)].join(',') + "\n"; });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' }));
+  link.download = "WealthFlow_Transactions.csv";
+  link.click();
+};
+window.exportToJSON = () => {
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(new Blob([JSON.stringify(S(), null, 2)], { type: 'application/json' }));
+  link.download = "WealthFlow_Backup.json";
+  link.click();
+};
+
+// ================= ฟอร์มกลาง (แก้ไข/เพิ่ม) =================
+const PALETTE = ['#2563eb', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#ec4899', '#64748b'];
+const safeColor = (c) => /^#[0-9a-f]{3,8}$/i.test(c || '') ? c : null;
+const walletColor = (w, i = 0) => safeColor(w.color) || PALETTE[i % PALETTE.length];
+const walletIcon = (w) => w.icon || (w.type === 'Liability' ? '💳' : '💵');
+let formCfg = null;
+const inputCls = 'w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2';
+
+window.openForm = (cfg) => {
+  formCfg = cfg;
+  document.getElementById('form-title').innerText = cfg.title;
+  document.getElementById('form-fields').innerHTML = cfg.fields.map(f => {
+    const id = 'f-' + f.id;
+    let input = '';
+    if (f.type === 'select') {
+      input = `<select id="${id}" class="${inputCls}">${f.options.map(o => `<option value="${esc(o.value)}" ${o.value === f.value ? 'selected' : ''}>${esc(o.label)}</option>`).join('')}</select>`;
+    } else if (f.type === 'color') {
+      input = `<input type="hidden" id="${id}" value="${esc(f.value)}"><div class="flex flex-wrap gap-2">${PALETTE.map(c =>
+        `<button type="button" onclick="pickColor('${id}','${c}')" data-color-for="${id}" data-color="${c}" class="w-8 h-8 rounded-full border-2 ${c === f.value ? 'border-slate-800 ring-2 ring-offset-1 ring-slate-300' : 'border-white'} shadow-sm" style="background:${c}"></button>`).join('')}</div>`;
+    } else if (f.type === 'emoji') {
+      input = `<input type="text" id="${id}" maxlength="4" value="${esc(f.value)}" class="${inputCls} text-center text-lg w-24"><div class="flex flex-wrap gap-1.5 mt-2">${f.options.map(e =>
+        `<button type="button" onclick="document.getElementById('${id}').value='${e}'" class="w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200 text-lg">${e}</button>`).join('')}</div>`;
+    } else {
+      input = `<input type="${f.type === 'number' ? 'number' : 'text'}" ${f.type === 'number' ? 'step="any"' : ''} id="${id}" value="${esc(f.value)}" placeholder="${esc(f.placeholder || '')}" class="${inputCls}">`;
+    }
+    return `<div><label class="block text-xs font-medium text-slate-600 mb-1">${esc(f.label)}</label>${input}</div>`;
+  }).join('');
+  const m = document.getElementById('form-modal'); m.classList.remove('hidden'); m.classList.add('flex');
+};
+window.pickColor = (id, c) => {
+  document.getElementById(id).value = c;
+  document.querySelectorAll(`[data-color-for="${id}"]`).forEach(b => {
+    const on = b.dataset.color === c;
+    b.classList.toggle('border-slate-800', on); b.classList.toggle('ring-2', on); b.classList.toggle('ring-offset-1', on);
+    b.classList.toggle('ring-slate-300', on); b.classList.toggle('border-white', !on);
+  });
+};
+window.closeForm = () => { const m = document.getElementById('form-modal'); m.classList.add('hidden'); m.classList.remove('flex'); formCfg = null; };
+window.submitForm = () => {
+  const cfg = formCfg; if (!cfg) return;
+  const v = {};
+  for (const f of cfg.fields) {
+    const el = document.getElementById('f-' + f.id);
+    let val = el.value;
+    if (f.type === 'number') {
+      if (val === '' || !isFinite(Number(val))) { alert('กรุณากรอกตัวเลขให้ถูกต้อง'); return; }
+      val = Number(val);
+    } else val = val.trim();
+    if (f.required && !val) { alert('กรุณากรอกชื่อ'); return; }
+    v[f.id] = val;
+  }
+  if (cfg.onSave(v) === false) return;
+  closeForm();
+};
+
+// ================= หน้าต่างรายละเอียด =================
+const thDate = (key, opt) => new Date(Number(key.slice(0, 4)), Number(key.slice(5, 7)) - 1, Number(key.slice(8, 10)) || 1).toLocaleDateString('th-TH', opt);
+const thMonth = (mk) => thDate(mk + '-01', { month: 'long', year: 'numeric' });
+
+window.openDetail = (title, sub, chips, body) => {
+  document.getElementById('detail-title').innerText = title;
+  document.getElementById('detail-sub').innerText = sub || '';
+  const chipHtml = chips && chips.length ? `<div class="grid grid-cols-${Math.min(chips.length, 3)} gap-2">${chips.map(([l, v, c]) =>
+    `<div class="p-3 rounded-xl bg-${c}-50 border border-${c}-100"><p class="text-xs text-${c}-700">${l}</p><p class="font-bold text-${c}-900 text-sm sm:text-base">${v}</p></div>`).join('')}</div>` : '';
+  document.getElementById('detail-body').innerHTML = chipHtml + body;
+  document.getElementById('detail-body').scrollTop = 0;
+  const m = document.getElementById('detail-modal'); m.classList.remove('hidden'); m.classList.add('flex');
+};
+window.closeDetail = () => { const m = document.getElementById('detail-modal'); m.classList.add('hidden'); m.classList.remove('flex'); };
+
+function txListHtml(list, ctxName) {
+  if (!list.length) return '<p class="text-sm text-slate-400 py-6 text-center">ไม่มีรายการ</p>';
+  return `<div><h4 class="text-sm font-semibold text-slate-700 mb-1">รายการทั้งหมด (${list.length})</h4><div class="divide-y divide-slate-100">` + list.map(t => {
+    const badge = t.type === 'รายรับ' ? 'bg-emerald-50 text-emerald-700' : t.type === 'รายจ่าย' ? 'bg-rose-50 text-rose-700' : 'bg-blue-50 text-blue-700';
+    let sign = t.type === 'รายรับ' ? '+' : t.type === 'รายจ่าย' ? '-' : (ctxName && t.to === ctxName ? '+' : ctxName ? '-' : '');
+    const cls = sign === '+' ? 'text-emerald-600' : 'text-slate-800';
+    const main = t.type === 'โอนเงิน' ? `${esc(t.from)} → ${esc(t.to)}` : esc(t.jar);
+    return `<div class="py-2.5 flex items-start justify-between gap-3">
+      <div class="min-w-0"><div class="flex items-center gap-2 flex-wrap"><span class="px-2 py-0.5 rounded-lg text-[11px] font-semibold ${badge}">${esc(t.type)}</span><span class="text-sm font-medium text-slate-800">${main}</span></div>
+      <div class="text-xs text-slate-500 mt-0.5">${esc(t.date)}${t.type !== 'โอนเงิน' ? ' · ' + esc(t.from) : ''}${t.note ? ' · ' + esc(t.note) : ''}</div></div>
+      <div class="flex items-center gap-2"><div class="font-semibold text-sm whitespace-nowrap ${cls}">${sign}${money(t.amount)}</div><button onclick="closeDetail(); editTransaction(${t.id})" class="text-slate-400 hover:text-blue-600 text-xs" title="แก้ไข"><i class="fa-solid fa-pen"></i></button></div></div>`;
+  }).join('') + '</div></div>';
+}
+function jarBreakdownHtml(list) {
+  const ex = list.filter(t => t.type === 'รายจ่าย');
+  if (!ex.length) return '';
+  const by = {}; ex.forEach(t => { by[t.jar] = (by[t.jar] || 0) + Number(t.amount); });
+  const total = sum(ex, t => t.amount);
+  return `<div><h4 class="text-sm font-semibold text-slate-700 mb-2">รายจ่ายแยกตามซองเงิน</h4><div class="space-y-2">` +
+    Object.entries(by).sort((a, b) => b[1] - a[1]).map(([n, v]) =>
+      `<div><div class="flex justify-between text-xs text-slate-600 mb-0.5"><span>${esc(n)}</span><span>${money(v)} · ${(v / total * 100).toFixed(0)}%</span></div>
+      <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden"><div class="bg-rose-400 h-full rounded-full" style="width:${v / total * 100}%"></div></div></div>`).join('') + '</div></div>';
+}
+const byDateDesc = (a, b) => b.date.localeCompare(a.date);
+
+window.showDay = (key) => {
+  const tx = S().transactions.filter(t => t.date === key).sort(byDateDesc);
+  const inc = sum(tx.filter(t => t.type === 'รายรับ'), t => t.amount), exp = sum(tx.filter(t => t.type === 'รายจ่าย'), t => t.amount);
+  openDetail(thDate(key, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }), `${tx.length} รายการ`,
+    [['รายรับ', money(inc), 'emerald'], ['รายจ่าย', money(exp), 'rose'], ['สุทธิ', money(inc - exp), 'blue']],
+    jarBreakdownHtml(tx) + txListHtml(tx) +
+    `<button onclick="closeDetail(); openTransactionModal('${key}')" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-xl text-sm font-medium transition"><i class="fa-solid fa-plus mr-1"></i> เพิ่มรายการในวันนี้</button>`);
+};
+function monthDetail(key, o = {}) {
+  const types = o.types || ['รายรับ', 'รายจ่าย'];
+  let tx = S().transactions.filter(t => monthKey(t.date) === key && types.includes(t.type));
+  if (o.sel) tx = tx.filter(txInSel);
+  tx.sort(byDateDesc);
+  const inc = sum(tx.filter(t => t.type === 'รายรับ'), t => t.amount), exp = sum(tx.filter(t => t.type === 'รายจ่าย'), t => t.amount);
+  let chips;
+  if (types.length === 1) chips = types[0] === 'รายรับ' ? [['รายรับรวม', money(inc), 'emerald']] : [['รายจ่ายรวม', money(exp), 'rose']];
+  else chips = [['รายรับ', money(inc), 'emerald'], ['รายจ่าย', money(exp), 'rose'], ['สุทธิ', money(inc - exp), 'blue']];
+  const scope = o.sel && selAccts.size ? ' · เฉพาะบัญชีที่เลือก' : '';
+  const calBtn = o.cal ? `<button onclick="goCalendarMonth('${key}')" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 rounded-xl text-sm font-medium transition"><i class="fa-solid fa-calendar-days mr-1"></i> ดูแบบรายวันของเดือนนี้</button>` : '';
+  openDetail(o.title || thMonth(key), `${tx.length} รายการ${scope}`, chips, (types.includes('รายจ่าย') ? jarBreakdownHtml(tx) : '') + txListHtml(tx) + calBtn);
+}
+window.showMonth = (key, sel, cal) => monthDetail(key, { sel, cal });
+window.goCalendarMonth = (key) => {
+  closeDetail();
+  calDate = new Date(Number(key.slice(0, 4)), Number(key.slice(5, 7)) - 1, 1);
+  document.getElementById('calendar-mode').value = 'month';
+  switchTab('calendar');
+};
+window.showKpi = (kind) => {
+  const k = nowKey();
+  if (kind === 'income') return monthDetail(k, { types: ['รายรับ'], title: 'รายรับเดือนนี้' });
+  if (kind === 'expense') return monthDetail(k, { types: ['รายจ่าย'], title: 'รายจ่ายเดือนนี้' });
+  if (kind === 'savings') return monthDetail(k, { title: 'เงินออมสุทธิเดือนนี้ (รับ − จ่าย)' });
+  const assets = S().wallets.filter(w => w.type !== 'Liability'), liab = S().wallets.filter(w => w.type === 'Liability');
+  const row = (w) => `<div onclick="showWallet(${w.id})" class="cursor-pointer hover:bg-slate-50 flex items-center justify-between py-2.5 px-1"><span class="text-sm text-slate-800">${esc(walletIcon(w))} ${esc(w.name)}</span><span class="text-sm font-semibold ${w.type === 'Liability' ? 'text-rose-600' : 'text-slate-900'}">${money(w.balance)}</span></div>`;
+  const A = sum(assets, w => w.balance), L = sum(liab, w => w.balance), D = debtRemaining();
+  if (kind === 'debts') {
+    openDetail('ยอดหนี้รวม', 'แยกจากสินทรัพย์ ไม่นำมาหักลบกัน', [['หนี้สินที่บันทึก', money(D), 'rose'], ['บัตร/บัญชีหนี้', money(L), 'rose'], ['รวมหนี้', money(D + L), 'rose']],
+      `<div><h4 class="text-sm font-semibold text-slate-700">หนี้สินที่บันทึก</h4><div class="divide-y divide-slate-100">${S().debts.map(d => `<div class="flex justify-between py-2.5 text-sm"><span>${esc(d.name)}</span><b class="text-rose-600">${money(d.remaining)}</b></div>`).join('') || '<p class="text-sm text-slate-400">ไม่มี</p>'}</div></div>` +
+      (liab.length ? `<div><h4 class="text-sm font-semibold text-slate-700">บัตร/บัญชีหนี้</h4><div class="divide-y divide-slate-100">${liab.map(row).join('')}</div></div>` : ''));
+    return;
+  }
+  openDetail('สินทรัพย์รวม', 'เฉพาะบัญชีสินทรัพย์ ไม่หักหนี้', [['สินทรัพย์รวม', money(A), 'blue']],
+    `<div><h4 class="text-sm font-semibold text-slate-700">บัญชีสินทรัพย์</h4><div class="divide-y divide-slate-100">${assets.map(row).join('') || '<p class="text-sm text-slate-400">ไม่มี</p>'}</div></div>`);
+};
+window.showWallet = (id) => {
+  const idx = S().wallets.findIndex(w => w.id === id); if (idx < 0) return;
+  const w = S().wallets[idx];
+  const all = S().transactions.filter(t => t.from === w.name || t.to === w.name).sort(byDateDesc);
+  const mt = all.filter(t => monthKey(t.date) === nowKey());
+  const inc = sum(mt.filter(t => t.type === 'รายรับ' && t.from === w.name), t => t.amount);
+  const exp = sum(mt.filter(t => t.type === 'รายจ่าย' && t.from === w.name), t => t.amount);
+  openDetail(`${walletIcon(w)} ${w.name}`, w.type === 'Asset' ? 'สินทรัพย์' : 'หนี้สิน',
+    [[w.type === 'Asset' ? 'ยอดคงเหลือ' : 'ยอดหนี้', money(w.balance), w.type === 'Asset' ? 'blue' : 'rose'], ['รับเดือนนี้', money(inc), 'emerald'], ['จ่ายเดือนนี้', money(exp), 'rose']],
+    `<button onclick="closeDetail(); openWalletModal(${idx})" class="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 py-2 rounded-xl text-sm font-semibold transition"><i class="fa-solid fa-pen mr-1"></i> แก้ไขชื่อ / ยอดเงิน / สี</button>` + txListHtml(all, w.name));
+};
+window.showJar = (idx) => {
+  const j = S().jars[idx]; if (!j) return;
+  const tx = S().transactions.filter(t => t.type === 'รายจ่าย' && t.jar === j.name && monthKey(t.date) === nowKey()).sort(byDateDesc);
+  const used = sum(tx, t => t.amount), left = Number(j.budget) - used;
+  openDetail(j.name, `รายจ่ายเดือนนี้ · ${tx.length} รายการ`,
+    [['งบ', money(j.budget), 'amber'], ['ใช้แล้ว', money(used), 'rose'], [left >= 0 ? 'คงเหลือ' : 'เกินงบ', money(Math.abs(left)), left >= 0 ? 'emerald' : 'rose']],
+    `<button onclick="closeDetail(); openJarModal(${idx})" class="w-full bg-amber-50 hover:bg-amber-100 text-amber-700 py-2 rounded-xl text-sm font-semibold transition"><i class="fa-solid fa-pen mr-1"></i> แก้ไขชื่อ / งบประมาณ</button>` + txListHtml(tx));
+};
+
+// ================= ภาพรวมเงินในบัญชี + กราฟ =================
+const selAccts = new Set(); // ว่าง = ทุกบัญชี
+const fmt0 = (n) => '฿' + Number(n).toLocaleString('th-TH', { maximumFractionDigits: 0 });
+function selNames() { return new Set(S().wallets.filter(w => !selAccts.size || selAccts.has(w.id)).map(w => w.name)); }
+function txInSel(t) { const n = selNames(); return n.has(t.from) || (t.type === 'โอนเงิน' && n.has(t.to)); }
+window.toggleAcct = (id) => {
+  if (id === null) selAccts.clear();
+  else {
+    if (selAccts.has(id)) selAccts.delete(id); else selAccts.add(id);
+    if (selAccts.size >= S().wallets.length) selAccts.clear();
+  }
+  renderAccountOverview();
+};
+
+function renderAccountOverview() {
+  const ws = S().wallets;
+  ws.forEach((w, i) => { if (w.id == null) w.id = Date.now() + i; });
+  [...selAccts].forEach(id => { if (!ws.some(w => w.id === id)) selAccts.delete(id); });
+
+  // ปุ่มเลือกบัญชี
+  document.getElementById('acct-chips').innerHTML =
+    `<button onclick="toggleAcct(null)" class="px-3 py-1.5 rounded-full text-xs font-semibold border transition ${!selAccts.size ? 'bg-slate-800 border-slate-800 text-white' : 'bg-white border-slate-300 text-slate-600 hover:bg-slate-50'}">ทั้งหมด</button>` +
+    ws.map((w, i) => {
+      const on = selAccts.has(w.id), c = walletColor(w, i);
+      return `<button onclick="toggleAcct(${w.id})" class="px-3 py-1.5 rounded-full text-xs font-semibold border transition whitespace-nowrap" style="${on ? `background:${c};border-color:${c};color:#fff` : `border-color:${c}80;color:#334155;background:#fff`}">${esc(walletIcon(w))} ${esc(w.name)}</button>`;
+    }).join('');
+
+  const sel = ws.map((w, i) => ({ w, i })).filter(({ w }) => !selAccts.size || selAccts.has(w.id));
+  const assetsSel = sel.filter(({ w }) => w.type !== 'Liability');
+  const A = sum(assetsSel, x => x.w.balance), L = sum(sel.filter(({ w }) => w.type === 'Liability'), x => x.w.balance);
+  document.getElementById('acct-total-assets').innerText = money(A);
+  document.getElementById('acct-total-liab').innerText = money(L);
+  document.getElementById('acct-total-net').innerText = money(A - L);
+
+  // โดนัท
+  const pos = assetsSel.filter(({ w }) => Number(w.balance) > 0);
+  const totalPos = sum(pos, x => x.w.balance);
+  if (!totalPos) {
+    document.getElementById('acct-donut').innerHTML = '<p class="text-sm text-slate-400 py-16">ยังไม่มียอดเงินให้แสดงกราฟ</p>';
+  } else {
+    const R = 70, C = 2 * Math.PI * R; let acc = 0;
+    const segs = pos.map(({ w, i }) => {
+      const len = Number(w.balance) / totalPos * C;
+      const s = `<circle cx="100" cy="100" r="${R}" fill="none" stroke="${walletColor(w, i)}" stroke-width="28" stroke-dasharray="${len} ${C - len}" stroke-dashoffset="${-acc}" transform="rotate(-90 100 100)" style="cursor:pointer" onclick="showWallet(${w.id})"><title>${esc(w.name)}: ${money(w.balance)} (${(Number(w.balance) / totalPos * 100).toFixed(1)}%)</title></circle>`;
+      acc += len; return s;
+    }).join('');
+    document.getElementById('acct-donut').innerHTML = `<svg viewBox="0 0 200 200" class="w-56 h-56"><circle cx="100" cy="100" r="${R}" fill="none" stroke="#e2e8f0" stroke-width="28"/>${segs}
+      <text x="100" y="94" text-anchor="middle" font-size="10" fill="#64748b">สินทรัพย์รวม</text>
+      <text x="100" y="114" text-anchor="middle" font-size="16" font-weight="700" fill="#0f172a">${fmt0(totalPos)}</text></svg>`;
+  }
+
+  // รายการบัญชี
+  const cur = nowKey();
+  document.getElementById('acct-list').innerHTML = sel.length ? sel.map(({ w, i }) => {
+    const mtx = S().transactions.filter(t => t.from === w.name && monthKey(t.date) === cur);
+    const inc = sum(mtx.filter(t => t.type === 'รายรับ'), t => t.amount), exp = sum(mtx.filter(t => t.type === 'รายจ่าย'), t => t.amount);
+    const liab = w.type === 'Liability', c = walletColor(w, i);
+    const share = !liab && totalPos > 0 && Number(w.balance) > 0 ? Number(w.balance) / totalPos * 100 : 0;
+    return `<div onclick="showWallet(${w.id})" class="cursor-pointer hover:border-blue-300 hover:shadow-sm transition p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center space-x-2 min-w-0"><span class="w-3 h-3 rounded-full shrink-0" style="background:${c}"></span><span class="text-sm font-bold text-slate-800 truncate">${esc(walletIcon(w))} ${esc(w.name)}</span>${liab ? '<span class="text-[10px] px-1.5 py-0.5 rounded bg-rose-100 text-rose-700">หนี้สิน</span>' : ''}</div>
+        <span class="text-sm font-bold ${liab ? 'text-rose-600' : 'text-slate-900'}">${liab ? '-' : ''}${money(w.balance)}</span>
+      </div>
+      ${liab ? '' : `<div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden"><div class="h-full rounded-full" style="width:${share}%;background:${c}"></div></div>`}
+      <div class="flex justify-between text-[11px] text-slate-500"><span>${liab ? '' : share.toFixed(1) + '% ของสินทรัพย์'}</span><span>เดือนนี้ <span class="text-emerald-600">+${inc.toLocaleString()}</span> / <span class="text-rose-600">-${exp.toLocaleString()}</span></span></div>
+    </div>`;
+  }).join('') : '<p class="text-sm text-slate-400">ยังไม่มีบัญชี ไปเพิ่มที่แท็บ "กระเป๋า & ซองเงิน"</p>';
+
+  // แท่งรายรับ-รายจ่าย 6 เดือน
+  const base = new Date(), months = [];
+  for (let k = 5; k >= 0; k--) {
+    const d = new Date(base.getFullYear(), base.getMonth() - k, 1);
+    months.push({ key: localISO(d).slice(0, 7), label: d.toLocaleDateString('th-TH', { month: 'short' }) });
+  }
+  const data = months.map(m => {
+    const tx = S().transactions.filter(t => monthKey(t.date) === m.key && txInSel(t));
+    return { ...m, inc: sum(tx.filter(t => t.type === 'รายรับ'), t => t.amount), exp: sum(tx.filter(t => t.type === 'รายจ่าย'), t => t.amount) };
+  });
+  const max = Math.max(1, ...data.flatMap(d => [d.inc, d.exp]));
+  const gw = 520 / 6, H = 140;
+  const bars = data.map((d, k) => {
+    const hi = d.inc / max * H, he = d.exp / max * H, x0 = k * gw + (gw - 44) / 2;
+    return `<g style="cursor:pointer" onclick="showMonth('${d.key}', true, true)">
+      <rect x="${k * gw + 2}" y="4" width="${gw - 4}" height="188" rx="8" fill="transparent" class="hover:fill-slate-100"/>
+      <rect x="${x0}" y="${170 - hi}" width="20" height="${hi}" rx="3" fill="#10b981"/>
+      <rect x="${x0 + 24}" y="${170 - he}" width="20" height="${he}" rx="3" fill="#f43f5e"/>
+      <text x="${k * gw + gw / 2}" y="188" text-anchor="middle" font-size="11" fill="#64748b">${d.label}</text>
+      <title>${thMonth(d.key)}\nรายรับ ${money(d.inc)}\nรายจ่าย ${money(d.exp)}</title></g>`;
+  }).join('');
+  document.getElementById('acct-flow').innerHTML = `<svg viewBox="0 0 520 195" class="w-full h-auto"><line x1="0" y1="170" x2="520" y2="170" stroke="#e2e8f0"/>${bars}</svg>`;
+  document.getElementById('acct-flow-scope').innerText = selAccts.size ? '(เฉพาะบัญชีที่เลือก)' : '(ทุกบัญชี)';
+}
+
+
+renderAll();
+</script>
+</body>
+</html>
