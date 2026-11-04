@@ -79,14 +79,10 @@ header.bg-white{background:#fff!important;border-bottom:2px dashed #f3d9c3!impor
   <div id="tab-dashboard" class="tab-content space-y-6">
     <div class="flex items-start gap-3"><div class="text-4xl wag">🐱</div><div id="cat-say" class="cat-bubble px-4 py-3 text-sm flex-1"></div></div>
     <div id="health-row" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <div onclick="showKpi('networth')" class="cursor-pointer hover:border-blue-300 hover:shadow-md transition bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-        <div><p class="text-xs font-medium text-slate-500">สินทรัพย์รวม</p><h3 id="kpi-networth" class="text-2xl font-bold text-slate-900 mt-1">฿0.00</h3></div>
+        <div><p class="text-xs font-medium text-slate-500">สินทรัพย์สุทธิ (Net Worth)</p><h3 id="kpi-networth" class="text-2xl font-bold text-slate-900 mt-1">฿0.00</h3></div>
         <div class="bg-blue-50 text-blue-600 p-3 rounded-xl"><i class="fa-solid fa-wallet text-xl"></i></div>
-      </div>
-      <div onclick="showKpi('debts')" class="cursor-pointer hover:border-rose-300 hover:shadow-md transition bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-        <div><p class="text-xs font-medium text-slate-500">ยอดหนี้รวม</p><h3 id="kpi-debts" class="text-2xl font-bold text-rose-600 mt-1">฿0.00</h3></div>
-        <div class="bg-rose-50 text-rose-600 p-3 rounded-xl text-xl">💸</div>
       </div>
       <div onclick="showKpi('income')" class="cursor-pointer hover:border-blue-300 hover:shadow-md transition bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
         <div><p class="text-xs font-medium text-slate-500">รายรับเดือนนี้</p><h3 id="kpi-income" class="text-2xl font-bold text-emerald-600 mt-1">฿0.00</h3></div>
@@ -240,10 +236,7 @@ header.bg-white{background:#fff!important;border-bottom:2px dashed #f3d9c3!impor
           <h2 class="text-lg font-bold text-slate-900"><i class="fa-solid fa-file-invoice-dollar text-rose-500 mr-2"></i>หนี้สิน</h2>
           <p class="text-xs text-slate-500">บันทึกหนี้ที่มี เลือกบัญชีที่ใช้จ่าย ระบบหักยอดบัญชีให้ทันที</p>
         </div>
-        <div class="flex flex-wrap gap-2"><button onclick="openDebtModal()" class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-xl text-sm font-medium shadow-sm transition"><i class="fa-solid fa-plus mr-2"></i> เพิ่มหนี้สิน</button>
-          <button onclick="openLoanWizard('student')" class="bg-amber-100 hover:bg-amber-200 text-amber-800 px-3 py-2 rounded-xl text-sm font-medium">🎓 กยศ.</button>
-          <button onclick="openLoanWizard('car')" class="bg-amber-100 hover:bg-amber-200 text-amber-800 px-3 py-2 rounded-xl text-sm font-medium">🚗 ผ่อนรถ/ของ</button>
-          <button onclick="openLoanWizard('loan')" class="bg-amber-100 hover:bg-amber-200 text-amber-800 px-3 py-2 rounded-xl text-sm font-medium">🏠 สินเชื่อ</button></div>
+        <button onclick="openDebtModal()" class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-xl text-sm font-medium shadow-sm transition"><i class="fa-solid fa-plus mr-2"></i> เพิ่มหนี้สิน</button>
       </div>
       <div id="debt-summary" class="grid grid-cols-1 sm:grid-cols-3 gap-3"></div>
       <div id="debts-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
@@ -281,21 +274,6 @@ header.bg-white{background:#fff!important;border-bottom:2px dashed #f3d9c3!impor
       <h3 class="font-bold text-slate-900">⚔️ เทียบวิธีปลดหนี้</h3>
       <p class="text-xs text-slate-500">ใช้ยอดค่างวดรวมของทุกหนี้ เมื่อปิดหนี้ก้อนหนึ่งได้ เงินงวดนั้นจะไปช่วยก้อนถัดไป</p>
       <div id="debt-compare" class="text-sm"></div>
-    </div>
-    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3">
-      <h3 class="font-bold text-slate-900">♻️ รีเซ็ตข้อมูล</h3>
-      <p class="text-xs text-slate-500">แนะนำให้กด "สำรองข้อมูล JSON" ก่อนรีเซ็ต การรีเซ็ตเฉพาะส่วนจะไม่ปรับยอดบัญชีให้</p>
-      <div class="grid grid-cols-2 gap-2 text-xs font-semibold">
-        <button onclick="resetPart('transactions')" class="bg-slate-100 hover:bg-slate-200 py-2 rounded-xl">🧾 ล้างรายการรับ-จ่าย</button>
-        <button onclick="resetPart('wallets0')" class="bg-slate-100 hover:bg-slate-200 py-2 rounded-xl">👛 ยอดทุกบัญชี = 0</button>
-        <button onclick="resetPart('savings')" class="bg-slate-100 hover:bg-slate-200 py-2 rounded-xl">🐟 ล้างเป้าหมายออม</button>
-        <button onclick="resetPart('debts')" class="bg-slate-100 hover:bg-slate-200 py-2 rounded-xl">💸 ล้างหนี้สิน</button>
-        <button onclick="resetPart('jars')" class="bg-slate-100 hover:bg-slate-200 py-2 rounded-xl">🫙 ซองเงินกลับค่าเริ่มต้น</button>
-        <button onclick="resetPart('recurring')" class="bg-slate-100 hover:bg-slate-200 py-2 rounded-xl">🔁 ล้างรายการประจำ</button>
-        <button onclick="resetPart('salary')" class="bg-slate-100 hover:bg-slate-200 py-2 rounded-xl">💌 รีเซ็ตเงินเดือน</button>
-        <button onclick="resetPart('nwHistory')" class="bg-slate-100 hover:bg-slate-200 py-2 rounded-xl">📈 ล้างกราฟแนวโน้ม</button>
-      </div>
-      <button onclick="resetPart('all')" class="w-full bg-rose-50 hover:bg-rose-100 text-rose-700 py-2.5 rounded-xl text-sm font-semibold">⚠️ รีเซ็ตทั้งหมด (เริ่มใหม่ทั้งแอป)</button>
     </div>
     <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3">
       <h3 class="font-bold text-slate-900">📥 นำเข้าข้อมูลสำรอง (JSON)</h3>
@@ -562,8 +540,7 @@ function renderDashboard() {
   const cur = monthTotals(nowKey()), prev = monthTotals(prevKey());
   const net = cur.income - cur.expense;
 
-  document.getElementById('kpi-networth').innerText = money(assets);
-  document.getElementById('kpi-debts').innerText = money(liab + debtRemaining());
+  document.getElementById('kpi-networth').innerText = money(assets - liab - debtRemaining());
   document.getElementById('kpi-income').innerText = money(cur.income);
   document.getElementById('kpi-expense').innerText = money(cur.expense);
   document.getElementById('kpi-savings').innerText = money(net);
@@ -625,12 +602,6 @@ window.syncSalaryToTransactions = () => {
   const wallet = S().wallets.find(w => w.type === 'Asset');
   if (!wallet) { alert("กรุณาเพิ่มบัญชีในแท็บ กระเป๋า & ซองเงิน ก่อน"); return; }
   const t = { id: Date.now(), date: localISO(), type: "รายรับ", from: wallet.name, to: "", jar: "เงินเดือนสุทธิ", amount: net, note: "เงินเดือนสุทธิประจำเดือน" };
-  if (editTxId !== null) {
-    const old = S().transactions.find(x => x.id === editTxId);
-    if (old) { applyTx(old, -1); Object.assign(old, t, { id: old.id }); applyTx(old, 1); }
-    editTxId = null; S().transactions.sort((a, b) => b.date.localeCompare(a.date));
-    closeTransactionModal(); commit(); return;
-  }
   const link = type === 'รายจ่าย' ? document.getElementById('tx-link').value : '';
   if (link) {
     const w = walletByName(t.from), ti = Number(document.getElementById('tx-link-target').value), note = t.note || undefined;
@@ -675,7 +646,7 @@ function renderTransactions() {
       <td class="p-3">${esc(t.jar)}</td>
       <td class="p-3 text-right font-semibold whitespace-nowrap ${t.type === 'รายรับ' ? 'text-emerald-600' : 'text-slate-800'}">${sign}${money(t.amount)}</td>
       <td class="p-3 text-slate-500">${esc(t.note)}</td>
-      <td class="p-3 text-center whitespace-nowrap"><button onclick="editTransaction(${t.id})" class="text-slate-400 hover:text-blue-600 mr-2" title="แก้ไข"><i class="fa-solid fa-pen"></i></button><button onclick="deleteTransaction(${idx})" class="text-rose-400 hover:text-rose-600"><i class="fa-solid fa-trash"></i></button></td>
+      <td class="p-3 text-center"><button onclick="deleteTransaction(${idx})" class="text-rose-400 hover:text-rose-600"><i class="fa-solid fa-trash"></i></button></td>
     </tr>`;
   }).join('');
 }
@@ -704,9 +675,7 @@ window.onTxLinkChange = () => {
   if (!list.length) { alert(k === 'saving' ? 'ยังไม่มีเป้าหมายออม' : 'ยังไม่มีหนี้ที่ค้างอยู่'); document.getElementById('tx-link').value = ''; t.classList.add('hidden'); return; }
   t.innerHTML = list.map(([i, n]) => `<option value="${i}">${esc(n)}</option>`).join(''); t.classList.remove('hidden');
 };
-let editTxId = null;
 window.openTransactionModal = (presetDate) => {
-  editTxId = null; { const h = document.querySelector('#tx-modal h3'); if (h) h.innerText = 'เพิ่มรายการใหม่'; }
   if (!S().wallets.length) { alert("กรุณาเพิ่มบัญชีในแท็บ กระเป๋า & ซองเงิน ก่อน"); return; }
   document.getElementById('tx-date').value = (typeof presetDate === 'string' && presetDate) ? presetDate : localISO();
   const opts = S().wallets.map(w => `<option value="${esc(w.name)}">${esc(w.name)}</option>`).join('');
@@ -719,21 +688,6 @@ window.openTransactionModal = (presetDate) => {
   document.getElementById('tx-link').value = '';
   onTxTypeChange(); onTxLinkChange();
   const m = document.getElementById('tx-modal'); m.classList.remove('hidden'); m.classList.add('flex');
-};
-window.editTransaction = (id) => {
-  const t = S().transactions.find(x => x.id === id); if (!t) return;
-  for (const [si, sv] of S().savings.entries()) { const ei = (sv.history || []).findIndex(e => e.txId === id); if (ei >= 0) { editSavingEntry(si, ei); return; } }
-  for (const [di, d] of S().debts.entries()) { const p = (d.payments || []).find(e => e.txId === id); if (p) { editDebtPayment(di, p.id); return; } }
-  openTransactionModal(t.date);
-  const set = (k, v) => { document.getElementById(k).value = v; };
-  set('tx-type', t.type); onTxTypeChange(); set('tx-from', t.from); set('tx-to', t.to || '');
-  const jar = document.getElementById('tx-jar');
-  if (t.type !== 'โอนเงิน' && t.jar && ![...jar.options].some(o => o.value === t.jar)) jar.insertAdjacentHTML('beforeend', `<option value="${esc(t.jar)}">${esc(t.jar)}</option>`);
-  if (t.type !== 'โอนเงิน') set('tx-jar', t.jar);
-  set('tx-amount', t.amount); set('tx-note', t.note || '');
-  document.getElementById('tx-link-wrap').classList.add('hidden');
-  const h = document.querySelector('#tx-modal h3'); if (h) h.innerText = 'แก้ไขรายการ';
-  editTxId = id;
 };
 window.closeTransactionModal = () => {
   const m = document.getElementById('tx-modal'); m.classList.add('hidden'); m.classList.remove('flex');
@@ -1050,7 +1004,7 @@ function renderDebts() {
     const pays = (d.payments || []).slice().reverse().slice(0, 5);
     return `<div class="bg-slate-50 border border-slate-200 p-5 rounded-xl space-y-3">
       <div class="flex justify-between items-start gap-2">
-        <div><h4 class="font-bold text-slate-900 text-sm">${kindIcon(d)} ${esc(d.name)}</h4>${d.note ? `<p class="text-xs text-slate-500">${esc(d.note)}</p>` : ''}</div>
+        <div><h4 class="font-bold text-slate-900 text-sm">${esc(d.name)}</h4>${d.note ? `<p class="text-xs text-slate-500">${esc(d.note)}</p>` : ''}</div>
         <div class="flex items-center space-x-3 shrink-0">
           <button onclick="openDebtModal(${idx})" class="text-slate-400 hover:text-rose-600 text-xs" title="แก้ไข"><i class="fa-solid fa-pen"></i></button>
           <button onclick="removeDebt(${idx})" class="text-rose-400 hover:text-rose-600 text-xs" title="ลบ"><i class="fa-solid fa-trash"></i></button>
@@ -1062,7 +1016,7 @@ function renderDebts() {
         <div class="text-right text-xs text-slate-500">ชำระแล้ว ${pct.toFixed(1)}%</div>
       </div>
       <div class="text-xs text-slate-600 space-y-0.5">
-        ${metaLines(d)}${d.rate ? `<div>ดอกเบี้ย ${d.rate}% ต่อปี</div>` : ''}${d.monthly ? `<div>ค่างวด ${money(d.monthly)} / เดือน</div>` : ''}
+        ${d.rate ? `<div>ดอกเบี้ย ${d.rate}% ต่อปี</div>` : ''}${d.monthly ? `<div>ค่างวด ${money(d.monthly)} / เดือน</div>` : ''}
         ${nextDue(d) && Number(d.remaining) > 0 ? `<div class="${nextDue(d).days <= 3 ? 'text-rose-600 font-semibold' : ''}">📅 ครบกำหนดทุกวันที่ ${d.dueDay} (อีก ${nextDue(d).days} วัน)</div>` : ''}
         <div class="${payoffInfo(d).bad ? 'text-rose-600' : 'text-emerald-700'}">${payoffInfo(d).txt}</div>
       </div>
@@ -1077,57 +1031,6 @@ function renderDebts() {
     </div>`;
   }).join('');
 }
-const KIND_ICON = { student: '🎓', car: '🚗', phone: '📱', other: '🛍️', house: '🏠', personal: '💼' };
-const kindIcon = (d) => d.meta && KIND_ICON[d.meta.kind] ? KIND_ICON[d.meta.kind] : '';
-const pmt = (P, r, n) => r > 0 ? P * r / (1 - Math.pow(1 + r, -n)) : P / n;
-function metaLines(d) {
-  const m = d.meta; if (!m) return '';
-  const L = [];
-  if (m.kind === 'student') { L.push(`ผ่อนชำระ ${m.years} ปี ดอกเบี้ย ${d.rate}% ต่อปี`); if (m.arrears > 0) L.push(`<span class="text-rose-600">รวมยอดค้างชำระ/เบี้ยปรับ ${money(m.arrears)}</span>`); L.push('💡 ชำระเพิ่มช่วยลดดอกเบี้ย และควรชำระตรงเวลาเพื่อเลี่ยงเบี้ยปรับ'); }
-  else if (m.term) { L.push(`ราคา ${fmt0(m.price)} · ดาวน์ ${fmt0(m.down)} · ดอกเบี้ยคงที่ ${m.flat}% ต่อปี (รวม ${fmt0(m.interest)})`); L.push(`ผ่อนแล้ว ${Number(m.paidCount || 0) + (d.payments || []).length}/${m.term} งวด`); if (m.yearlyCost > 0) L.push(`ค่าประกัน/ภาษี ${fmt0(m.yearlyCost)} ต่อปี (≈ ${fmt0(m.yearlyCost / 12)}/เดือน)`); }
-  else if (m.years) L.push(`ระยะเวลา ${m.years} ปี`);
-  return L.map(x => `<div>${x}</div>`).join('');
-}
-window.openLoanWizard = (type) => {
-  const wopts = [{ value: '', label: '— เลือกตอนจ่าย —' }, ...S().wallets.map(w => ({ value: String(w.id), label: `${walletIcon(w)} ${w.name}` }))];
-  const common = [{ id: 'dueDay', label: 'ครบกำหนดจ่ายทุกวันที่ (1-31)', type: 'number', value: 1 }, { id: 'wallet', label: 'บัญชีที่จ่ายเป็นประจำ', type: 'select', value: '', options: wopts }];
-  const save = (o, meta) => { S().debts.push({ id: Date.now(), payments: [], asExpense: true, note: '', dueDay: Math.round(o.dueDay), walletId: o.wallet ? Number(o.wallet) : null, meta, ...o.debt }); commit(); };
-  if (type === 'student') openForm({ title: '🎓 เพิ่มหนี้ กยศ./กรอ.', fields: [
-    { id: 'name', label: 'ชื่อ', type: 'text', value: 'กยศ.', required: true },
-    { id: 'principal', label: 'ยอดหนี้คงเหลือ (เงินต้น+ดอกเบี้ยที่ค้าง)', type: 'number', value: 100000 },
-    { id: 'arrears', label: 'ยอดค้างชำระ/เบี้ยปรับ (ถ้ามี)', type: 'number', value: 0 },
-    { id: 'rate', label: 'ดอกเบี้ย (% ต่อปี — กยศ. ปัจจุบัน 1%)', type: 'number', value: 1 },
-    { id: 'years', label: 'ระยะเวลาผ่อนที่เหลือ (ปี)', type: 'number', value: 15 },
-    { id: 'monthly', label: 'ค่างวดต่อเดือน (0 = คำนวณให้)', type: 'number', value: 0 }, ...common],
-    onSave: (v) => { if (v.principal <= 0 || v.years <= 0) { alert('ตรวจสอบยอดหนี้และจำนวนปี'); return false; }
-      const rem = v.principal + v.arrears, m = v.monthly > 0 ? v.monthly : Math.ceil(pmt(rem, v.rate / 1200, Math.round(v.years * 12)));
-      save(v, { kind: 'student', years: v.years, arrears: v.arrears });
-      Object.assign(S().debts[S().debts.length - 1], { name: v.name, total: rem, remaining: rem, rate: v.rate, monthly: m }); commit(); } });
-  else if (type === 'car') openForm({ title: '🚗 เพิ่มผ่อนรถ / ผ่อนสินค้า (ดอกเบี้ยคงที่)', fields: [
-    { id: 'kind', label: 'ประเภท', type: 'select', value: 'car', options: [{ value: 'car', label: '🚗 รถ/มอเตอร์ไซค์' }, { value: 'phone', label: '📱 มือถือ/อุปกรณ์' }, { value: 'other', label: '🛍️ สินค้าอื่น' }] },
-    { id: 'name', label: 'ชื่อรายการ (เช่น ผ่อนรถ Yaris)', type: 'text', value: '', required: true },
-    { id: 'price', label: 'ราคา (บาท)', type: 'number', value: 500000 },
-    { id: 'down', label: 'เงินดาวน์ (บาท)', type: 'number', value: 100000 },
-    { id: 'flat', label: 'ดอกเบี้ยคงที่ (% ต่อปี)', type: 'number', value: 2.5 },
-    { id: 'term', label: 'จำนวนงวดทั้งหมด (เดือน)', type: 'number', value: 60 },
-    { id: 'paid', label: 'ผ่อนไปแล้ว (งวด)', type: 'number', value: 0 },
-    { id: 'yearly', label: 'ค่าประกัน+ภาษี ต่อปี (ไม่บังคับ)', type: 'number', value: 0 }, ...common],
-    onSave: (v) => { if (v.price <= v.down || v.term < 1 || v.paid < 0 || v.paid > v.term) { alert('ตรวจสอบราคา เงินดาวน์ และจำนวนงวด'); return false; }
-      const P = v.price - v.down, interest = P * v.flat / 100 * v.term / 12, total = P + interest, monthly = Math.ceil(total / v.term), rem = Math.max(0, total - monthly * v.paid);
-      save(v, { kind: v.kind, price: v.price, down: v.down, flat: v.flat, term: v.term, paidCount: v.paid, yearlyCost: v.yearly, interest });
-      Object.assign(S().debts[S().debts.length - 1], { name: v.name, total, remaining: rem, rate: 0, monthly }); commit(); } });
-  else openForm({ title: '🏠 เพิ่มสินเชื่อ (ดอกเบี้ยลดต้นลดดอก)', fields: [
-    { id: 'kind', label: 'ประเภท', type: 'select', value: 'house', options: [{ value: 'house', label: '🏠 บ้าน/คอนโด' }, { value: 'personal', label: '💼 สินเชื่อส่วนบุคคล' }] },
-    { id: 'name', label: 'ชื่อ', type: 'text', value: '', required: true },
-    { id: 'principal', label: 'ยอดเงินต้นคงเหลือ (บาท)', type: 'number', value: 1000000 },
-    { id: 'rate', label: 'ดอกเบี้ย (% ต่อปี)', type: 'number', value: 5 },
-    { id: 'years', label: 'ระยะเวลาที่เหลือ (ปี)', type: 'number', value: 20 },
-    { id: 'monthly', label: 'ค่างวดต่อเดือน (0 = คำนวณให้)', type: 'number', value: 0 }, ...common],
-    onSave: (v) => { if (v.principal <= 0 || v.years <= 0) { alert('ตรวจสอบยอดหนี้และจำนวนปี'); return false; }
-      const m = v.monthly > 0 ? v.monthly : Math.ceil(pmt(v.principal, v.rate / 1200, Math.round(v.years * 12)));
-      save(v, { kind: v.kind, years: v.years });
-      Object.assign(S().debts[S().debts.length - 1], { name: v.name, total: v.principal, remaining: v.principal, rate: v.rate, monthly: m }); commit(); } });
-};
 window.openDebtModal = (idx) => {
   const isEdit = typeof idx === 'number';
   const d = isEdit ? S().debts[idx] : null;
@@ -1327,7 +1230,7 @@ function renderDebtCompare() {
 // ---------- สุขภาพการเงิน + แมวพูด ----------
 function recordNW() {
   const assets = sum(S().wallets.filter(w => w.type === 'Asset'), w => w.balance), liab = sum(S().wallets.filter(w => w.type === 'Liability'), w => w.balance);
-  (S().nwHistory = S().nwHistory || {})[nowKey()] = Math.round(assets * 100) / 100;
+  (S().nwHistory = S().nwHistory || {})[nowKey()] = Math.round((assets - liab - debtRemaining()) * 100) / 100;
 }
 function renderCatHealth(cur, net) {
   const liquid = sum(S().wallets.filter(w => w.type === 'Asset'), w => w.balance);
@@ -1346,7 +1249,7 @@ function renderCatHealth(cur, net) {
   document.getElementById('health-row').innerHTML =
     card('🐟 กองทุนฉุกเฉิน', efm === null ? '—' : efm.toFixed(1) + ' เดือน', 'เป้าหมาย 3-6 เดือนของรายจ่าย', efm === null ? 'text-slate-400' : efm >= 3 ? 'text-emerald-600' : 'text-amber-600') +
     card('💸 หนี้ต่อรายได้ (DTI)', dti === null ? '—' : dti.toFixed(0) + '%', 'ควรไม่เกิน 40%', dti === null ? 'text-slate-400' : dti > 40 ? 'text-rose-600' : 'text-emerald-600') +
-    `<div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm"><p class="text-xs text-slate-500">📈 แนวโน้มสินทรัพย์รวม</p>${spark}</div>`;
+    `<div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm"><p class="text-xs text-slate-500">📈 แนวโน้มสินทรัพย์สุทธิ</p>${spark}</div>`;
   // แมวพูด
   const due = (S().debts || []).filter(d => d.remaining > 0 && nextDue(d) && nextDue(d).days <= 7).sort((a, b) => nextDue(a).days - nextDue(b).days);
   let say = net > 0 ? `เดือนนี้เหลือเก็บ ${fmt0(net)} เก่งมากเลยเหมียว 😸` : cur.expense > 0 ? 'เดือนนี้ใช้เยอะกว่ารายรับนะ ลองดูซองเงินหน่อยเหมียว 🙀' : 'สวัสดีเหมียว~ เริ่มบันทึกรายการวันนี้กันเลย 🐾';
@@ -1354,13 +1257,6 @@ function renderCatHealth(cur, net) {
   document.getElementById('cat-say').innerHTML = say;
 }
 
-window.resetPart = (k) => {
-  const d = defaultState(), names = { transactions: 'รายการรับ-จ่ายทั้งหมด', wallets0: 'ยอดคงเหลือของทุกบัญชี (ตั้งเป็น 0)', savings: 'เป้าหมายเงินออมทั้งหมด', debts: 'หนี้สินทั้งหมด', jars: 'ซองเงิน', recurring: 'รายการประจำ', salary: 'ข้อมูลเงินเดือน', nwHistory: 'ประวัติกราฟแนวโน้ม', all: 'ข้อมูลทั้งหมดในแอป' };
-  if (k === 'all') { if (prompt('การรีเซ็ตทั้งหมดย้อนกลับไม่ได้\nพิมพ์คำว่า รีเซ็ต เพื่อยืนยัน') !== 'รีเซ็ต') return; window.appState = d; commit(); return; }
-  if (!confirm(`ล้าง${names[k]}? ย้อนกลับไม่ได้`)) return;
-  if (k === 'wallets0') S().wallets.forEach(w => { w.balance = 0; }); else S()[k] = d[k];
-  commit();
-};
 window.importJSON = (inp) => {
   const f = inp.files[0]; if (!f) return;
   const rd = new FileReader();
@@ -1485,7 +1381,7 @@ function txListHtml(list, ctxName) {
     return `<div class="py-2.5 flex items-start justify-between gap-3">
       <div class="min-w-0"><div class="flex items-center gap-2 flex-wrap"><span class="px-2 py-0.5 rounded-lg text-[11px] font-semibold ${badge}">${esc(t.type)}</span><span class="text-sm font-medium text-slate-800">${main}</span></div>
       <div class="text-xs text-slate-500 mt-0.5">${esc(t.date)}${t.type !== 'โอนเงิน' ? ' · ' + esc(t.from) : ''}${t.note ? ' · ' + esc(t.note) : ''}</div></div>
-      <div class="flex items-center gap-2"><div class="font-semibold text-sm whitespace-nowrap ${cls}">${sign}${money(t.amount)}</div><button onclick="closeDetail(); editTransaction(${t.id})" class="text-slate-400 hover:text-blue-600 text-xs" title="แก้ไข"><i class="fa-solid fa-pen"></i></button></div></div>`;
+      <div class="font-semibold text-sm whitespace-nowrap ${cls}">${sign}${money(t.amount)}</div></div>`;
   }).join('') + '</div></div>';
 }
 function jarBreakdownHtml(list) {
@@ -1534,16 +1430,11 @@ window.showKpi = (kind) => {
   if (kind === 'expense') return monthDetail(k, { types: ['รายจ่าย'], title: 'รายจ่ายเดือนนี้' });
   if (kind === 'savings') return monthDetail(k, { title: 'เงินออมสุทธิเดือนนี้ (รับ − จ่าย)' });
   const assets = S().wallets.filter(w => w.type !== 'Liability'), liab = S().wallets.filter(w => w.type === 'Liability');
-  const row = (w) => `<div onclick="showWallet(${w.id})" class="cursor-pointer hover:bg-slate-50 flex items-center justify-between py-2.5 px-1"><span class="text-sm text-slate-800">${esc(walletIcon(w))} ${esc(w.name)}</span><span class="text-sm font-semibold ${w.type === 'Liability' ? 'text-rose-600' : 'text-slate-900'}">${money(w.balance)}</span></div>`;
-  const A = sum(assets, w => w.balance), L = sum(liab, w => w.balance), D = debtRemaining();
-  if (kind === 'debts') {
-    openDetail('ยอดหนี้รวม', 'แยกจากสินทรัพย์ ไม่นำมาหักลบกัน', [['หนี้สินที่บันทึก', money(D), 'rose'], ['บัตร/บัญชีหนี้', money(L), 'rose'], ['รวมหนี้', money(D + L), 'rose']],
-      `<div><h4 class="text-sm font-semibold text-slate-700">หนี้สินที่บันทึก</h4><div class="divide-y divide-slate-100">${S().debts.map(d => `<div class="flex justify-between py-2.5 text-sm"><span>${esc(d.name)}</span><b class="text-rose-600">${money(d.remaining)}</b></div>`).join('') || '<p class="text-sm text-slate-400">ไม่มี</p>'}</div></div>` +
-      (liab.length ? `<div><h4 class="text-sm font-semibold text-slate-700">บัตร/บัญชีหนี้</h4><div class="divide-y divide-slate-100">${liab.map(row).join('')}</div></div>` : ''));
-    return;
-  }
-  openDetail('สินทรัพย์รวม', 'เฉพาะบัญชีสินทรัพย์ ไม่หักหนี้', [['สินทรัพย์รวม', money(A), 'blue']],
-    `<div><h4 class="text-sm font-semibold text-slate-700">บัญชีสินทรัพย์</h4><div class="divide-y divide-slate-100">${assets.map(row).join('') || '<p class="text-sm text-slate-400">ไม่มี</p>'}</div></div>`);
+  const row = (w) => `<div onclick="showWallet(${w.id})" class="cursor-pointer hover:bg-slate-50 flex items-center justify-between py-2.5 px-1"><span class="text-sm text-slate-800">${esc(walletIcon(w))} ${esc(w.name)}</span><span class="text-sm font-semibold ${w.type === 'Liability' ? 'text-rose-600' : 'text-slate-900'}">${w.type === 'Liability' ? '-' : ''}${money(w.balance)}</span></div>`;
+  const A = sum(assets, w => w.balance), L = sum(liab, w => w.balance);
+  openDetail('สินทรัพย์สุทธิ', 'สินทรัพย์ − หนี้สิน', [['สินทรัพย์', money(A), 'blue'], ['หนี้สิน', money(L + debtRemaining()), 'rose'], ['สุทธิ', money(A - L - debtRemaining()), 'emerald']],
+    `<div><h4 class="text-sm font-semibold text-slate-700">สินทรัพย์</h4><div class="divide-y divide-slate-100">${assets.map(row).join('') || '<p class="text-sm text-slate-400">ไม่มี</p>'}</div></div>` +
+    (liab.length ? `<div><h4 class="text-sm font-semibold text-slate-700">หนี้สิน</h4><div class="divide-y divide-slate-100">${liab.map(row).join('')}</div></div>` : ''));
 };
 window.showWallet = (id) => {
   const idx = S().wallets.findIndex(w => w.id === id); if (idx < 0) return;
