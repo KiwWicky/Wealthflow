@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WealthFlow Pro</title>
+<title>WealthFlow Pro & WorkSpace</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -31,12 +31,23 @@ header.bg-white{background:#fff!important;border-bottom:2px dashed #f3d9c3!impor
 <header class="bg-white border-b border-slate-200 sticky top-0 z-40">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
     <div class="flex items-center space-x-3">
-      <div class="bg-blue-600 text-white w-10 h-10 flex items-center justify-center rounded-2xl shadow-md text-xl wag">🐱</div>
+      <div class="bg-blue-600 text-white w-10 h-10 flex items-center justify-center rounded-2xl shadow-md text-xl wag" id="header-logo-icon">🐱</div>
       <div>
-        <h1 class="font-bold text-lg text-slate-900 leading-tight">WealthFlow Pro</h1>
-        <p class="text-xs text-slate-500">แมวเหมียวช่วยดูแลเงินของคุณ 🐾</p>
+        <h1 class="font-bold text-lg text-slate-900 leading-tight" id="header-app-title">WealthFlow Pro</h1>
+        <p class="text-xs text-slate-500" id="header-app-subtitle">แมวเหมียวช่วยดูแลเงินของคุณ 🐾</p>
       </div>
     </div>
+
+    <!-- Mode Switcher in Header -->
+    <div id="mode-switcher" class="hidden flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200">
+      <button onclick="switchAppMode('finance')" id="nav-mode-finance" class="px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5 bg-blue-600 text-white shadow-sm">
+        <span>💰</span><span>การเงิน</span>
+      </button>
+      <button onclick="switchAppMode('workspace')" id="nav-mode-workspace" class="px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5 text-slate-600 hover:text-slate-900">
+        <span>💼</span><span>พื้นที่การทำงาน</span>
+      </button>
+    </div>
+
     <div class="flex items-center space-x-3">
       <div id="sync-status" class="text-xs text-slate-400 hidden sm:block"></div>
       <div id="auth-status" class="text-sm font-medium text-slate-600 hidden sm:block">กำลังตรวจสอบ...</div>
@@ -53,7 +64,7 @@ header.bg-white{background:#fff!important;border-bottom:2px dashed #f3d9c3!impor
     <div class="bg-blue-600 text-white w-16 h-16 rounded-3xl flex items-center justify-center mx-auto shadow-md text-3xl wag">🐱</div>
     <div>
       <h2 class="text-xl font-bold text-slate-900">เข้าสู่ระบบ</h2>
-      <p class="text-sm text-slate-500 mt-1">ข้อมูลของแต่ละบัญชีแยกกัน และซิงก์ข้ามอุปกรณ์อัตโนมัติ</p>
+      <p class="text-sm text-slate-500 mt-1">จัดการทั้งเรื่องการเงินและชีวิตการทำงานในที่เดียว ซิงก์ข้ามอุปกรณ์อัตโนมัติ</p>
     </div>
     <button id="login-btn" onclick="loginWithGoogle()" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-xl text-sm font-medium transition shadow-sm flex items-center justify-center space-x-2">
       <i class="fa-brands fa-google"></i><span class="ml-2">เข้าสู่ระบบด้วย Google</span>
@@ -62,7 +73,48 @@ header.bg-white{background:#fff!important;border-bottom:2px dashed #f3d9c3!impor
   </div>
 </section>
 
-<!-- App -->
+<!-- Hub Screen (Choose Mode) -->
+<section id="hub-screen" class="hidden flex-grow max-w-4xl w-full mx-auto px-4 py-12 flex flex-col justify-center space-y-8">
+  <div class="text-center space-y-2">
+    <div class="text-5xl mb-2 wag">🐾</div>
+    <h2 class="text-2xl font-bold text-slate-900">ยินดีต้อนรับสู่ศูนย์รวมการจัดการ</h2>
+    <p class="text-slate-500 text-sm">เลือกพื้นที่ที่คุณต้องการเข้าใช้งานในตอนนี้</p>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- Card Finance -->
+    <div onclick="switchAppMode('finance')" class="group cursor-pointer bg-white p-8 rounded-3xl border-2 border-slate-200 hover:border-orange-400 hover:shadow-xl transition-all duration-300 relative overflow-hidden space-y-4">
+      <div class="bg-orange-100 text-orange-600 w-16 h-16 rounded-2xl flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">
+        🐱
+      </div>
+      <div>
+        <span class="text-xs font-bold text-orange-600 tracking-wider uppercase">WealthFlow Pro</span>
+        <h3 class="text-xl font-bold text-slate-900 mt-1">ระบบบริหารจัดการการเงิน 💰</h3>
+        <p class="text-sm text-slate-500 mt-2">บันทึกรับ-จ่าย เงินออม คำนวณเงินเดือน หนี้สิน จัดการพอร์ตลงทุน และวิเคราะห์สุขภาพทางการเงิน</p>
+      </div>
+      <div class="pt-2 flex items-center text-sm font-semibold text-orange-600">
+        เข้าสู่ระบบการเงิน <i class="fa-solid fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+      </div>
+    </div>
+
+    <!-- Card Workspace -->
+    <div onclick="switchAppMode('workspace')" class="group cursor-pointer bg-white p-8 rounded-3xl border-2 border-slate-200 hover:border-indigo-400 hover:shadow-xl transition-all duration-300 relative overflow-hidden space-y-4">
+      <div class="bg-indigo-100 text-indigo-600 w-16 h-16 rounded-2xl flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">
+        💼
+      </div>
+      <div>
+        <span class="text-xs font-bold text-indigo-600 tracking-wider uppercase">WorkSpace Hub</span>
+        <h3 class="text-xl font-bold text-slate-900 mt-1">ระบบบริหารจัดการการทำงาน 📝</h3>
+        <p class="text-sm text-slate-500 mt-2">ติดตามงานที่ต้องทำ บันทึกเวลาเข้างาน ขาด/ลา/มาสาย ปฏิทินวันหยุด และสรุปสถิติประสิทธิภาพงาน</p>
+      </div>
+      <div class="pt-2 flex items-center text-sm font-semibold text-indigo-600">
+        เข้าสู่พื้นที่การทำงาน <i class="fa-solid fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- App Finance (WealthFlow Main) -->
 <main id="app-main" class="hidden flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
   <div class="flex overflow-x-auto space-x-2 pb-2 border-b border-slate-200">
@@ -354,6 +406,126 @@ header.bg-white{background:#fff!important;border-bottom:2px dashed #f3d9c3!impor
   </div>
 <p class="paw">🐾 meow · made with love 🐾</p></main>
 
+<!-- NEW SYSTEM: WORKSPACE MAIN APP -->
+<main id="workspace-main" class="hidden flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+  <!-- Workspace Navigation Tabs -->
+  <div class="flex overflow-x-auto space-x-2 pb-2 border-b border-slate-200">
+    <button onclick="switchWorkTab('tasks')" class="work-tab-btn px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition bg-blue-600 text-white shadow-sm" data-wtarget="tasks"><span class="mr-1">📋 </span>งาน & บอร์ดงาน</button>
+    <button onclick="switchWorkTab('schedule')" class="work-tab-btn px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition bg-white text-slate-600 hover:bg-slate-100" data-wtarget="schedule"><span class="mr-1">📅 </span>ปฏิทินงาน & วันหยุด</button>
+    <button onclick="switchWorkTab('attendance')" class="work-tab-btn px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition bg-white text-slate-600 hover:bg-slate-100" data-wtarget="attendance"><span class="mr-1">⏰ </span>ขาด/ลา/มาสาย</button>
+    <button onclick="switchWorkTab('analytics')" class="work-tab-btn px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition bg-white text-slate-600 hover:bg-slate-100" data-wtarget="analytics"><span class="mr-1">📊 </span>สถิติ & ประสิทธิภาพ</button>
+  </div>
+
+  <!-- WORKSPACE TAB 1: TASKS & PROJECTS -->
+  <div id="wtab-tasks" class="work-tab-content space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+      <div>
+        <h2 class="text-lg font-bold text-slate-900">รายการงานและบอร์ดจัดการ (Task Management)</h2>
+        <p class="text-xs text-slate-500">บริหารจัดการงาน ปรับสถานะงาน ติดตามวันครบกำหนดส่ง</p>
+      </div>
+      <button onclick="openTaskModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-medium shadow-sm transition"><i class="fa-solid fa-plus mr-2"></i> สร้างงานใหม่</button>
+    </div>
+
+    <!-- Task Board (Kanban / Columns) -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- To Do -->
+      <div class="bg-slate-100/70 p-4 rounded-2xl space-y-3 border border-slate-200">
+        <div class="flex justify-between items-center px-1">
+          <h3 class="font-bold text-sm text-slate-700 flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-amber-500 mr-2"></span>งานที่ต้องทำ (To-Do)</h3>
+          <span id="cnt-todo" class="text-xs bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full font-bold">0</span>
+        </div>
+        <div id="col-todo" class="space-y-3 min-h-[300px]"></div>
+      </div>
+
+      <!-- In Progress -->
+      <div class="bg-slate-100/70 p-4 rounded-2xl space-y-3 border border-slate-200">
+        <div class="flex justify-between items-center px-1">
+          <h3 class="font-bold text-sm text-slate-700 flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-blue-500 mr-2"></span>กำลังทำ (In Progress)</h3>
+          <span id="cnt-doing" class="text-xs bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full font-bold">0</span>
+        </div>
+        <div id="col-doing" class="space-y-3 min-h-[300px]"></div>
+      </div>
+
+      <!-- Done -->
+      <div class="bg-slate-100/70 p-4 rounded-2xl space-y-3 border border-slate-200">
+        <div class="flex justify-between items-center px-1">
+          <h3 class="font-bold text-sm text-slate-700 flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 mr-2"></span>เสร็จสิ้น (Done)</h3>
+          <span id="cnt-done" class="text-xs bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full font-bold">0</span>
+        </div>
+        <div id="col-done" class="space-y-3 min-h-[300px]"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WORKSPACE TAB 2: SCHEDULE & CALENDAR -->
+  <div id="wtab-schedule" class="work-tab-content hidden space-y-6">
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-4">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">ปฏิทินการทำงาน & กำหนดการ</h2>
+          <p class="text-xs text-slate-500">แสดงวันครบกำหนดส่งงาน วันหยุดประจำปี และรายการลา</p>
+        </div>
+        <div class="flex items-center space-x-1">
+          <button onclick="changeWorkCalMonth(-1)" class="p-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-700 transition"><i class="fa-solid fa-chevron-left"></i></button>
+          <span id="work-cal-label" class="text-sm font-semibold px-3"></span>
+          <button onclick="changeWorkCalMonth(1)" class="p-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-700 transition"><i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+      </div>
+      <div id="work-calendar-grid" class="overflow-x-auto"></div>
+    </div>
+  </div>
+
+  <!-- WORKSPACE TAB 3: ATTENDANCE & LEAVE -->
+  <div id="wtab-attendance" class="work-tab-content hidden space-y-6">
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-4">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">บันทึกเวลาเข้างาน & การลา (Attendance & Leave)</h2>
+          <p class="text-xs text-slate-500">ลงเวลาเข้า/เลิกงาน บันทึกมาสาย ขาดงาน ลาป่วย/ลากิจ/พักร้อน</p>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="openAttendanceModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-xl text-sm font-medium shadow-sm transition"><i class="fa-solid fa-clock mr-1.5"></i> ลงเวลาเข้างาน</button>
+          <button onclick="openLeaveModal()" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-xl text-sm font-medium shadow-sm transition"><i class="fa-solid fa-plane-departure mr-1.5"></i> ยื่นใบลา</button>
+        </div>
+      </div>
+
+      <!-- Attendance Summary Cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4" id="att-summary-cards"></div>
+
+      <!-- History Table -->
+      <div class="space-y-3">
+        <h3 class="font-bold text-slate-900 text-sm">ประวัติบันทึกย้อนหลัง</h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm text-slate-600">
+            <thead class="bg-slate-50 text-slate-700 text-xs font-semibold border-b border-slate-200">
+              <tr><th class="p-3">วันที่</th><th class="p-3">ประเภท</th><th class="p-3">เวลาเข้า-ออก</th><th class="p-3">สถานะ/เหตุผล</th><th class="p-3 text-center">จัดการ</th></tr>
+            </thead>
+            <tbody id="att-table-body" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WORKSPACE TAB 4: WORK ANALYTICS -->
+  <div id="wtab-analytics" class="work-tab-content hidden space-y-6">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4" id="work-kpi-row"></div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <h3 class="font-bold text-slate-900 text-base">อัตราการทำงานเสร็จ (Task Completion Rate)</h3>
+        <div id="task-progress-chart" class="flex flex-col items-center justify-center p-4"></div>
+      </div>
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <h3 class="font-bold text-slate-900 text-base">สถิติวันลาสะสม (Leave Usage Breakdown)</h3>
+        <div id="leave-breakdown-chart" class="space-y-3"></div>
+      </div>
+    </div>
+  </div>
+
+<p class="paw">🐾 Workspace Hub · Organishing your work life 💼</p></main>
+
 <!-- MODAL: TRANSACTION -->
 <div id="tx-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
   <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl max-h-[90vh] overflow-y-auto">
@@ -459,7 +631,13 @@ const defaultState = () => ({
   debts: [],
   recurring: [],
   invest: { watch: [], positions: [], prices: {} },
-  nwHistory: {}
+  nwHistory: {},
+  // WORKSPACE NEW DATA STRUCTURE
+  workspace: {
+    tasks: [],
+    attendance: [],
+    leaves: []
+  }
 });
 window.appState = defaultState();
 
@@ -522,14 +700,17 @@ onAuthStateChanged(auth, (user) => {
   if (user) {
     document.getElementById('auth-status').innerText = user.displayName || user.email;
     document.getElementById('login-screen').classList.add('hidden');
-    document.getElementById('app-main').classList.remove('hidden');
+    document.getElementById('hub-screen').classList.remove('hidden');
+    document.getElementById('mode-switcher').classList.remove('hidden');
     document.getElementById('logout-btn').classList.remove('hidden');
     document.getElementById('logout-btn').classList.add('flex');
     setSyncStatus('กำลังโหลดข้อมูล...');
     unsubscribe = onSnapshot(doc(db, "users", user.uid), (snap) => {
       if (snap.metadata.hasPendingWrites) return; // เปลี่ยนจากเครื่องนี้เอง ไม่ต้องโหลดทับ
       if (snap.exists()) {
-        window.appState = { ...defaultState(), ...snap.data() };
+        const d = snap.data();
+        if (!d.workspace) d.workspace = { tasks: [], attendance: [], leaves: [] };
+        window.appState = { ...defaultState(), ...d };
       } else {
         window.appState = defaultState();
         loaded = true;
@@ -540,6 +721,7 @@ onAuthStateChanged(auth, (user) => {
       if (runRecurring()) saveData();
       recordNW();
       renderAll();
+      renderWorkspaceAll();
     }, (e) => {
       console.error(e);
       setSyncStatus('โหลดไม่สำเร็จ');
@@ -550,12 +732,55 @@ onAuthStateChanged(auth, (user) => {
     window.appState = defaultState();
     document.getElementById('auth-status').innerText = 'ยังไม่ได้เข้าสู่ระบบ';
     document.getElementById('login-screen').classList.remove('hidden');
+    document.getElementById('hub-screen').classList.add('hidden');
     document.getElementById('app-main').classList.add('hidden');
+    document.getElementById('workspace-main').classList.add('hidden');
+    document.getElementById('mode-switcher').classList.add('hidden');
     document.getElementById('logout-btn').classList.add('hidden');
     document.getElementById('logout-btn').classList.remove('flex');
     setSyncStatus('');
   }
 });
+
+// ---------- SYSTEM SWITCHER (FINANCE vs WORKSPACE) ----------
+window.switchAppMode = (mode) => {
+  const hub = document.getElementById('hub-screen');
+  const financeApp = document.getElementById('app-main');
+  const workApp = document.getElementById('workspace-main');
+
+  const btnFin = document.getElementById('nav-mode-finance');
+  const btnWork = document.getElementById('nav-mode-workspace');
+
+  const logoIcon = document.getElementById('header-logo-icon');
+  const appTitle = document.getElementById('header-app-title');
+  const appSub = document.getElementById('header-app-subtitle');
+
+  hub.classList.add('hidden');
+
+  if (mode === 'finance') {
+    financeApp.classList.remove('hidden');
+    workApp.classList.add('hidden');
+
+    btnFin.className = "px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5 bg-blue-600 text-white shadow-sm";
+    btnWork.className = "px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5 text-slate-600 hover:text-slate-900";
+
+    logoIcon.innerText = "🐱";
+    appTitle.innerText = "WealthFlow Pro";
+    appSub.innerText = "แมวเหมียวช่วยดูแลเงินของคุณ 🐾";
+    renderAll();
+  } else if (mode === 'workspace') {
+    financeApp.classList.add('hidden');
+    workApp.classList.remove('hidden');
+
+    btnWork.className = "px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5 bg-blue-600 text-white shadow-sm";
+    btnFin.className = "px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5 text-slate-600 hover:text-slate-900";
+
+    logoIcon.innerText = "💼";
+    appTitle.innerText = "WorkSpace Hub";
+    appSub.innerText = "จัดการงาน วันหยุด และบันทึกเวลา 📝";
+    renderWorkspaceAll();
+  }
+};
 
 // ---------- แท็บ ----------
 window.switchTab = (tabId) => {
@@ -1885,6 +2110,332 @@ function renderAccountOverview() {
   document.getElementById('acct-flow-scope').innerText = selAccts.size ? '(เฉพาะบัญชีที่เลือก)' : '(ทุกบัญชี)';
 }
 
+
+// ================= NEW WORKSPACE SYSTEM LOGIC =================
+const W = () => {
+  if (!S().workspace) S().workspace = { tasks: [], attendance: [], leaves: [] };
+  return S().workspace;
+};
+
+window.switchWorkTab = (tabId) => {
+  document.querySelectorAll('.work-tab-content').forEach(el => el.classList.add('hidden'));
+  document.querySelectorAll('.work-tab-btn').forEach(btn => {
+    btn.classList.remove('bg-blue-600', 'text-white', 'shadow-sm');
+    btn.classList.add('bg-white', 'text-slate-600', 'hover:bg-slate-100');
+  });
+  document.getElementById(`wtab-${tabId}`).classList.remove('hidden');
+  const activeBtn = document.querySelector(`[data-wtarget="${tabId}"]`);
+  if (activeBtn) {
+    activeBtn.classList.add('bg-blue-600', 'text-white', 'shadow-sm');
+    activeBtn.classList.remove('bg-white', 'text-slate-600', 'hover:bg-slate-100');
+  }
+  if (tabId === 'schedule') renderWorkCalendar();
+  if (tabId === 'attendance') renderAttendance();
+  if (tabId === 'analytics') renderWorkAnalytics();
+};
+
+function renderWorkspaceAll() {
+  renderTasksBoard();
+  renderWorkCalendar();
+  renderAttendance();
+  renderWorkAnalytics();
+}
+
+// 1. TASK BOARD (KANBAN)
+function renderTasksBoard() {
+  const tasks = W().tasks || [];
+  const todoCol = document.getElementById('col-todo');
+  const doingCol = document.getElementById('col-doing');
+  const doneCol = document.getElementById('col-done');
+
+  if (!todoCol || !doingCol || !doneCol) return;
+
+  const todoList = tasks.filter(t => t.status === 'todo');
+  const doingList = tasks.filter(t => t.status === 'doing');
+  const doneList = tasks.filter(t => t.status === 'done');
+
+  document.getElementById('cnt-todo').innerText = todoList.length;
+  document.getElementById('cnt-doing').innerText = doingList.length;
+  document.getElementById('cnt-done').innerText = doneList.length;
+
+  const renderCard = (t) => {
+    const prioColor = t.priority === 'high' ? 'bg-rose-100 text-rose-700 border-rose-200' : t.priority === 'medium' ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-slate-100 text-slate-600 border-slate-200';
+    const prioLabel = t.priority === 'high' ? '🔥 สูง' : t.priority === 'medium' ? '⚡ กลาง' : '🍃 ต่ำ';
+    const isOverdue = t.dueDate && t.dueDate < localISO() && t.status !== 'done';
+
+    return `<div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3 hover:shadow-md transition">
+      <div class="flex items-start justify-between gap-2">
+        <h4 class="font-bold text-slate-800 text-sm leading-snug">${esc(t.title)}</h4>
+        <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border ${prioColor} shrink-0">${prioLabel}</span>
+      </div>
+      ${t.desc ? `<p class="text-xs text-slate-500 line-clamp-2">${esc(t.desc)}</p>` : ''}
+      <div class="flex items-center justify-between text-xs pt-1 border-t border-slate-100">
+        <span class="${isOverdue ? 'text-rose-600 font-bold' : 'text-slate-400'}">
+          <i class="fa-regular fa-clock mr-1"></i>${t.dueDate ? esc(t.dueDate) : 'ไม่มีกำหนด'}
+        </span>
+        <div class="flex items-center space-x-1">
+          <button onclick="openTaskModal('${t.id}')" class="text-slate-400 hover:text-blue-600 p-1" title="แก้ไข"><i class="fa-solid fa-pen"></i></button>
+          <button onclick="deleteTask('${t.id}')" class="text-slate-400 hover:text-rose-600 p-1" title="ลบ"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      </div>
+      <!-- Status Changer -->
+      <div class="flex gap-1 pt-1 text-[11px]">
+        ${t.status !== 'todo' ? `<button onclick="moveTask('${t.id}', 'todo')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 py-1 rounded">← To-Do</button>` : ''}
+        ${t.status !== 'doing' ? `<button onclick="moveTask('${t.id}', 'doing')" class="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 py-1 rounded">กำลังทำ</button>` : ''}
+        ${t.status !== 'done' ? `<button onclick="moveTask('${t.id}', 'done')" class="flex-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 py-1 rounded">เสร็จสิ้น →</button>` : ''}
+      </div>
+    </div>`;
+  };
+
+  todoCol.innerHTML = todoList.map(renderCard).join('') || '<p class="text-xs text-slate-400 text-center py-8">ไม่มีงาน</p>';
+  doingCol.innerHTML = doingList.map(renderCard).join('') || '<p class="text-xs text-slate-400 text-center py-8">ไม่มีงานที่กำลังทำ</p>';
+  doneCol.innerHTML = doneList.map(renderCard).join('') || '<p class="text-xs text-slate-400 text-center py-8">ไม่มีงานที่เสร็จสิ้น</p>';
+}
+
+window.openTaskModal = (taskId) => {
+  const task = taskId ? W().tasks.find(t => t.id === taskId) : null;
+  openForm({
+    title: task ? 'แก้ไขงาน' : 'เพิ่มงานใหม่',
+    fields: [
+      { id: 'title', label: 'ชื่องาน/โปรเจกต์', type: 'text', value: task ? task.title : '', required: true, placeholder: 'เช่น ส่งรายงานประจำเดือน' },
+      { id: 'desc', label: 'รายละเอียดงาน', type: 'text', value: task ? task.desc : '', placeholder: 'อธิบายรายละเอียด...' },
+      { id: 'priority', label: 'ความสำคัญ', type: 'select', value: task ? task.priority : 'medium', options: [{ value: 'low', label: '🍃 ต่ำ' }, { value: 'medium', label: '⚡ กลาง' }, { value: 'high', label: '🔥 สูง' }] },
+      { id: 'status', label: 'สถานะ', type: 'select', value: task ? task.status : 'todo', options: [{ value: 'todo', label: 'งานที่ต้องทำ (To-Do)' }, { value: 'doing', label: 'กำลังทำ (In Progress)' }, { value: 'done', label: 'เสร็จสิ้น (Done)' }] },
+      { id: 'dueDate', label: 'กำหนดส่ง (YYYY-MM-DD)', type: 'text', value: task ? task.dueDate : localISO() }
+    ],
+    onSave: (v) => {
+      if (task) {
+        Object.assign(task, v);
+      } else {
+        W().tasks.push({ id: 'task_' + Date.now(), ...v, createdAt: localISO() });
+      }
+      commit();
+    }
+  });
+};
+
+window.moveTask = (taskId, newStatus) => {
+  const task = W().tasks.find(t => t.id === taskId);
+  if (task) {
+    task.status = newStatus;
+    commit();
+  }
+};
+
+window.deleteTask = (taskId) => {
+  if (!confirm("ลบงานนี้?")) return;
+  W().tasks = W().tasks.filter(t => t.id !== taskId);
+  commit();
+};
+
+// 2. WORK SCHEDULE & CALENDAR
+let workCalDate = new Date();
+workCalDate.setDate(1);
+
+window.changeWorkCalMonth = (dir) => {
+  workCalDate.setMonth(workCalDate.getMonth() + dir);
+  renderWorkCalendar();
+};
+
+function renderWorkCalendar() {
+  const grid = document.getElementById('work-calendar-grid');
+  const label = document.getElementById('work-cal-label');
+  if (!grid || !label) return;
+
+  const y = workCalDate.getFullYear(), m = workCalDate.getMonth();
+  label.innerText = workCalDate.toLocaleDateString('th-TH', { month: 'long', year: 'numeric' });
+
+  let html = '<div class="min-w-[600px]"><div class="grid grid-cols-7 gap-2 text-center font-semibold text-xs text-slate-400 mb-2">';
+  ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'].forEach(d => html += `<div>${d}</div>`);
+  html += '</div><div class="grid grid-cols-7 gap-2">';
+
+  const firstDay = new Date(y, m, 1).getDay();
+  const days = new Date(y, m + 1, 0).getDate();
+
+  for (let i = 0; i < firstDay; i++) html += `<div class="bg-slate-50/50 rounded-xl h-24"></div>`;
+
+  for (let d = 1; d <= days; d++) {
+    const dateKey = `${y}-${pad(m + 1)}-${pad(d)}`;
+    const tasksDue = (W().tasks || []).filter(t => t.dueDate === dateKey);
+    const leaves = (W().leaves || []).filter(l => l.date === dateKey);
+    const atts = (W().attendance || []).filter(a => a.date === dateKey);
+    const isToday = dateKey === localISO();
+
+    html += `<div class="bg-slate-50 border ${isToday ? 'border-blue-500 ring-1 ring-blue-500' : 'border-slate-200'} rounded-xl p-2 h-24 flex flex-col justify-between overflow-hidden">
+      <span class="font-bold text-xs ${isToday ? 'text-blue-600' : 'text-slate-700'}">${d}</span>
+      <div class="text-[10px] space-y-1 overflow-y-auto">
+        ${tasksDue.map(t => `<div class="bg-blue-100 text-blue-800 rounded px-1 truncate" title="${esc(t.title)}">📌 ${esc(t.title)}</div>`).join('')}
+        ${leaves.map(l => `<div class="bg-purple-100 text-purple-800 rounded px-1 truncate">✈️ ลา: ${esc(l.type)}</div>`).join('')}
+        ${atts.map(a => `<div class="bg-emerald-100 text-emerald-800 rounded px-1 truncate">⏰ เข้า ${a.timeIn}</div>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  grid.innerHTML = html + '</div></div>';
+}
+
+// 3. ATTENDANCE & LEAVES
+function renderAttendance() {
+  const cards = document.getElementById('att-summary-cards');
+  const body = document.getElementById('att-table-body');
+  if (!cards || !body) return;
+
+  const atts = W().attendance || [];
+  const leaves = W().leaves || [];
+
+  const curMonth = nowKey();
+  const monthAtts = atts.filter(a => monthKey(a.date) === curMonth);
+  const monthLeaves = leaves.filter(l => monthKey(l.date) === curMonth);
+
+  const lateCount = monthAtts.filter(a => a.status === 'late').length;
+  const normalCount = monthAtts.filter(a => a.status === 'normal').length;
+
+  cards.innerHTML = `
+    <div class="bg-emerald-50 border border-emerald-100 p-4 rounded-xl"><p class="text-xs text-emerald-700">เข้างานตรงเวลา</p><h3 class="text-xl font-bold text-emerald-900 mt-1">${normalCount} วัน</h3></div>
+    <div class="bg-amber-50 border border-amber-100 p-4 rounded-xl"><p class="text-xs text-amber-700">เข้างานสาย</p><h3 class="text-xl font-bold text-amber-900 mt-1">${lateCount} ครั้ง</h3></div>
+    <div class="bg-purple-50 border border-purple-100 p-4 rounded-xl"><p class="text-xs text-purple-700">การลาเดือนนี้</p><h3 class="text-xl font-bold text-purple-900 mt-1">${monthLeaves.length} วัน</h3></div>
+    <div class="bg-blue-50 border border-blue-100 p-4 rounded-xl"><p class="text-xs text-blue-700">บันทึกทั้งหมด</p><h3 class="text-xl font-bold text-blue-900 mt-1">${monthAtts.length} รายการ</h3></div>
+  `;
+
+  const combinedHistory = [
+    ...atts.map(a => ({ ...a, recordType: 'attendance' })),
+    ...leaves.map(l => ({ ...l, recordType: 'leave' }))
+  ].sort((a, b) => b.date.localeCompare(a.date));
+
+  if (!combinedHistory.length) {
+    body.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400">ยังไม่มีข้อมูลการเข้างานหรือวันลา</td></tr>`;
+    return;
+  }
+
+  body.innerHTML = combinedHistory.map(item => {
+    if (item.recordType === 'attendance') {
+      const isLate = item.status === 'late';
+      return `<tr class="hover:bg-slate-50 transition">
+        <td class="p-3 font-medium">${esc(item.date)}</td>
+        <td class="p-3"><span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">เข้างาน</span></td>
+        <td class="p-3">${esc(item.timeIn)} - ${esc(item.timeOut || 'ยังไม่ลง')}</td>
+        <td class="p-3">${isLate ? '<span class="text-amber-600 font-semibold">⚠️ สาย</span>' : '<span class="text-emerald-600">ตรงเวลา</span>'}</td>
+        <td class="p-3 text-center"><button onclick="deleteAttendance('${item.id}')" class="text-rose-400 hover:text-rose-600"><i class="fa-solid fa-trash"></i></button></td>
+      </tr>`;
+    } else {
+      return `<tr class="hover:bg-slate-50 transition">
+        <td class="p-3 font-medium">${esc(item.date)}</td>
+        <td class="p-3"><span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">วันลา (${esc(item.type)})</span></td>
+        <td class="p-3">เต็มวัน</td>
+        <td class="p-3 text-slate-500">${esc(item.reason || '-')}</td>
+        <td class="p-3 text-center"><button onclick="deleteLeave('${item.id}')" class="text-rose-400 hover:text-rose-600"><i class="fa-solid fa-trash"></i></button></td>
+      </tr>`;
+    }
+  }).join('');
+}
+
+window.openAttendanceModal = () => {
+  openForm({
+    title: 'บันทึกเวลาเข้างาน',
+    fields: [
+      { id: 'date', label: 'วันที่ (YYYY-MM-DD)', type: 'text', value: localISO() },
+      { id: 'timeIn', label: 'เวลาเข้างาน', type: 'text', value: '08:30' },
+      { id: 'timeOut', label: 'เวลาออกงาน (ถ้ามี)', type: 'text', value: '17:30' },
+      { id: 'status', label: 'สถานะเข้างาน', type: 'select', value: 'normal', options: [{ value: 'normal', label: 'ตรงเวลา' }, { value: 'late', label: 'มาสาย' }] }
+    ],
+    onSave: (v) => {
+      W().attendance.push({ id: 'att_' + Date.now(), ...v });
+      commit();
+    }
+  });
+};
+
+window.openLeaveModal = () => {
+  openForm({
+    title: 'ยื่นใบลา / บันทึกการลา',
+    fields: [
+      { id: 'date', label: 'วันที่ลา (YYYY-MM-DD)', type: 'text', value: localISO() },
+      { id: 'type', label: 'ประเภทการลา', type: 'select', value: 'ลากิจ', options: [{ value: 'ลาป่วย', label: '🏥 ลาป่วย' }, { value: 'ลากิจ', label: '✉️ ลากิจ' }, { value: 'ลาพักร้อน', label: '✈️ ลาพักร้อน' }] },
+      { id: 'reason', label: 'เหตุผลการลา', type: 'text', value: '', placeholder: 'ระบุเหตุผล...' }
+    ],
+    onSave: (v) => {
+      W().leaves.push({ id: 'leave_' + Date.now(), ...v });
+      commit();
+    }
+  });
+};
+
+window.deleteAttendance = (id) => {
+  if (!confirm("ลบบันทึกการเข้างานนี้?")) return;
+  W().attendance = W().attendance.filter(a => a.id !== id);
+  commit();
+};
+
+window.deleteLeave = (id) => {
+  if (!confirm("ลบบันทึกการลานี้?")) return;
+  W().leaves = W().leaves.filter(l => l.id !== id);
+  commit();
+};
+
+// 4. WORK ANALYTICS
+function renderWorkAnalytics() {
+  const kpiRow = document.getElementById('work-kpi-row');
+  const taskChart = document.getElementById('task-progress-chart');
+  const leaveChart = document.getElementById('leave-breakdown-chart');
+
+  if (!kpiRow || !taskChart || !leaveChart) return;
+
+  const tasks = W().tasks || [];
+  const atts = W().attendance || [];
+  const leaves = W().leaves || [];
+
+  const doneTasks = tasks.filter(t => t.status === 'done').length;
+  const totalTasks = tasks.length;
+  const completionRate = totalTasks > 0 ? ((doneTasks / totalTasks) * 100).toFixed(0) : 0;
+
+  const lateAtts = atts.filter(a => a.status === 'late').length;
+  const onTimeAtts = atts.filter(a => a.status === 'normal').length;
+  const totalAtts = atts.length;
+  const punctualityRate = totalAtts > 0 ? ((onTimeAtts / totalAtts) * 100).toFixed(0) : 100;
+
+  kpiRow.innerHTML = `
+    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm"><p class="text-xs text-slate-500">อัตราทำส่งงานสำเร็จ</p><h3 class="text-2xl font-bold text-emerald-600 mt-1">${completionRate}%</h3><p class="text-xs text-slate-400 mt-1">${doneTasks} จาก ${totalTasks} งาน</p></div>
+    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm"><p class="text-xs text-slate-500">ตรงต่อเวลา</p><h3 class="text-2xl font-bold text-blue-600 mt-1">${punctualityRate}%</h3><p class="text-xs text-slate-400 mt-1">มาสาย ${lateAtts} ครั้ง</p></div>
+    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm"><p class="text-xs text-slate-500">จำนวนวันลาสะสม</p><h3 class="text-2xl font-bold text-purple-600 mt-1">${leaves.length} วัน</h3><p class="text-xs text-slate-400 mt-1">ลาป่วย/ลากิจ/พักร้อน</p></div>
+    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm"><p class="text-xs text-slate-500">งานที่กำลังดำเนินการ</p><h3 class="text-2xl font-bold text-amber-600 mt-1">${tasks.filter(t=>t.status==='doing').length} งาน</h3><p class="text-xs text-slate-400 mt-1">In Progress</p></div>
+  `;
+
+  // Task Chart Circle SVG
+  taskChart.innerHTML = `
+    <div class="relative flex items-center justify-center my-4">
+      <svg class="w-40 h-40 transform -rotate-90">
+        <circle cx="80" cy="80" r="65" stroke="#e2e8f0" stroke-width="14" fill="transparent" />
+        <circle cx="80" cy="80" r="65" stroke="#10b981" stroke-width="14" fill="transparent" stroke-dasharray="408.4" stroke-dashoffset="${408.4 - (408.4 * completionRate) / 100}" stroke-linecap="round" />
+      </svg>
+      <div class="absolute text-center">
+        <span class="text-3xl font-bold text-slate-900">${completionRate}%</span>
+        <p class="text-xs text-slate-500">สำเร็จ</p>
+      </div>
+    </div>
+  `;
+
+  // Leave Breakdown
+  const sick = leaves.filter(l => l.type === 'ลาป่วย').length;
+  const personal = leaves.filter(l => l.type === 'ลากิจ').length;
+  const vacation = leaves.filter(l => l.type === 'ลาพักร้อน').length;
+
+  leaveChart.innerHTML = `
+    <div class="space-y-3">
+      <div>
+        <div class="flex justify-between text-xs text-slate-600 mb-1"><span>🏥 ลาป่วย</span><span>${sick} วัน</span></div>
+        <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden"><div class="bg-rose-500 h-full rounded-full" style="width: ${leaves.length ? (sick/leaves.length*100) : 0}%"></div></div>
+      </div>
+      <div>
+        <div class="flex justify-between text-xs text-slate-600 mb-1"><span>✉️ ลากิจ</span><span>${personal} วัน</span></div>
+        <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden"><div class="bg-amber-500 h-full rounded-full" style="width: ${leaves.length ? (personal/leaves.length*100) : 0}%"></div></div>
+      </div>
+      <div>
+        <div class="flex justify-between text-xs text-slate-600 mb-1"><span>✈️ ลาพักร้อน</span><span>${vacation} วัน</span></div>
+        <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden"><div class="bg-purple-500 h-full rounded-full" style="width: ${leaves.length ? (vacation/leaves.length*100) : 0}%"></div></div>
+      </div>
+    </div>
+  `;
+}
 
 renderAll();
 </script>
