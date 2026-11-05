@@ -72,6 +72,7 @@ header.bg-white{background:#fff!important;border-bottom:2px dashed #f3d9c3!impor
     <button onclick="switchTab('calendar')" class="tab-btn px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition bg-white text-slate-600 hover:bg-slate-100" data-target="calendar"><span class="mr-1">📅 </span><i class="hidden"></i> ปฏิทินการเงิน</button>
     <button onclick="switchTab('savings')" class="tab-btn px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition bg-white text-slate-600 hover:bg-slate-100" data-target="savings"><span class="mr-1">🐟 </span><i class="hidden"></i> เงินออม & เป้าหมาย</button>
     <button onclick="switchTab('wallets')" class="tab-btn px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition bg-white text-slate-600 hover:bg-slate-100" data-target="wallets"><span class="mr-1">👛 </span><i class="hidden"></i> กระเป๋า & ซองเงิน</button>
+    <button onclick="switchTab('invest')" class="tab-btn px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition bg-white text-slate-600 hover:bg-slate-100" data-target="invest"><span class="mr-1">📊</span>ลงทุน</button>
     <button onclick="switchTab('tools')" class="tab-btn px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition bg-white text-slate-600 hover:bg-slate-100" data-target="tools"><span class="mr-1">🧶 </span><i class="hidden"></i> เครื่องมือ & ส่งออก</button>
   </div>
 
@@ -270,6 +271,33 @@ header.bg-white{background:#fff!important;border-bottom:2px dashed #f3d9c3!impor
     </div>
   </div>
 
+  <!-- INVEST -->
+  <div id="tab-invest" class="tab-content hidden space-y-6">
+    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div><h2 class="text-lg font-bold text-slate-900">📊 โหมดลงทุน</h2><p class="text-xs text-slate-500">ราคาและข้อมูลย้อนหลังจากอินเทอร์เน็ต (Twelve Data) · ข้อมูลเพื่อประกอบการตัดสินใจ ไม่ใช่คำแนะนำการลงทุน</p></div>
+        <div class="flex flex-wrap items-center gap-2 text-xs">
+          <label class="flex items-center gap-1 text-slate-500"><input type="checkbox" id="iv-auto" onchange="ivToggleAuto(this.checked)"> รีเฟรชอัตโนมัติทุก 5 นาที</label>
+          <button onclick="ivRefresh()" class="bg-blue-600 text-white px-3 py-2 rounded-xl font-semibold">🔄 อัปเดตราคา</button>
+          <button onclick="ivSetKey()" class="bg-slate-100 px-3 py-2 rounded-xl font-semibold">🔑 API key</button>
+        </div>
+      </div>
+      <p id="iv-status" class="text-xs text-slate-400"></p>
+    </div>
+    <div id="iv-alerts"></div>
+    <div id="iv-portfolio" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3"></div>
+    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+      <div class="flex items-center justify-between"><h3 class="font-bold text-slate-900">👀 รายการหุ้นที่ติดตาม</h3><button onclick="ivAddWatch()" class="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-xl text-xs font-semibold">+ เพิ่มหุ้น</button></div>
+      <div id="iv-watch" class="space-y-2"></div>
+    </div>
+    <div id="iv-analysis" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3"></div>
+    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+      <div class="flex items-center justify-between gap-2"><h3 class="font-bold text-slate-900">✨ หุ้นที่น่าสนใจ</h3><button onclick="ivScan()" class="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-xl text-xs font-semibold">สแกนตลาด</button></div>
+      <p class="text-xs text-slate-500">ให้คะแนนจากเทรนด์ (เส้นค่าเฉลี่ย 20/50 วัน) RSI และโมเมนตัม 3 เดือน ของหุ้นที่ติดตาม ถือครอง และหุ้นใหญ่ยอดนิยม แพ็กเกจฟรีจำกัด 8 คำขอ/นาที การสแกนจึงใช้เวลาประมาณ 1-2 นาที</p>
+      <div id="iv-scan" class="space-y-2 text-sm"></div>
+    </div>
+  </div>
+
   <!-- TOOLS -->
   <div id="tab-tools" class="tab-content hidden space-y-6">
     <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
@@ -430,6 +458,7 @@ const defaultState = () => ({
   savings: [],
   debts: [],
   recurring: [],
+  invest: { watch: [], positions: [], prices: {} },
   nwHistory: {}
 });
 window.appState = defaultState();
@@ -540,11 +569,12 @@ window.switchTab = (tabId) => {
   activeBtn.classList.add('bg-blue-600', 'text-white', 'shadow-sm');
   activeBtn.classList.remove('bg-white', 'text-slate-600', 'hover:bg-slate-100');
   if (tabId === 'calendar') renderCalendar();
+  if (tabId === 'invest') renderInvest();
 };
 
 window.renderAll = () => {
   renderDashboard(); renderSalary(); renderTransactions();
-  renderWalletsAndJars(); renderSavings(); renderDebts(); renderRecurring(); renderDebtCompare();
+  renderWalletsAndJars(); renderSavings(); renderDebts(); renderRecurring(); renderDebtCompare(); renderInvest();
   if (!document.getElementById('tab-calendar').classList.contains('hidden')) renderCalendar();
 };
 
@@ -625,19 +655,6 @@ window.syncSalaryToTransactions = () => {
   const wallet = S().wallets.find(w => w.type === 'Asset');
   if (!wallet) { alert("กรุณาเพิ่มบัญชีในแท็บ กระเป๋า & ซองเงิน ก่อน"); return; }
   const t = { id: Date.now(), date: localISO(), type: "รายรับ", from: wallet.name, to: "", jar: "เงินเดือนสุทธิ", amount: net, note: "เงินเดือนสุทธิประจำเดือน" };
-  if (editTxId !== null) {
-    const old = S().transactions.find(x => x.id === editTxId);
-    if (old) { applyTx(old, -1); Object.assign(old, t, { id: old.id }); applyTx(old, 1); }
-    editTxId = null; S().transactions.sort((a, b) => b.date.localeCompare(a.date));
-    closeTransactionModal(); commit(); return;
-  }
-  const link = type === 'รายจ่าย' ? document.getElementById('tx-link').value : '';
-  if (link) {
-    const w = walletByName(t.from), ti = Number(document.getElementById('tx-link-target').value), note = t.note || undefined;
-    if (link === 'saving') { const sv = S().savings[ti]; sv.history = sv.history || []; sv.history.push(savingApply(sv, w, t.amount, t.date, true, note)); }
-    else doDebtPay(S().debts[ti], w, t.amount, t.date, note, true);
-    closeTransactionModal(); commit(); return;
-  }
   applyTx(t, 1);
   S().transactions.unshift(t);
   commit();
@@ -753,6 +770,19 @@ window.saveTransaction = () => {
   if (!t.date) { alert("กรุณาเลือกวันที่"); return; }
   if (!t.amount || t.amount <= 0) { alert("กรุณาระบุจำนวนเงินให้ถูกต้อง"); return; }
   if (type === 'โอนเงิน' && t.from === t.to) { alert("บัญชีต้นทางและปลายทางต้องไม่ซ้ำกัน"); return; }
+  if (editTxId !== null) {
+    const old = S().transactions.find(x => x.id === editTxId);
+    if (old) { applyTx(old, -1); Object.assign(old, t, { id: old.id }); applyTx(old, 1); }
+    editTxId = null; S().transactions.sort((a, b) => b.date.localeCompare(a.date));
+    closeTransactionModal(); commit(); return;
+  }
+  const link = type === 'รายจ่าย' ? document.getElementById('tx-link').value : '';
+  if (link) {
+    const w = walletByName(t.from), ti = Number(document.getElementById('tx-link-target').value), note = t.note || undefined;
+    if (link === 'saving') { const sv = S().savings[ti]; sv.history = sv.history || []; sv.history.push(savingApply(sv, w, t.amount, t.date, true, note)); }
+    else doDebtPay(S().debts[ti], w, t.amount, t.date, note, true);
+    closeTransactionModal(); commit(); return;
+  }
   applyTx(t, 1);
   S().transactions.unshift(t);
   S().transactions.sort((a, b) => b.date.localeCompare(a.date));
@@ -1375,6 +1405,203 @@ window.importJSON = (inp) => {
   };
   rd.readAsText(f);
 };
+
+
+// ---------- โหมดลงทุน ----------
+const IV = () => (S().invest = Object.assign({ watch: [], positions: [], prices: {} }, S().invest || {}));
+const n2 = (x) => Number(x).toLocaleString('en-US', { maximumFractionDigits: 2 });
+const ivId = (sym, ex) => sym + (ex ? ':' + ex : '');
+const ivQuotes = {}, ivCache = {}; const ivState = { sel: null, view: 'day' }; let ivScanRes = null, ivTimer = null, ivBusy = '';
+const ivKey = () => { try { return localStorage.getItem('td_key') || ''; } catch (e) { return ''; } };
+window.ivSetKey = () => {
+  const k = prompt('วาง Twelve Data API key (สมัครฟรีที่ twelvedata.com)\nเก็บไว้ในเครื่องนี้เท่านั้น ไม่ซิงก์ขึ้นคลาวด์', ivKey());
+  if (k === null) return; try { localStorage.setItem('td_key', k.trim()); } catch (e) { alert('บันทึก key ในเบราว์เซอร์นี้ไม่ได้'); } renderInvest();
+};
+async function tdFetch(path, params) {
+  const key = ivKey(); if (!key) throw new Error('ยังไม่ได้ตั้งค่า API key (กดปุ่ม 🔑)');
+  const u = new URL('https://api.twelvedata.com/' + path);
+  Object.entries({ ...params, apikey: key }).forEach(([k, v]) => v && u.searchParams.set(k, v));
+  const j = await (await fetch(u)).json();
+  if (j.status === 'error' || j.code >= 400) throw new Error(j.message || 'ดึงข้อมูลไม่สำเร็จ');
+  return j;
+}
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+async function getQuote(sym, ex) {
+  const j = await tdFetch('quote', { symbol: sym, exchange: ex });
+  const q = { price: +j.close, prev: +j.previous_close, pct: +j.percent_change, name: j.name, open: j.is_market_open, at: Date.now() };
+  ivQuotes[ivId(sym, ex)] = q; IV().prices[ivId(sym, ex)] = q.price; return q;
+}
+async function getSeries(sym, ex, size) {
+  const c = ivCache[ivId(sym, ex)];
+  if (c && c.bars.length >= Math.min(size, c.max) && Date.now() - c.at < 6e5) return c.bars;
+  const j = await tdFetch('time_series', { symbol: sym, exchange: ex, interval: '1day', outputsize: size });
+  const bars = (j.values || []).map(v => ({ d: v.datetime, o: +v.open, h: +v.high, l: +v.low, c: +v.close, v: +v.volume })).reverse();
+  ivCache[ivId(sym, ex)] = { bars, at: Date.now(), max: size }; return bars;
+}
+const smaOf = (a, n) => a.length >= n ? sum(a.slice(-n), x => x) / n : null;
+function rsiOf(a, n = 14) {
+  if (a.length <= n) return null; let g = 0, l = 0;
+  for (let i = a.length - n; i < a.length; i++) { const d = a[i] - a[i - 1]; if (d > 0) g += d; else l -= d; }
+  return l === 0 ? 100 : 100 - 100 / (1 + g / l);
+}
+function analyze(bars) {
+  const c = bars.map(b => b.c), last = c[c.length - 1], ret = (n) => c.length > n ? (last / c[c.length - 1 - n] - 1) * 100 : null;
+  const yr = bars.slice(-252), a = { last, sma20: smaOf(c, 20), sma50: smaOf(c, 50), rsi: rsiOf(c), r1m: ret(21), r3m: ret(63), r1y: ret(252), hi: Math.max(...yr.map(b => b.h)), lo: Math.min(...yr.map(b => b.l)), reasons: [], score: 0 };
+  const add = (pts, why) => { a.score += pts; a.reasons.push(why); };
+  if (a.sma20 && a.sma50) { if (last > a.sma20 && a.sma20 > a.sma50) add(2, 'เทรนด์ขาขึ้น (ราคา > SMA20 > SMA50)'); else if (last < a.sma20 && a.sma20 < a.sma50) add(-2, 'เทรนด์ขาลง (ราคา < SMA20 < SMA50)'); else add(0, 'เทรนด์ยังไม่ชัด'); }
+  if (a.rsi !== null) { if (a.rsi > 70) add(-1, `RSI ${a.rsi.toFixed(0)} ซื้อมากเกินไป ระวังย่อตัว`); else if (a.rsi < 30) add(1, `RSI ${a.rsi.toFixed(0)} ขายมากเกินไป อาจรีบาวด์`); else if (a.rsi >= 45 && a.rsi <= 65) add(1, `RSI ${a.rsi.toFixed(0)} โมเมนตัมสมดุล`); }
+  if (a.r3m !== null) add(a.r3m > 0 ? 1 : -1, `ผลตอบแทน 3 เดือน ${a.r3m >= 0 ? '+' : ''}${a.r3m.toFixed(1)}%`);
+  a.label = a.score >= 3 ? 'น่าสนใจ 🟢' : a.score >= 1 ? 'เป็นกลาง-บวก 🟡' : a.score >= 0 ? 'เป็นกลาง ⚪' : 'ระวัง 🔴';
+  return a;
+}
+function posStats(pos) {
+  let sh = 0, cost = 0, real = 0;
+  [...pos.trades].sort((a, b) => a.date.localeCompare(b.date)).forEach(t => {
+    if (t.side === 'buy') { sh += t.qty; cost += t.qty * t.price + t.fee; }
+    else { const avg = sh > 0 ? cost / sh : 0; real += t.qty * t.price - t.fee - avg * t.qty; cost -= avg * t.qty; sh -= t.qty; }
+  });
+  return { sh, cost, avg: sh > 0 ? cost / sh : 0, real };
+}
+function ivAlerts() {
+  const out = [], iv = IV(); let total = 0; const vals = [];
+  iv.positions.forEach(p => { const st = posStats(p), px = iv.prices[ivId(p.symbol, p.exchange)]; if (st.sh > 0 && px) { vals.push([p, st.sh * px]); total += st.sh * px; const pl = (px * st.sh / st.cost - 1) * 100; if (pl <= -10) out.push(['🔻', `${p.symbol} ขาดทุน ${pl.toFixed(1)}% จากต้นทุน ทบทวนแผน/จุดตัดขาดทุน`]); if (pl >= 20) out.push(['🎯', `${p.symbol} กำไร +${pl.toFixed(1)}% พิจารณาทยอยทำกำไร`]); } });
+  if (vals.length > 1) vals.forEach(([p, v]) => { if (v / total > .4) out.push(['⚖️', `${p.symbol} คิดเป็น ${(v / total * 100).toFixed(0)}% ของพอร์ต กระจุกตัวสูง`]); });
+  const syms = new Map(); iv.watch.forEach(w => syms.set(ivId(w.symbol, w.exchange), w)); iv.positions.forEach(p => syms.has(ivId(p.symbol, p.exchange)) || syms.set(ivId(p.symbol, p.exchange), p));
+  syms.forEach((w, id) => {
+    const q = ivQuotes[id], px = q ? q.price : iv.prices[id];
+    if (px && w.above && px >= w.above) out.push(['🔔', `${w.symbol} ราคา ${n2(px)} ถึงเป้าบน ${n2(w.above)}`]);
+    if (px && w.below && px <= w.below) out.push(['🔔', `${w.symbol} ราคา ${n2(px)} ต่ำกว่าเป้าล่าง ${n2(w.below)}`]);
+    if (q && Math.abs(q.pct) >= 5) out.push([q.pct > 0 ? '🚀' : '📉', `${w.symbol} วันนี้ ${q.pct > 0 ? '+' : ''}${q.pct.toFixed(1)}% เคลื่อนไหวแรง`]);
+    const c = ivCache[id]; if (c && c.bars.length > 20) { const r = rsiOf(c.bars.map(b => b.c)); if (r > 70) out.push(['🌡️', `${w.symbol} RSI ${r.toFixed(0)} ร้อนแรง`]); else if (r < 30) out.push(['🧊', `${w.symbol} RSI ${r.toFixed(0)} ขายมากเกินไป`]); }
+  });
+  return out;
+}
+window.ivToggleAuto = (on) => { clearInterval(ivTimer); if (on) ivTimer = setInterval(ivRefresh, 3e5); };
+window.ivRefresh = async () => {
+  const iv = IV(), ids = new Map(); iv.watch.forEach(w => ids.set(ivId(w.symbol, w.exchange), w)); iv.positions.forEach(p => ids.set(ivId(p.symbol, p.exchange), p));
+  if (!ids.size) { alert('เพิ่มหุ้นที่ติดตามหรือซื้อหุ้นก่อน'); return; }
+  const st = document.getElementById('iv-status'); let ok = 0, err = '';
+  for (const [id, w] of ids) { st.innerText = `กำลังอัปเดต ${id}…`; try { await getQuote(w.symbol, w.exchange); ok++; } catch (e) { err = `${id}: ${e.message}`; if (/credits|limit/i.test(e.message)) { await sleep(8000); } } if (ids.size > 7) await sleep(7500); }
+  ivBusy = `อัปเดต ${ok}/${ids.size} รายการ เมื่อ ${new Date().toLocaleTimeString('th-TH')}${err ? ' · ' + err : ''}`;
+  saveData(); renderInvest();
+};
+window.ivAddWatch = () => openForm({ title: 'เพิ่มหุ้นที่ติดตาม', fields: [
+  { id: 'symbol', label: 'ชื่อย่อหุ้น (เช่น AAPL, NVDA, PTT)', type: 'text', value: '', required: true },
+  { id: 'exchange', label: 'ตลาด (เว้นว่าง = สหรัฐ, ไทยใส่ SET)', type: 'text', value: '' }],
+  onSave: (v) => { const sym = v.symbol.trim().toUpperCase(), ex = v.exchange.trim().toUpperCase(); if (IV().watch.some(w => w.symbol === sym && w.exchange === ex)) { alert('มีอยู่แล้ว'); return false; } IV().watch.push({ symbol: sym, exchange: ex, above: 0, below: 0 }); commit(); } });
+window.ivAlertSet = (i) => { const w = IV().watch[i]; openForm({ title: `ตั้งเตือนราคา ${w.symbol}`, fields: [
+  { id: 'above', label: 'เตือนเมื่อราคา ≥ (0 = ปิด)', type: 'number', value: w.above || 0 }, { id: 'below', label: 'เตือนเมื่อราคา ≤ (0 = ปิด)', type: 'number', value: w.below || 0 }],
+  onSave: (v) => { w.above = v.above; w.below = v.below; commit(); } }); };
+window.ivRemoveWatch = (i) => { if (confirm('เลิกติดตามหุ้นนี้?')) { IV().watch.splice(i, 1); commit(); } };
+window.ivTrade = (sym, ex, side, pi, ti) => {
+  if (!S().wallets.length) { alert('เพิ่มบัญชีก่อน (ใช้บัญชีหุ้นเป็น "กระเป๋า" ได้)'); return; }
+  const pos = typeof pi === 'number' ? IV().positions[pi] : null, old = pos && typeof ti === 'number' ? pos.trades[ti] : null;
+  const ow = old ? S().wallets.find(w => w.id === old.walletId) : null;
+  openForm({ title: `${old ? 'แก้ไข' : ''}${(old ? old.side : side) === 'buy' ? 'ซื้อ' : 'ขาย'} ${sym}`, fields: [
+    { id: 'qty', label: 'จำนวนหุ้น', type: 'number', value: old ? old.qty : 10 },
+    { id: 'price', label: 'ราคาต่อหุ้น', type: 'number', value: old ? old.price : (IV().prices[ivId(sym, ex)] || 0) },
+    { id: 'fee', label: 'ค่าธรรมเนียม (บาท/สกุลเงินบัญชี)', type: 'number', value: old ? old.fee : 0 },
+    { id: 'wallet', label: 'บัญชีหุ้น/บัญชีที่ใช้', type: 'select', value: ow ? String(ow.id) : String(S().wallets[0].id), options: S().wallets.map(w => ({ value: String(w.id), label: `${walletIcon(w)} ${w.name} (${money(w.balance)})` })) },
+    { id: 'date', label: 'วันที่ (YYYY-MM-DD)', type: 'text', value: old ? old.date : localISO() }],
+    onSave: (v) => {
+      const sd = old ? old.side : side, w = S().wallets.find(x => String(x.id) === v.wallet);
+      if (v.qty <= 0 || v.price <= 0 || v.fee < 0 || !w || !/^\d{4}-\d{2}-\d{2}$/.test(v.date)) { alert('ตรวจสอบข้อมูล'); return false; }
+      let p = pos || IV().positions.find(x => x.symbol === sym && x.exchange === ex);
+      const others = p ? { ...p, trades: p.trades.filter(t => t !== old) } : { trades: [] };
+      if (sd === 'sell' && posStats(others).sh < v.qty - 1e-9) { alert('จำนวนหุ้นที่ถืออยู่ไม่พอขาย'); return false; }
+      if (sd === 'buy' && w.type !== 'Liability' && v.qty * v.price + v.fee > Number(w.balance) && !confirm('เงินในบัญชีไม่พอ ยอดจะติดลบ ต้องการทำต่อ?')) return false;
+      if (old) { const ow2 = S().wallets.find(x => x.id === old.walletId); if (ow2) walletMove(ow2, old.side === 'buy' ? old.qty * old.price + old.fee : -(old.qty * old.price - old.fee)); p.trades.splice(p.trades.indexOf(old), 1); }
+      if (!p) { p = { symbol: sym, exchange: ex, trades: [] }; IV().positions.push(p); }
+      walletMove(w, sd === 'buy' ? -(v.qty * v.price + v.fee) : v.qty * v.price - v.fee);
+      p.trades.push({ side: sd, qty: v.qty, price: v.price, fee: v.fee, date: v.date, walletId: w.id, walletName: w.name });
+      commit();
+    } });
+};
+window.ivCancelTrade = (pi, ti) => {
+  const p = IV().positions[pi], t = p.trades[ti];
+  if (t.side === 'buy' && posStats({ trades: p.trades.filter(x => x !== t) }).sh < -1e-9) { alert('ยกเลิกรายการซื้อนี้ไม่ได้ เพราะมีรายการขายที่อ้างอิงอยู่'); return; }
+  if (!confirm(`ยกเลิก${t.side === 'buy' ? 'ซื้อ' : 'ขาย'} ${t.qty} หุ้น? เงินจะ${t.side === 'buy' ? 'คืนเข้า' : 'หักออกจาก'}บัญชี "${t.walletName}"`)) return;
+  const w = S().wallets.find(x => x.id === t.walletId); if (w) walletMove(w, t.side === 'buy' ? t.qty * t.price + t.fee : -(t.qty * t.price - t.fee));
+  p.trades.splice(ti, 1); if (!p.trades.length) IV().positions.splice(pi, 1); commit();
+};
+window.ivAnalyze = async (sym, ex) => {
+  ivState.sel = { sym, ex }; ivState.bars = null; ivState.err = ''; renderIvAnalysis();
+  try { ivState.bars = await getSeries(sym, ex, 1300); } catch (e) { ivState.err = e.message; }
+  renderIvAnalysis(); renderIvAlerts();
+};
+window.ivView = (v) => { ivState.view = v; renderIvAnalysis(); };
+function groupBars(bars, len) {
+  const m = new Map(); bars.forEach(b => { const k = b.d.slice(0, len); if (!m.has(k)) m.set(k, []); m.get(k).push(b); });
+  return [...m].map(([k, a]) => ({ k, o: a[0].o, c: a[a.length - 1].c, h: Math.max(...a.map(x => x.h)), l: Math.min(...a.map(x => x.l)), v: sum(a, x => x.v) }));
+}
+function lineSvg(vals) {
+  if (vals.length < 2) return ''; const mn = Math.min(...vals), mx = Math.max(...vals), rg = mx - mn || 1, up = vals[vals.length - 1] >= vals[0];
+  return `<svg viewBox="0 0 300 90" class="w-full h-28"><polyline fill="none" stroke="${up ? '#10b981' : '#f43f5e'}" stroke-width="2" stroke-linejoin="round" points="${vals.map((v, i) => `${(i / (vals.length - 1) * 296 + 2).toFixed(1)},${(84 - (v - mn) / rg * 78).toFixed(1)}`).join(' ')}"/></svg><div class="flex justify-between text-[10px] text-slate-400"><span>ต่ำ ${n2(mn)}</span><span>สูง ${n2(mx)}</span></div>`;
+}
+function renderIvAnalysis() {
+  const el = document.getElementById('iv-analysis'); if (!el) return;
+  if (!ivState.sel) { el.innerHTML = '<h3 class="font-bold text-slate-900">🔍 วิเคราะห์หุ้น</h3><p class="text-sm text-slate-400">กด "วิเคราะห์" ที่หุ้นด้านบน เพื่อดูรายวัน รายเดือน รายปี</p>'; return; }
+  const { sym, ex } = ivState.sel, head = `<div class="flex items-center justify-between flex-wrap gap-2"><h3 class="font-bold text-slate-900">🔍 ${esc(ivId(sym, ex))}</h3><div class="flex gap-1 text-xs">${[['day', 'รายวัน'], ['month', 'รายเดือน'], ['year', 'รายปี']].map(([k, n]) => `<button onclick="ivView('${k}')" class="px-3 py-1.5 rounded-full font-semibold ${ivState.view === k ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'}">${n}</button>`).join('')}</div></div>`;
+  if (ivState.err) { el.innerHTML = head + `<p class="text-sm text-rose-600">${esc(ivState.err)}</p>`; return; }
+  if (!ivState.bars) { el.innerHTML = head + '<p class="text-sm text-slate-400">กำลังดึงข้อมูล…</p>'; return; }
+  const bars = ivState.bars, a = analyze(bars), chg = (x, y) => y ? (x / y - 1) * 100 : 0, pc = (x) => `<b class="${x >= 0 ? 'text-emerald-600' : 'text-rose-600'}">${x >= 0 ? '+' : ''}${x.toFixed(2)}%</b>`;
+  let body = '';
+  if (ivState.view === 'day') {
+    const d = bars.slice(-30), t = d[d.length - 1], y = d[d.length - 2] || t;
+    body = lineSvg(d.map(b => b.c)) + `<div class="text-sm space-y-1"><div>ล่าสุด ${t.d}: <b>${n2(t.c)}</b> ${pc(chg(t.c, y.c))} · สูง ${n2(t.h)} / ต่ำ ${n2(t.l)} · ปริมาณ ${fmt0(t.v)}</div>${d.slice(-7).reverse().map((b, i, arr) => { const pv = bars[bars.indexOf(b) - 1]; return `<div class="flex justify-between text-xs text-slate-500"><span>${b.d}</span><span>${n2(b.c)} ${pv ? pc(chg(b.c, pv.c)) : ''}</span></div>`; }).join('')}</div>`;
+  } else if (ivState.view === 'month') {
+    const m = groupBars(bars, 7).slice(-12);
+    body = lineSvg(m.map(x => x.c)) + `<div class="space-y-1">${m.slice().reverse().map(x => `<div class="flex justify-between text-xs text-slate-600"><span>${x.k}</span><span>${n2(x.o)} → ${n2(x.c)} ${pc(chg(x.c, x.o))}</span></div>`).join('')}</div>`;
+  } else {
+    const y = groupBars(bars, 4);
+    body = lineSvg(groupBars(bars, 7).map(x => x.c)) + `<div class="space-y-1">${y.slice().reverse().map(x => `<div class="flex justify-between text-xs text-slate-600"><span>ปี ${x.k}</span><span>${n2(x.o)} → ${n2(x.c)} ${pc(chg(x.c, x.o))}</span></div>`).join('')}</div>`;
+  }
+  const f = (x) => x === null ? '—' : x.toFixed(1) + '%';
+  el.innerHTML = head + body + `<div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs space-y-1"><div class="font-semibold text-sm">สรุปเชิงเทคนิค: ${a.label}</div>${a.reasons.map(r => `<div>• ${esc(r)}</div>`).join('')}<div class="text-slate-500">SMA20 ${a.sma20 ? n2(a.sma20) : '—'} · SMA50 ${a.sma50 ? n2(a.sma50) : '—'} · 1 เดือน ${f(a.r1m)} · 1 ปี ${f(a.r1y)} · ช่วง 52 สัปดาห์ ${n2(a.lo)}–${n2(a.hi)}</div><div class="text-slate-400">ข้อมูลย้อนหลังเท่าที่ผู้ให้บริการมี · ไม่ใช่คำแนะนำการลงทุน</div></div>`;
+}
+window.ivScan = async () => {
+  const el = document.getElementById('iv-scan'), iv = IV(), ids = new Map();
+  iv.watch.forEach(w => ids.set(ivId(w.symbol, w.exchange), w)); iv.positions.forEach(p => ids.set(ivId(p.symbol, p.exchange), p));
+  ['AAPL', 'MSFT', 'NVDA', 'GOOGL', 'AMZN', 'KO', 'JNJ', 'V'].forEach(x => ids.has(x) || ids.set(x, { symbol: x, exchange: '' }));
+  const res = []; let i = 0;
+  for (const [id, w] of ids) { i++; el.innerHTML = `<p class="text-slate-400">กำลังสแกน ${i}/${ids.size}: ${id}… (เว้นจังหวะเพื่อไม่เกินโควตา)</p>`; const cached = ivCache[id] && Date.now() - ivCache[id].at < 6e5;
+    try { const b = await getSeries(w.symbol, w.exchange, 120); if (b.length > 60) res.push({ id, w, a: analyze(b) }); } catch (e) { if (/api key/i.test(e.message)) { el.innerHTML = `<p class="text-rose-600">${esc(e.message)}</p>`; return; } }
+    if (!cached && i < ids.size) await sleep(7800); }
+  ivScanRes = res.sort((a, b) => b.a.score - a.a.score); renderIvScan(); renderIvAlerts();
+};
+function renderIvScan() {
+  const el = document.getElementById('iv-scan'); if (!el || !ivScanRes) return;
+  el.innerHTML = ivScanRes.slice(0, 5).map(r => `<div class="border border-slate-200 rounded-xl p-3 flex items-start justify-between gap-2"><div><b>${esc(r.id)}</b> <span class="text-xs">${r.a.label}</span><div class="text-xs text-slate-500">${r.a.reasons.map(esc).join(' · ')}</div></div><button onclick="ivAnalyze('${r.w.symbol}','${r.w.exchange || ''}')" class="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-lg whitespace-nowrap">วิเคราะห์</button></div>`).join('') + '<p class="text-xs text-slate-400">จัดอันดับจากเกณฑ์ทางเทคนิคแบบง่าย ไม่รวมงบการเงิน/ข่าว · ไม่ใช่คำแนะนำการลงทุน</p>';
+}
+function renderIvAlerts() {
+  const el = document.getElementById('iv-alerts'); if (!el) return; const a = ivAlerts();
+  el.innerHTML = a.length ? `<div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 space-y-1"><h3 class="font-bold text-amber-800 text-sm">🔔 การแจ้งเตือน (${a.length})</h3>${a.map(([i, t]) => `<div class="text-sm text-amber-900">${i} ${esc(t)}</div>`).join('')}</div>` : '';
+}
+function renderInvest() {
+  const el = document.getElementById('iv-portfolio'); if (!el) return; const iv = IV();
+  document.getElementById('iv-status').innerText = ivKey() ? (ivBusy || 'พร้อมใช้งาน กด "อัปเดตราคา" เพื่อดึงราคาล่าสุด') : '⚠️ ยังไม่ได้ตั้งค่า API key — กด 🔑 แล้ววาง key จาก twelvedata.com (ฟรี)';
+  let tv = 0, tc = 0;
+  const rows = iv.positions.map((p, pi) => {
+    const st = posStats(p), id = ivId(p.symbol, p.exchange), px = (ivQuotes[id] || {}).price || iv.prices[id], val = px ? st.sh * px : null, pl = val !== null && st.sh > 0 ? val - st.cost : null;
+    if (st.sh > 0) { tc += st.cost; if (val !== null) tv += val; }
+    return `<div class="border border-slate-200 rounded-xl p-3 space-y-1"><div class="flex flex-wrap items-center justify-between gap-2"><div><b>${esc(id)}</b> <span class="text-xs text-slate-500">${n2(st.sh)} หุ้น · ต้นทุนเฉลี่ย ${n2(st.avg)}</span></div>
+      <div class="text-right text-sm">${px ? `ราคา ${n2(px)}` : 'ยังไม่มีราคา'} ${pl !== null ? `<b class="${pl >= 0 ? 'text-emerald-600' : 'text-rose-600'}">${pl >= 0 ? '+' : ''}${fmt0(pl)} (${(pl / st.cost * 100).toFixed(1)}%)</b>` : ''}</div></div>
+      ${st.real ? `<div class="text-xs text-slate-500">กำไร/ขาดทุนที่รับรู้แล้ว ${fmt0(st.real)}</div>` : ''}
+      <div class="flex flex-wrap gap-2 text-xs"><button onclick="ivTrade('${p.symbol}','${p.exchange}','buy',${pi})" class="bg-emerald-500 text-white px-3 py-1.5 rounded-lg font-semibold">ซื้อเพิ่ม</button><button onclick="ivTrade('${p.symbol}','${p.exchange}','sell',${pi})" class="bg-rose-500 text-white px-3 py-1.5 rounded-lg font-semibold">ขาย</button><button onclick="ivAnalyze('${p.symbol}','${p.exchange}')" class="bg-slate-100 px-3 py-1.5 rounded-lg font-semibold">วิเคราะห์</button></div>
+      <details><summary class="text-xs text-slate-500 cursor-pointer">ประวัติซื้อขาย (${p.trades.length})</summary><div class="space-y-1 mt-1">${p.trades.map((t, ti) => [t, ti]).reverse().map(([t, ti]) => `<div class="flex justify-between text-xs text-slate-600"><span>${esc(t.date)} · ${t.side === 'buy' ? 'ซื้อ' : 'ขาย'} ${n2(t.qty)} @ ${n2(t.price)} · ${esc(t.walletName)}</span><span class="space-x-2"><button onclick="ivTrade('${p.symbol}','${p.exchange}','${t.side}',${pi},${ti})" class="text-slate-400 hover:text-blue-600"><i class="fa-solid fa-pen"></i></button><button onclick="ivCancelTrade(${pi},${ti})" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-rotate-left"></i></button></span></div>`).join('')}</div></details></div>`;
+  }).join('');
+  const tpl = tc > 0 ? tv - tc : 0;
+  el.innerHTML = `<div class="flex items-center justify-between flex-wrap gap-2"><h3 class="font-bold text-slate-900">💼 พอร์ตหุ้น</h3><button onclick="ivNewTrade()" class="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-xl text-xs font-semibold">+ ซื้อหุ้น</button></div>
+    <p class="text-xs text-slate-500">ซื้อ/ขายจะหัก/เพิ่มเงินในบัญชีที่เลือก (สร้างบัญชีหุ้นในแท็บกระเป๋า) · มูลค่าพอร์ตแสดงแยก ไม่รวมในสินทรัพย์รวมหน้าภาพรวม</p>
+    ${iv.positions.length ? `<div class="grid grid-cols-3 gap-2 text-center text-xs"><div class="bg-slate-50 rounded-xl p-2">ต้นทุน<br><b class="text-sm">${fmt0(tc)}</b></div><div class="bg-slate-50 rounded-xl p-2">มูลค่าตลาด<br><b class="text-sm">${tv ? fmt0(tv) : '—'}</b></div><div class="bg-slate-50 rounded-xl p-2">กำไร/ขาดทุน<br><b class="text-sm ${tpl >= 0 ? 'text-emerald-600' : 'text-rose-600'}">${tv ? (tpl >= 0 ? '+' : '') + fmt0(tpl) : '—'}</b></div></div>` : ''}
+    ${rows || '<p class="text-sm text-slate-400">ยังไม่มีหุ้นในพอร์ต</p>'}`;
+  document.getElementById('iv-watch').innerHTML = iv.watch.map((w, i) => { const id = ivId(w.symbol, w.exchange), q = ivQuotes[id], px = q ? q.price : iv.prices[id];
+    return `<div class="flex flex-wrap items-center justify-between gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm"><span><b>${esc(id)}</b> ${q && q.name ? `<span class="text-xs text-slate-400">${esc(q.name)}</span>` : ''}</span><span>${px ? n2(px) : '—'} ${q ? `<b class="${q.pct >= 0 ? 'text-emerald-600' : 'text-rose-600'}">${q.pct >= 0 ? '+' : ''}${q.pct.toFixed(2)}%</b>` : ''}</span>
+    <span class="flex gap-2 text-xs"><button onclick="ivAnalyze('${w.symbol}','${w.exchange}')" class="bg-white border border-slate-200 px-2 py-1 rounded-lg">วิเคราะห์</button><button onclick="ivTrade('${w.symbol}','${w.exchange}','buy')" class="bg-white border border-slate-200 px-2 py-1 rounded-lg">ซื้อ</button><button onclick="ivAlertSet(${i})" class="bg-white border border-slate-200 px-2 py-1 rounded-lg">🔔${w.above || w.below ? ' ✓' : ''}</button><button onclick="ivRemoveWatch(${i})" class="text-rose-400"><i class="fa-solid fa-trash"></i></button></span></div>`; }).join('') || '<p class="text-sm text-slate-400">ยังไม่ได้ติดตามหุ้น กด "+ เพิ่มหุ้น"</p>';
+  renderIvAlerts(); renderIvAnalysis(); renderIvScan();
+}
+window.ivNewTrade = () => openForm({ title: 'ซื้อหุ้น', fields: [{ id: 'symbol', label: 'ชื่อย่อหุ้น (เช่น AAPL, PTT)', type: 'text', value: '', required: true }, { id: 'exchange', label: 'ตลาด (เว้นว่าง = สหรัฐ, ไทยใส่ SET)', type: 'text', value: '' }],
+  onSave: (v) => { setTimeout(() => ivTrade(v.symbol.trim().toUpperCase(), v.exchange.trim().toUpperCase(), 'buy'), 50); } });
 
 // ---------- เครื่องมือ ----------
 window.runSimulator = () => {
