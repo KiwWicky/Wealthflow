@@ -1868,7 +1868,7 @@ function renderAccountOverview() {
   }
   const data = months.map(m => {
     const tx = S().transactions.filter(t => monthKey(t.date) === m.key && txInSel(t));
-    return { ...m, inc: sum(tx.filter(t => t.type === 'รายรับ'), t => t.amount), exp: sum(atx.filter(t => t.type === 'รายจ่าย'), t => t.amount) };
+    return { ...m, inc: sum(tx.filter(t => t.type === 'รายรับ'), t => t.amount), exp: sum(tx.filter(t => t.type === 'รายจ่าย'), t => t.amount) };
   });
   const max = Math.max(1, ...data.flatMap(d => [d.inc, d.exp]));
   const gw = 520 / 6, H = 140;
