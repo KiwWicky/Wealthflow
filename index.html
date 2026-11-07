@@ -131,6 +131,7 @@ header.bg-white{background:#fff!important;border-bottom:2px dashed #f3d9c3!impor
   <!-- DASHBOARD -->
   <div id="tab-dashboard" class="tab-content space-y-6">
     <div class="flex items-start gap-3"><div class="text-4xl wag">🐱</div><div id="cat-say" class="cat-bubble px-4 py-3 text-sm flex-1"></div></div>
+    <div id="dash-debts"></div>
     <div id="health-row" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
       <div onclick="showKpi('networth')" class="cursor-pointer hover:border-blue-300 hover:shadow-md transition bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
@@ -303,6 +304,7 @@ header.bg-white{background:#fff!important;border-bottom:2px dashed #f3d9c3!impor
         <div class="flex flex-wrap gap-2"><button onclick="openDebtModal()" class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-xl text-sm font-medium shadow-sm transition"><i class="fa-solid fa-plus mr-2"></i> เพิ่มหนี้สิน</button>
           <button onclick="openLoanWizard('student')" class="bg-amber-100 hover:bg-amber-200 text-amber-800 px-3 py-2 rounded-xl text-sm font-medium">🎓 กยศ.</button>
           <button onclick="openLoanWizard('car')" class="bg-amber-100 hover:bg-amber-200 text-amber-800 px-3 py-2 rounded-xl text-sm font-medium">🚗 ผ่อนรถ/ของ</button>
+          <button onclick="openLoanWizard('shop')" class="bg-amber-100 hover:bg-amber-200 text-amber-800 px-3 py-1.5 rounded-xl text-sm font-medium">🛒 ผ่อนออนไลน์</button>
           <button onclick="openLoanWizard('loan')" class="bg-amber-100 hover:bg-amber-200 text-amber-800 px-3 py-2 rounded-xl text-sm font-medium">🏠 สินเชื่อ</button></div>
       </div>
       <div id="debt-summary" class="grid grid-cols-1 sm:grid-cols-3 gap-3"></div>
@@ -806,7 +808,7 @@ window.switchTab = (tabId) => {
 
 window.renderAll = () => {
   renderDashboard(); renderSalary(); renderTransactions();
-  renderWalletsAndJars(); renderSavings(); renderDebts(); renderRecurring(); renderDebtCompare(); renderInvest();
+  renderWalletsAndJars(); renderSavings(); renderDebts(); renderDashDebts(); renderRecurring(); renderDebtCompare(); renderInvest();
   if (!document.getElementById('tab-calendar').classList.contains('hidden')) renderCalendar();
 };
 
@@ -1446,6 +1448,23 @@ function walletMove(w, delta) {
   w.balance = Number(w.balance) + (w.type === 'Liability' ? -delta : delta);
 }
 function debtRemaining() { return sum(S().debts || [], d => d.remaining); }
+function renderDashDebts() {
+  const el = document.getElementById('dash-debts'); if (!el) return;
+  const list = S().debts || [], ym = localISO().slice(0, 7), today = new Date().getDate();
+  if (!list.length) { el.innerHTML = ''; return; }
+  const rows = list.map((d, idx) => ({ d, idx, ...monthNeed(d, ym) })), rem = debtRemaining();
+  const nominal = sum(rows, r => r.nominal), paid = sum(rows, r => Math.min(r.paid, r.nominal || r.paid)), need = sum(rows, r => r.need);
+  el.innerHTML = `<div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+    <div class="flex items-center justify-between gap-2"><h3 class="font-bold text-slate-900">💸 หนี้ทั้งหมด</h3><button onclick="switchTab('savings')" class="text-xs bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl font-semibold">จัดการหนี้</button></div>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-center text-xs">
+      <div class="bg-rose-50 rounded-xl p-2.5">หนี้คงเหลือรวม<br><b class="text-sm text-rose-700">${money(rem)}</b></div>
+      <div class="bg-amber-50 rounded-xl p-2.5">ต้องจ่ายเดือนนี้<br><b class="text-sm text-amber-800">${money(nominal)}</b></div>
+      <div class="bg-emerald-50 rounded-xl p-2.5">จ่ายแล้วเดือนนี้<br><b class="text-sm text-emerald-700">${money(paid)}</b></div>
+      <div class="bg-slate-50 rounded-xl p-2.5">ยังต้องจ่ายอีก<br><b class="text-sm ${need > 0 ? 'text-rose-600' : 'text-emerald-600'}">${money(need)}</b></div>
+    </div>
+    <div class="space-y-2">${rows.map(r => { const d = r.d, late = d.dueDay && d.dueDay < today && r.need > 0, st = Number(d.remaining) <= 0 ? '<span class="text-emerald-600">หมดหนี้แล้ว 🎉</span>' : !r.nominal ? '<span class="text-slate-400">ไม่ได้ตั้งค่างวด</span>' : r.need <= 0 ? '<span class="text-emerald-600">✅ จ่ายเดือนนี้แล้ว</span>' : `<span class="${late ? 'text-rose-600 font-semibold' : 'text-amber-700'}">${late ? '⚠️ เลยกำหนด ' : ''}ต้องจ่าย ${money(r.need)}${d.dueDay ? ` · ภายในวันที่ ${d.dueDay}` : ''}</span>`;
+      return `<div class="flex items-center justify-between gap-2 border border-slate-200 rounded-xl px-3 py-2"><div class="min-w-0"><div class="text-sm font-semibold truncate">${kindIcon(d)} ${esc(d.name)}</div><div class="text-xs text-slate-500">คงเหลือ ${money(d.remaining)} · ${st}</div></div>${r.need > 0 ? `<button onclick="${d.monthly && d.walletId ? 'quickPay' : 'payDebt'}(${r.idx})" class="bg-rose-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap">จ่าย</button>` : ''}</div>`; }).join('')}</div></div>`;
+}
 function renderDebts() {
   const g = document.getElementById('debts-grid'), sm = document.getElementById('debt-summary');
   if (!g) return;
@@ -1490,12 +1509,18 @@ function renderDebts() {
   }).join('');
 }
 const KIND_ICON = { student: '🎓', car: '🚗', phone: '📱', other: '🛍️', house: '🏠', personal: '💼' };
-const kindIcon = (d) => d.meta && KIND_ICON[d.meta.kind] ? KIND_ICON[d.meta.kind] : '';
+const kindIcon0 = (d) => d.meta && KIND_ICON[d.meta.kind] ? KIND_ICON[d.meta.kind] : '';
+const kindIcon = (d) => d.meta && d.meta.icon ? d.meta.icon : kindIcon0(d);
 const pmt = (P, r, n) => r > 0 ? P * r / (1 - Math.pow(1 + r, -n)) : P / n;
 function metaLines(d) {
   const m = d.meta; if (!m) return '';
   const L = [];
   if (m.kind === 'student') { L.push(`ผ่อนชำระ ${m.years} ปี ดอกเบี้ย ${d.rate}% ต่อปี`); if (m.arrears > 0) L.push(`<span class="text-rose-600">รวมยอดค้างชำระ/เบี้ยปรับ ${money(m.arrears)}</span>`); L.push('💡 ชำระเพิ่มช่วยลดดอกเบี้ย และควรชำระตรงเวลาเพื่อเลี่ยงเบี้ยปรับ'); }
+  else if (m.platform) {
+    L.push(`${esc(m.platform)} · ผ่อน ${m.term} เดือน · ดอกเบี้ย ${m.rate}%/เดือน${m.fee ? ` + ค่าธรรมเนียม ${fmt0(m.fee)}` : ''} (รวมดอกเบี้ย+ค่าธรรมเนียม ${fmt0(m.interest)})`);
+    if (m.apr) L.push(`<span class="text-amber-700">ดอกเบี้ยที่แท้จริงประมาณ ${m.apr.toFixed(1)}% ต่อปี</span>`);
+    L.push(`ผ่อนแล้ว ${Number(m.paidCount || 0) + (d.payments || []).length}/${m.term} งวด`);
+  }
   else if (m.term) { L.push(`ราคา ${fmt0(m.price)} · ดาวน์ ${fmt0(m.down)} · ดอกเบี้ยคงที่ ${m.flat}% ต่อปี (รวม ${fmt0(m.interest)})`); L.push(`ผ่อนแล้ว ${Number(m.paidCount || 0) + (d.payments || []).length}/${m.term} งวด`); if (m.yearlyCost > 0) L.push(`ค่าประกัน/ภาษี ${fmt0(m.yearlyCost)} ต่อปี (≈ ${fmt0(m.yearlyCost / 12)}/เดือน)`); }
   else if (m.years) L.push(`ระยะเวลา ${m.years} ปี`);
   return L.map(x => `<div>${x}</div>`).join('');
@@ -1527,6 +1552,20 @@ window.openLoanWizard = (type) => {
     onSave: (v) => { if (v.price <= v.down || v.term < 1 || v.paid < 0 || v.paid > v.term) { alert('ตรวจสอบราคา เงินดาวน์ และจำนวนงวด'); return false; }
       const P = v.price - v.down, interest = P * v.flat / 100 * v.term / 12, total = P + interest, monthly = Math.ceil(total / v.term), rem = Math.max(0, total - monthly * v.paid);
       save(v, { kind: v.kind, price: v.price, down: v.down, flat: v.flat, term: v.term, paidCount: v.paid, yearlyCost: v.yearly, interest });
+      Object.assign(S().debts[S().debts.length - 1], { name: v.name, total, remaining: rem, rate: 0, monthly }); commit(); } });
+  else if (type === 'shop') openForm({ title: '🛒 ผ่อนสินค้าออนไลน์ (Shopee / TikTok / Lazada)', fields: [
+    { id: 'platform', label: 'แพลตฟอร์ม', type: 'select', value: 'Shopee SPayLater', options: [{ value: 'Shopee SPayLater', label: '🛒 Shopee (SPayLater)' }, { value: 'TikTok Shop', label: '🎵 TikTok Shop' }, { value: 'Lazada PayLater', label: '💙 Lazada' }, { value: 'อื่นๆ', label: '🛍️ แพลตฟอร์มอื่น' }] },
+    { id: 'name', label: 'สินค้า/ชื่อรายการ', type: 'text', value: '', required: true },
+    { id: 'price', label: 'ราคาสินค้า (บาท)', type: 'number', value: 5000 },
+    { id: 'term', label: 'ผ่อนกี่เดือน', type: 'number', value: 3 },
+    { id: 'rate', label: 'ดอกเบี้ย (% ต่อเดือน, 0 = ไม่มีดอกเบี้ย)', type: 'number', value: 1.5 },
+    { id: 'fee', label: 'ค่าธรรมเนียมรวม (บาท, ถ้ามี)', type: 'number', value: 0 },
+    { id: 'paid', label: 'ผ่อนไปแล้ว (งวด)', type: 'number', value: 0 }, ...common],
+    onSave: (v) => { if (v.price <= 0 || v.term < 1 || v.paid < 0 || v.paid > v.term || v.rate < 0) { alert('ตรวจสอบราคา จำนวนเดือน และดอกเบี้ย'); return false; }
+      const interest = v.price * v.rate / 100 * v.term + v.fee, total = v.price + interest, monthly = Math.ceil(total / v.term), rem = Math.max(0, total - monthly * v.paid);
+      let lo = 0, hi = 1; for (let i = 0; i < 60; i++) { const mid = (lo + hi) / 2; pmt(v.price, mid, v.term) > monthly ? hi = mid : lo = mid; }
+      const apr = interest > 0 ? lo * 1200 : 0, icon = v.platform.startsWith('Shopee') ? '🛒' : v.platform.startsWith('TikTok') ? '🎵' : v.platform.startsWith('Lazada') ? '💙' : '🛍️';
+      save(v, { kind: 'shop', icon, platform: v.platform, price: v.price, down: 0, term: v.term, rate: v.rate, fee: v.fee, interest, apr, paidCount: v.paid });
       Object.assign(S().debts[S().debts.length - 1], { name: v.name, total, remaining: rem, rate: 0, monthly }); commit(); } });
   else openForm({ title: '🏠 เพิ่มสินเชื่อ (ดอกเบี้ยลดต้นลดดอก)', fields: [
     { id: 'kind', label: 'ประเภท', type: 'select', value: 'house', options: [{ value: 'house', label: '🏠 บ้าน/คอนโด' }, { value: 'personal', label: '💼 สินเชื่อส่วนบุคคล' }] },
@@ -1581,10 +1620,35 @@ function nextDue(d) {
   if (dt < new Date(t.getFullYear(), t.getMonth(), t.getDate())) dt = new Date(t.getFullYear(), t.getMonth() + 1, mk(t.getFullYear(), t.getMonth() + 1));
   return { date: dt, days: Math.round((dt - new Date(t.getFullYear(), t.getMonth(), t.getDate())) / 864e5) };
 }
-function dueBadge(y, m, day, dim) {
-  const hit = (S().debts || []).filter(d => d.dueDay && Number(d.remaining) > 0 && Math.min(d.dueDay, dim) === day);
-  return hit.length ? `<div class="text-[10px] text-amber-700 bg-amber-100 rounded px-1 truncate">💸 ${esc(hit[0].name)}</div>` : '';
+const ymOf = (k) => k.slice(0, 7);
+const paidInMonth = (d, ym) => sum((d.payments || []).filter(p => p.date.slice(0, ym.length) === ym), p => p.amount);
+function monthNeed(d, ym) { // ยอดที่ต้องจ่ายตามงวดของเดือนนั้น และที่จ่ายแล้ว
+  const paid = paidInMonth(d, ym), nominal = Number(d.monthly) > 0 ? Math.min(Number(d.monthly), Number(d.remaining) + paid) : 0;
+  return { nominal, paid, need: Math.max(0, nominal - paid) };
 }
+function debtDuesOn(key) {
+  const [y, m, day] = key.split('-').map(Number), dim = new Date(y, m, 0).getDate(), ym = key.slice(0, 7), nowYm = localISO().slice(0, 7), out = [];
+  (S().debts || []).forEach((d, idx) => {
+    if (!d.dueDay || Math.min(d.dueDay, dim) !== day) return;
+    const paid = paidInMonth(d, ym);
+    if (ym < nowYm && paid <= 0) return;
+    if (Number(d.remaining) <= 0 && paid <= 0) return;
+    const amt = ym === nowYm ? monthNeed(d, ym).nominal : (Number(d.monthly) > 0 ? Number(d.monthly) : 0);
+    out.push({ d, idx, amt: amt || paid, paid, done: paid >= (amt || 1) - 0.005 || (ym === nowYm && monthNeed(d, ym).need <= 0 && paid > 0) });
+  });
+  return out;
+}
+function dueBadge(y, m, day, dim) {
+  const list = debtDuesOn(`${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`); if (!list.length) return '';
+  const key = `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  return list.slice(0, 2).map(x => `<div onclick="event.stopPropagation(); showDueDay('${key}')" class="rounded px-1 truncate ${x.done ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-800'}">${x.done ? '✅' : '💸'} ${esc(x.d.name)} ${fmt0(x.amt)}</div>`).join('') + (list.length > 2 ? `<div onclick="event.stopPropagation(); showDueDay('${key}')" class="text-amber-700">+${list.length - 2} รายการ</div>` : '');
+}
+window.showDueDay = (key) => {
+  const list = debtDuesOn(key), total = sum(list, x => x.amt), done = sum(list, x => x.paid);
+  openDetail('หนี้ที่ครบกำหนด ' + thDate(key, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }), `${list.length} รายการ`,
+    [['ต้องจ่ายรวม', money(total), 'amber'], ['จ่ายแล้ว', money(done), 'emerald'], ['ยังไม่จ่าย', money(Math.max(0, total - done)), 'rose']],
+    list.map(x => `<div class="flex items-center justify-between gap-2 border border-slate-200 rounded-xl p-3"><div><div class="text-sm font-semibold">${kindIcon(x.d)} ${esc(x.d.name)}</div><div class="text-xs text-slate-500">ต้องจ่าย ${money(x.amt)} · คงเหลือ ${money(x.d.remaining)}${x.paid ? ` · จ่ายแล้ว ${money(x.paid)}` : ''}</div></div>${x.done ? '<span class="text-xs text-emerald-600 font-semibold">✅ จ่ายแล้ว</span>' : `<button onclick="closeDetail(); ${x.d.monthly && x.d.walletId ? 'quickPay' : 'payDebt'}(${x.idx})" class="bg-rose-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold">จ่ายเลย</button>`}</div>`).join('') || '<p class="text-sm text-slate-400">ไม่มีหนี้ครบกำหนดวันนี้</p>');
+};
 window.quickPay = (idx) => {
   const d = S().debts[idx], w = S().wallets.find(x => x.id === d.walletId);
   if (!w || !d.monthly) { payDebt(idx); return; }
@@ -2114,7 +2178,7 @@ window.showDay = (key) => {
   const inc = sum(tx.filter(t => t.type === 'รายรับ'), t => t.amount), exp = sum(tx.filter(t => t.type === 'รายจ่าย'), t => t.amount);
   openDetail(thDate(key, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }), `${tx.length} รายการ`,
     [['รายรับ', money(inc), 'emerald'], ['รายจ่าย', money(exp), 'rose'], ['สุทธิ', money(inc - exp), 'blue']],
-    jarBreakdownHtml(tx) + txListHtml(tx) +
+    (debtDuesOn(key).length ? `<button onclick="closeDetail(); showDueDay('${key}')" class="w-full bg-amber-50 border border-amber-200 text-amber-800 py-2 rounded-xl text-sm font-medium">💸 ดูหนี้ที่ครบกำหนดวันนี้ (${debtDuesOn(key).length})</button>` : '') + jarBreakdownHtml(tx) + txListHtml(tx) +
     `<button onclick="closeDetail(); openTransactionModal('${key}')" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-xl text-sm font-medium transition"><i class="fa-solid fa-plus mr-1"></i> เพิ่มรายการในวันนี้</button>`);
 };
 function monthDetail(key, o = {}) {
