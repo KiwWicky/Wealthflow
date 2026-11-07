@@ -931,7 +931,7 @@ function bracketInfo(net) {
   return { rate: 0.35, toNext: null, nextRate: null };
 }
 const ssoCapFor = (y) => y < 2026 ? 15000 : y <= 2028 ? 17500 : y <= 2031 ? 20000 : 23000; // ม.33 เพดานค่าจ้างแบบขั้นบันได
-const scDefault = () => ({ year: new Date().getFullYear(), base: 0, others: [], bonus: 0, unpaidDays: 0, ssoOn: true, ssoCapOverride: 0, pvdPct: 0, pvdEmpPct: 0, taxOn: true, spouse: false, kids30: 0, kids60: 0, parents: 0, lifeIns: 0, healthIns: 0, mortgage: 0, otherFunds: 0, otherAllow: 0, deds: [] });
+const scDefault = () => ({ year: new Date().getFullYear(), base: 0, others: [], bonus: 0, unpaidDays: 0, ssoOn: true, ssoCapOverride: 0, pvdPct: 0, pvdEmpPct: 0, taxOn: true, spouse: false, kids30: 0, kids60: 0, parents: 0, lifeIns: 0, healthIns: 0, mortgage: 0, otherFunds: 0, otherAllow: 0, deds: [], ssoTaxCap: 9000, actualNet: 0, actualSso: 0, actualTax: 0, pvdSaving: 0, pvdWithEmp: false });
 function SC() { const s = S().salary; s.calc = Object.assign(scDefault(), s.calc || {}); return s.calc; }
 let scWalletSel = '';
 
@@ -947,10 +947,10 @@ function scCompute(c) {
   const dedsOther = sum(c.deds || [], i => i.amount);
   // ภาษีเงินได้ (ประมาณการหัก ณ ที่จ่าย: ภาษีทั้งปี ÷ 12 จากรายได้ประจำที่ไม่รวมวันลาไม่รับค่าจ้าง)
   const taxableMonthly = base + sum(others.filter(i => i.tax), i => i.amount);
-  const allow = 60000 + (c.spouse ? 60000 : 0) + (Number(c.kids30) || 0) * 30000 + (Number(c.kids60) || 0) * 60000 + Math.min(Number(c.parents) || 0, 4) * 30000 + Math.min(Number(c.lifeIns) || 0, 100000) + Math.min(Number(c.healthIns) || 0, 25000) + Math.min(Number(c.mortgage) || 0, 100000) + (Number(c.otherAllow) || 0);
+  const allow = 60000 + (c.spouse ? 60000 : 0) + (Number(c.kids30) || 0) * 30000 + (Number(c.kids60) || 0) * 60000 + Math.min(Number(c.parents) || 0, 4) * 30000 + Math.min(Math.min(Number(c.lifeIns) || 0, 100000) + Math.min(Number(c.healthIns) || 0, 25000), 100000) + Math.min(Number(c.mortgage) || 0, 100000) + (Number(c.otherAllow) || 0);
   const calcTax = (bonus) => {
     const income = taxableMonthly * 12 + bonus, expense = Math.min(income * 0.5, 100000);
-    const ssoYear = c.ssoOn ? sso * 12 : 0, pvdYear = Math.min(pvd * 12, base * 12 * 0.15, 500000);
+    const ssoYear = c.ssoOn ? Math.min(sso * 12, Number(c.ssoTaxCap) > 0 ? Number(c.ssoTaxCap) : Infinity) : 0, pvdYear = Math.min(pvd * 12, base * 12 * 0.15, 500000);
     const funds = Math.min(Number(c.otherFunds) || 0, income * 0.30, Math.max(0, 500000 - pvdYear));
     const net = Math.max(0, income - expense - ssoYear - pvdYear - funds - allow);
     return { income, expense, ssoYear, pvdYear, funds, net, tax: c.taxOn ? taxOf(net) : 0 };
@@ -959,7 +959,7 @@ function scCompute(c) {
   const monthlyTax = t0.tax / 12, bonusTax = tb.tax - t0.tax;
   const totalDed = sso + pvd + monthlyTax + dedsOther + unpaid;
   const net = gross - totalDed;
-  return { base, othersTotal, gross, unpaid, sso, ssoBase, cap, pvd, pvdEmp, dedsOther, allow, t0, tb, monthlyTax, bonusTax, net, bonusNet: (Number(c.bonus) || 0) - bonusTax, br: bracketInfo(tb.net) };
+  return { taxableMonthly, base, othersTotal, gross, unpaid, sso, ssoBase, cap, pvd, pvdEmp, dedsOther, allow, t0, tb, monthlyTax, bonusTax, net, bonusNet: (Number(c.bonus) || 0) - bonusTax, br: bracketInfo(tb.net) };
 }
 
 function renderSalaryNet() {
@@ -971,7 +971,7 @@ function renderSalaryNet() {
   if (!sw.contains(document.activeElement) || !sw.innerHTML) { // อย่าสร้างฟอร์มใหม่ขณะกำลังพิมพ์
     const c = SC(), num = (f, label, hint = '') => `<label class="block text-xs text-slate-600 space-y-1"><span>${label}</span><input type="number" min="0" value="${Number(c[f]) || 0}" oninput="scSet('${f}', this.value)" class="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-sm text-right">${hint ? `<span class="block text-[11px] text-slate-400">${hint}</span>` : ''}</label>`;
     const chk = (f, label) => `<label class="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" ${c[f] ? 'checked' : ''} onchange="scSet('${f}', this.checked, 'bool')" class="w-4 h-4"> ${label}</label>`;
-    const row = (list, it, i, withFlags) => `<div class="flex flex-wrap items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200"><input type="text" value="${esc(it.name)}" oninput="scListSet('${list}', ${i}, 'name', this.value, 'text')" class="flex-1 min-w-[120px] bg-white border border-slate-200 rounded-lg px-2 py-1 text-sm"><input type="number" min="0" value="${Number(it.amount) || 0}" oninput="scListSet('${list}', ${i}, 'amount', this.value)" class="w-28 bg-white border border-slate-200 rounded-lg px-2 py-1 text-sm text-right">${withFlags ? `<label class="text-[11px] text-slate-500 flex items-center gap-1"><input type="checkbox" ${it.tax ? 'checked' : ''} onchange="scListSet('${list}', ${i}, 'tax', this.checked, 'bool')"> คิดภาษี</label><label class="text-[11px] text-slate-500 flex items-center gap-1"><input type="checkbox" ${it.sso ? 'checked' : ''} onchange="scListSet('${list}', ${i}, 'sso', this.checked, 'bool')"> เข้าฐานประกันสังคม</label>` : ''}<button onclick="scDel('${list}', ${i})" class="text-rose-500 px-2"><i class="fa-solid fa-trash"></i></button></div>`;
+    const row = (list, it, i, withFlags) => `<div class="flex flex-wrap items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200"><input type="text" value="${esc(it.name)}" oninput="scListSet('${list}', ${i}, 'name', this.value, 'text')" class="flex-1 min-w-[120px] bg-white border border-slate-200 rounded-lg px-2 py-1 text-sm"><input type="number" min="0" value="${Number(it.amount) || 0}" oninput="scListSet('${list}', ${i}, 'amount', this.value)" class="w-28 bg-white border border-slate-200 rounded-lg px-2 py-1 text-sm text-right">${withFlags ? `<label class="text-[11px] text-slate-500 flex items-center gap-1"><input type="checkbox" ${it.tax ? 'checked' : ''} onchange="scListSet('${list}', ${i}, 'tax', this.checked, 'bool')"> คิดภาษี</label><label class="text-[11px] text-slate-500 flex items-center gap-1"><input type="checkbox" ${it.sso ? 'checked' : ''} onchange="scListSet('${list}', ${i}, 'sso', this.checked, 'bool')"> เข้าฐานประกันสังคม</label>` : ''}${list === 'deds' && (S().debts || []).length ? `<select onchange="scListSet('deds', ${i}, 'debtId', this.value)" class="bg-white border border-slate-200 rounded-lg px-2 py-1 text-[11px] text-slate-600"><option value="0">ไม่ผูกหนี้</option>${S().debts.map(d => `<option value="${d.id}" ${Number(it.debtId) === Number(d.id) ? 'selected' : ''}>ตัดหนี้: ${esc(d.name)}</option>`).join('')}</select>` : ''}<button onclick="scDel('${list}', ${i})" class="text-rose-500 px-2"><i class="fa-solid fa-trash"></i></button></div>`;
     sw.innerHTML = `
     <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
       <div class="lg:col-span-3 space-y-5">
@@ -985,13 +985,15 @@ function renderSalaryNet() {
           <h3 class="font-bold text-slate-900 text-sm">② ประกันสังคม & กองทุนสำรองเลี้ยงชีพ</h3>
           ${chk('ssoOn', 'อยู่ในประกันสังคม มาตรา 33 (หัก 5% ของค่าจ้าง)')}
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">${num('ssoCapOverride', 'เพดานค่าจ้างที่ใช้คิด (0 = อัตโนมัติ)', 'ปีนี้ ' + fmt0(ssoCapFor(c.year)) + ' → สูงสุด ' + fmt0(ssoCapFor(c.year) * 0.05) + '/เดือน')}${num('pvdPct', 'กองทุนสำรองฯ ที่คุณจ่าย (% ของเงินเดือน)')}${num('pvdEmpPct', 'นายจ้างสมทบให้ (% ของเงินเดือน)', 'ไม่หักจากคุณ แต่เป็นเงินออมเพิ่ม')}</div>
+          ${S().savings.length ? `<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end"><label class="block text-xs text-slate-600 space-y-1"><span>นำเงินสะสมกองทุนฯ เข้าเป้าหมายออม (ตอนบันทึกเงินเดือน)</span><select onchange="scSet('pvdSaving', this.value)" class="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-sm"><option value="0">ไม่ผูก</option>${S().savings.map(x => `<option value="${x.id}" ${Number(c.pvdSaving) === Number(x.id) ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select></label>${chk('pvdWithEmp', 'รวมส่วนที่นายจ้างสมทบด้วย')}</div>` : ''}
         </div>
         <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
           <div class="flex items-center justify-between"><h3 class="font-bold text-slate-900 text-sm">③ ภาษีเงินได้บุคคลธรรมดา (หัก ณ ที่จ่าย)</h3></div>
           ${chk('taxOn', 'คำนวณภาษีหัก ณ ที่จ่าย')}
           <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">${num('kids30', 'บุตร (คนละ 30,000)', 'จำนวนคน')}${num('kids60', 'บุตรคนที่ 2+ เกิดปี 2561+ (คนละ 60,000)', 'จำนวนคน')}${num('parents', 'บิดามารดา (คนละ 30,000)', 'ไม่เกิน 4 คน')}</div>
           ${chk('spouse', 'คู่สมรสไม่มีเงินได้ (ลดหย่อน 60,000)')}
-          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">${num('lifeIns', 'เบี้ยประกันชีวิต/ปี', 'สูงสุด 100,000')}${num('healthIns', 'เบี้ยประกันสุขภาพ/ปี', 'สูงสุด 25,000')}${num('mortgage', 'ดอกเบี้ยบ้าน/ปี', 'สูงสุด 100,000')}${num('otherFunds', 'RMF/SSF/ThaiESG/ประกันบำนาญ ซื้อเอง/ปี', 'ไม่เกิน 30% ของรายได้ และรวมกองทุนสำรองฯ ≤ 500,000')}${num('otherAllow', 'ลดหย่อนอื่นๆ/ปี (เช่น เงินบริจาค ฯลฯ)')}</div>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">${num('lifeIns', 'เบี้ยประกันชีวิต/ปี', 'สูงสุด 100,000')}${num('healthIns', 'เบี้ยประกันสุขภาพ/ปี', 'สูงสุด 25,000 · รวมกับประกันชีวิตไม่เกิน 100,000')}${num('mortgage', 'ดอกเบี้ยบ้าน/ปี', 'สูงสุด 100,000')}${num('otherFunds', 'RMF/SSF/ThaiESG/ประกันบำนาญ ซื้อเอง/ปี', 'ไม่เกิน 30% ของรายได้ และรวมกองทุนสำรองฯ ≤ 500,000')}${num('otherAllow', 'ลดหย่อนอื่นๆ/ปี (เช่น เงินบริจาค ฯลฯ)')}</div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">${num('ssoTaxCap', 'เพดานนำเงินสมทบประกันสังคมไปลดหย่อน/ปี', '0 = ไม่จำกัด · แหล่งข้อมูลที่พบระบุ 9,000 ควรตรวจสอบกับกรมสรรพากรอีกครั้ง')}</div>
           <p class="text-[11px] text-slate-400">หักค่าใช้จ่าย 50% ของเงินเดือน (สูงสุด 100,000) และลดหย่อนส่วนตัว 60,000 ให้อัตโนมัติ</p>
         </div>
         <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
@@ -999,8 +1001,14 @@ function renderSalaryNet() {
           <p class="text-[11px] text-slate-400">เช่น หักผ่อนสหกรณ์ / กยศ. หักเงินเดือน / ประกันกลุ่ม / เงินกู้บริษัท</p>
           ${(c.deds || []).map((it, i) => row('deds', it, i, false)).join('') || '<p class="text-xs text-slate-400">ยังไม่มี</p>'}
         </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+          <h3 class="font-bold text-slate-900 text-sm">⑤ เทียบกับสลิปเงินเดือนจริง (ไม่บังคับ)</h3>
+          <p class="text-[11px] text-slate-400">กรอกตัวเลขจากสลิปเดือนนี้ ระบบจะบอกส่วนต่างจากค่าประมาณ และใช้ตัวเลขจริงตอนกด "บันทึกเงินเดือนเดือนนี้"</p>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">${num('actualNet', 'เงินเข้าบัญชีจริง')}${num('actualSso', 'ประกันสังคมตามสลิป')}${num('actualTax', 'ภาษีตามสลิป')}</div>
+        </div>
       </div>
       <div class="lg:col-span-2"><div id="sc-result" class="lg:sticky lg:top-4 space-y-4"></div></div>
+      <div id="sc-year" class="lg:col-span-5 space-y-4"></div>
     </div>`;
   }
   scResult();
@@ -1009,19 +1017,48 @@ function renderSalaryNet() {
 function scResult() {
   const el = document.getElementById('sc-result'); if (!el) return;
   const c = SC(), r = scCompute(c);
-  if (!(r.base > 0)) { el.innerHTML = '<div class="bg-white p-6 rounded-2xl border border-slate-200 text-sm text-slate-400 text-center">กรอกเงินเดือนฐานเพื่อดูยอดเข้าบัญชีจริง</div>'; return; }
+  if (!(r.base > 0)) { el.innerHTML = '<div class="bg-white p-6 rounded-2xl border border-slate-200 text-sm text-slate-400 text-center">กรอกเงินเดือนฐานเพื่อดูยอดเข้าบัญชีจริง</div>'; scYear(); return; }
   const line = (l, v, cls = 'text-slate-700', sub = '') => `<div class="flex justify-between items-start py-1.5 text-sm"><span class="text-slate-600">${l}${sub ? `<span class="block text-[11px] text-slate-400">${sub}</span>` : ''}</span><span class="font-medium ${cls}">${v}</span></div>`;
   const wallets = S().wallets.filter(w => w.type === 'Asset');
   const eff = r.tb.income > 0 ? r.t0.tax / (r.t0.income) * 100 : 0;
   let tip = '';
   if (c.taxOn && r.br.rate > 0) tip = `<p class="text-xs text-blue-700 bg-blue-50 rounded-xl p-3">💡 คุณอยู่ในขั้นภาษี <b>${(r.br.rate * 100).toFixed(0)}%</b> — ทุกการลดหย่อนเพิ่ม 10,000 บาท (เช่น RMF/SSF/ประกัน) ประหยัดภาษีประมาณ <b>${fmt0(10000 * r.br.rate)}</b>${r.br.toNext != null ? ` · เหลือรายได้สุทธิอีก ${fmt0(r.br.toNext)} ก่อนขึ้นขั้น ${(r.br.nextRate * 100).toFixed(0)}%` : ''}</p>`;
   else if (c.taxOn) tip = '<p class="text-xs text-emerald-700 bg-emerald-50 rounded-xl p-3">🎉 รายได้สุทธิหลังลดหย่อนไม่เกิน 150,000 บาท จึงไม่ต้องเสียภาษี</p>';
+  // เทียบกับสลิปจริง
+  let cmp = '';
+  const an = Number(c.actualNet) || 0, at = Number(c.actualTax) || 0, asso = Number(c.actualSso) || 0;
+  if (an > 0 || at > 0 || asso > 0) {
+    const dl = (a, b) => { const x = a - b; return `<b class="${Math.abs(x) < 1 ? 'text-emerald-600' : 'text-amber-700'}">${Math.abs(x) < 1 ? 'ตรงกัน' : (x > 0 ? '+' : '') + money(x)}</b>`; };
+    const rw = (l, est, act) => `<div class="flex justify-between gap-2"><span>${l}: ประมาณ ${fmt0(est)} · จริง ${fmt0(act)}</span>${dl(act, est)}</div>`;
+    let rows = '', hints = [], btn = '';
+    if (an > 0) rows += rw('เงินเข้าบัญชี', r.net, an);
+    if (asso > 0) { rows += rw('ประกันสังคม', r.sso, asso); if (Math.abs(asso - r.sso) >= 1) hints.push('ประกันสังคมต่างจากค่าประมาณ ลองตรวจว่าค่าจ้างที่เข้าฐานประกันสังคมตรงกับสลิป (เงินเดือนฐาน และรายได้อื่นที่ติ๊ก "เข้าฐานประกันสังคม")'); }
+    if (at > 0) {
+      rows += rw('ภาษีหัก ณ ที่จ่าย', r.monthlyTax, at);
+      if (at - r.monthlyTax > 1) hints.push('นายจ้างหักภาษีมากกว่าค่าประมาณ อาจเพราะยังไม่ได้แจ้งลดหย่อน (คู่สมรส บุตร ประกัน กองทุน) กับฝ่ายบุคคล ส่วนที่หักเกินขอคืนได้ตอนยื่นภาษี');
+      else if (at - r.monthlyTax < -1) hints.push('นายจ้างหักภาษีน้อยกว่าค่าประมาณ อาจใช้ลดหย่อนมากกว่าที่กรอก ระวังต้องจ่ายเพิ่มตอนยื่นภาษี');
+    }
+    if (an > 0) {
+      const expAdj = r.net + (r.sso - (asso > 0 ? asso : r.sso)) + (r.monthlyTax - (at > 0 ? at : r.monthlyTax));
+      const rest = an - expAdj;
+      if (Math.abs(rest) >= 1) {
+        hints.push(`ส่วนต่างที่ยังอธิบายไม่ได้ ${money(rest)} ${rest < 0 ? '(อาจมีรายการหักอื่น เช่น สหกรณ์ ประกันกลุ่ม กยศ. ที่ยังไม่ได้กรอก)' : '(อาจมีรายได้เพิ่มที่ยังไม่ได้กรอก)'}`);
+        if (rest < 0) btn = `<button onclick="scAddDiff(${Math.round(-rest * 100) / 100})" class="mt-2 w-full bg-amber-100 hover:bg-amber-200 text-amber-900 rounded-xl py-1.5 text-xs font-semibold">+ เพิ่มเป็นรายการหัก "หักอื่นตามสลิป" ${fmt0(-rest)}</button>`;
+      }
+    }
+    cmp = `<div class="bg-white p-4 rounded-2xl border border-amber-200 text-xs text-slate-600 space-y-1"><p class="font-bold text-slate-800 text-sm pb-1">🧾 เทียบกับสลิปจริง</p>${rows}${hints.map(h => `<p class="text-amber-800 bg-amber-50 rounded-lg p-2 mt-1">💡 ${h}</p>`).join('')}${btn}</div>`;
+  }
+  const recSal = (S().recurring || []).find(x => x.src === 'salary');
+  const autoBtn = recSal
+    ? `<div class="flex items-center justify-between text-xs bg-emerald-50 text-emerald-800 rounded-xl px-3 py-2"><span>🔁 เข้าอัตโนมัติทุกวันที่ ${recSal.day} (ยอดตามตัวเลขล่าสุดในหน้านี้)</span><button onclick="scAutoOff()" class="underline">ปิด</button></div>`
+    : `<button onclick="scAutoMonthly()" class="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-800 px-4 py-2 rounded-xl text-sm font-medium">🔁 ตั้งให้เงินเดือนเข้าอัตโนมัติทุกเดือน</button>`;
   el.innerHTML = `
     <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white p-5 rounded-2xl shadow-sm">
       <p class="text-xs opacity-90">เงินเดือนเข้าบัญชีจริง (เดือนปกติ)</p>
       <p class="text-3xl font-bold">${money(r.net)}</p>
       <p class="text-xs opacity-90 mt-1">หักรวม ${money(r.gross - r.net)} (${r.gross > 0 ? ((r.gross - r.net) / r.gross * 100).toFixed(1) : 0}% ของรายได้)</p>
     </div>
+    ${cmp}
     <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm divide-y divide-slate-100">
       <p class="text-xs font-bold text-emerald-700 pb-1">รายรับ</p>
       ${line('เงินเดือนฐาน', money(r.base))}
@@ -1049,10 +1086,12 @@ function scResult() {
     ${Number(c.bonus) > 0 ? `<div class="bg-amber-50 border border-amber-100 p-4 rounded-2xl text-xs text-amber-900 space-y-1"><p class="font-bold text-sm">🎁 เดือนที่ได้โบนัส ${money(c.bonus)}</p>${c.taxOn ? `<p>ภาษีส่วนเพิ่มจากโบนัสประมาณ ${money(r.bonusTax)}</p>` : ''}<p>โบนัสสุทธิที่ได้เพิ่ม <b>${money(r.bonusNet)}</b> · เดือนนั้นเข้าบัญชีรวมประมาณ <b>${money(r.net + r.bonusNet)}</b></p></div>` : ''}
     <div class="bg-white p-4 rounded-2xl border border-slate-200 space-y-2">
       ${wallets.length ? `<select onchange="scWalletSel=this.value" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm">${wallets.map(w => `<option value="${w.id}" ${String(w.id) === scWalletSel ? 'selected' : ''}>เข้าบัญชี: ${esc(w.name)}</option>`).join('')}</select>` : '<p class="text-xs text-slate-400">ยังไม่มีบัญชีประเภททรัพย์สิน</p>'}
-      <button onclick="scSync('regular')" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-sm font-medium"><i class="fa-solid fa-cloud-arrow-down mr-2"></i>บันทึกยอดสุทธิลงรายรับ</button>
+      <button onclick="scSync('regular')" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-sm font-medium"><i class="fa-solid fa-cloud-arrow-down mr-2"></i>บันทึกเงินเดือนเดือนนี้ (เก็บสลิปด้วย)</button>
+      ${autoBtn}
       ${Number(c.bonus) > 0 ? `<button onclick="scSync('bonus')" class="w-full bg-amber-100 hover:bg-amber-200 text-amber-900 px-4 py-2 rounded-xl text-sm font-medium">🎁 บันทึกโบนัสสุทธิลงรายรับ</button>` : ''}
     </div>
     <p class="text-[11px] text-slate-400">* เป็นการประมาณการเพื่อวางแผน อัตราประกันสังคมและเพดานค่าจ้างตามประกาศปี ${c.year} · ยอดจริงอาจต่างเล็กน้อยตามวิธีหักภาษีของนายจ้าง (เช่น คำนวณตามเดือนที่เหลือ) ควรเทียบกับสลิปเงินเดือนของคุณ</p>`;
+  scYear();
 }
 window.scMode = (m) => { S().salary.mode = m; renderSalaryNet(); saveData(); };
 const scCast = (v, t) => t === 'bool' ? !!v : t === 'text' ? v : (Number(v) || 0);
@@ -1060,7 +1099,7 @@ window.scSet = (f, v, t) => { SC()[f] = scCast(v, t); scResult(); saveData(); };
 window.scListSet = (list, i, f, v, t) => { const it = SC()[list][i]; if (it) it[f] = scCast(v, t); scResult(); saveData(); };
 window.scAdd = (list) => { const c = SC(); c[list].push(list === 'others' ? { id: Date.now(), name: 'OT', amount: 0, tax: true, sso: true } : { id: Date.now(), name: 'หักอื่นๆ', amount: 0 }); document.getElementById('salary-netmode').innerHTML = ''; renderSalaryNet(); saveData(); };
 window.scDel = (list, i) => { SC()[list].splice(i, 1); document.getElementById('salary-netmode').innerHTML = ''; renderSalaryNet(); saveData(); };
-window.scSync = (kind) => {
+const scSyncOld = (kind) => {
   const r = scCompute(SC()), amt = kind === 'bonus' ? r.bonusNet : r.net;
   if (!(amt > 0)) { alert('ยอดต้องมากกว่า 0'); return; }
   const wallet = S().wallets.find(w => String(w.id) === scWalletSel) || S().wallets.find(w => w.type === 'Asset');
@@ -1070,6 +1109,119 @@ window.scSync = (kind) => {
   alert(`บันทึก ${money(t.amount)} เข้า "${wallet.name}" แล้ว`);
 };
 
+
+// ---------- เงินเดือน: บันทึกประจำเดือน / สลิป / ผูกกับเป้าหมายออมและหนี้ / สรุปภาษีทั้งปี ----------
+function scPostMonth(date, auto) {
+  const sl = (S().salary.slips = S().salary.slips || {}), key = date.slice(0, 7), c = SC(), r = scCompute(c);
+  const amt = Number(c.actualNet) > 0 ? Number(c.actualNet) : r.net;
+  if (!(amt > 0)) { if (!auto) alert('ยอดต้องมากกว่า 0'); return false; }
+  const wallet = S().wallets.find(w => String(w.id) === scWalletSel) || S().wallets.find(w => w.type === 'Asset');
+  if (!wallet) { if (!auto) alert('กรุณาเพิ่มบัญชีในแท็บ กระเป๋า & ซองเงิน ก่อน'); return false; }
+  if (sl[key]) {
+    if (auto) return false;
+    if (!confirm(`เดือน ${key} บันทึกเงินเดือนไปแล้ว ต้องการแทนที่ด้วยตัวเลขชุดนี้?\n(ของเดิมจะถูกยกเลิกและคืนยอดให้ก่อน)`)) return false;
+    scUndoSlip(key);
+  }
+  const t = { id: Date.now() + Math.random(), date, type: 'รายรับ', from: wallet.name, to: '', jar: 'เงินเดือนสุทธิ', amount: Math.round(amt * 100) / 100, note: auto ? 'ประจำ: เงินเดือน' : 'เงินเดือนสุทธิ (คำนวณประกันสังคม/ภาษีแล้ว)' };
+  applyTx(t, 1); S().transactions.unshift(t);
+  sl[key] = { date, net: t.amount, gross: r.gross, taxable: r.taxableMonthly, sso: Number(c.actualSso) > 0 ? Number(c.actualSso) : r.sso, tax: Number(c.actualTax) > 0 ? Number(c.actualTax) : r.monthlyTax, pvd: r.pvd, pvdEmp: r.pvdEmp, walletId: wallet.id, txId: t.id };
+  // เงินสะสมกองทุนสำรองเลี้ยงชีพ -> เป้าหมายออม (เงินไม่ได้ผ่านบัญชี จึงไม่หักยอดบัญชี)
+  const sv = S().savings.find(x => Number(x.id) === Number(c.pvdSaving));
+  if (sv && r.pvd > 0) {
+    const e = savingApply(sv, null, Math.round((r.pvd + (c.pvdWithEmp ? r.pvdEmp : 0)) * 100) / 100, date, false);
+    e.src = 'salary:' + key; e.note = 'หักจากเงินเดือน (กองทุนสำรองเลี้ยงชีพ)';
+    (sv.history = sv.history || []).push(e);
+  }
+  // รายการหักที่ผูกกับหนี้ (เช่น กยศ.) -> ตัดยอดหนี้ ไม่หักบัญชีซ้ำ
+  (c.deds || []).forEach(it => {
+    const d = (S().debts || []).find(x => Number(x.id) === Number(it.debtId));
+    const pay = d ? Math.min(Number(it.amount) || 0, Number(d.remaining) || 0) : 0;
+    if (d && pay > 0) {
+      d.remaining = Number(d.remaining) - pay;
+      (d.payments = d.payments || []).push({ id: Date.now() + Math.floor(Math.random() * 1e6), date, amount: pay, walletId: null, walletName: 'หักจากเงินเดือน', txId: null, src: 'salary:' + key });
+    }
+  });
+  c.actualNet = 0; c.actualSso = 0; c.actualTax = 0;
+  return true;
+}
+function scUndoSlip(key) {
+  const sl = S().salary.slips || {}, s = sl[key]; if (!s) return;
+  const ti = S().transactions.findIndex(t => t.id === s.txId);
+  if (ti >= 0) { applyTx(S().transactions[ti], -1); S().transactions.splice(ti, 1); }
+  S().savings.forEach(sv => { for (let i = (sv.history || []).length - 1; i >= 0; i--) if (sv.history[i].src === 'salary:' + key) { savingRevert(sv, sv.history[i]); sv.history.splice(i, 1); } });
+  (S().debts || []).forEach(d => { for (let i = (d.payments || []).length - 1; i >= 0; i--) if (d.payments[i].src === 'salary:' + key) debtRevert(d, i); });
+  delete sl[key];
+}
+window.scDeleteSlip = (key) => {
+  if (!confirm(`ยกเลิกสลิปเดือน ${key}? เงินเดือนที่เข้าบัญชีจะถูกหักกลับ และรายการที่ผูกกับเป้าหมายออม/หนี้ของเดือนนั้นจะถูกย้อนกลับ`)) return;
+  scUndoSlip(key); commit();
+};
+window.scSync = (kind) => {
+  if (kind === 'bonus') return scSyncOld(kind);
+  const date = localISO();
+  if (!scPostMonth(date, false)) return;
+  const s = S().salary.slips[date.slice(0, 7)], w = S().wallets.find(x => x.id === s.walletId);
+  document.getElementById('salary-netmode').innerHTML = '';
+  commit();
+  alert(`บันทึก ${money(s.net)} เข้า "${w ? w.name : ''}" แล้ว และเก็บสลิปเดือน ${date.slice(0, 7)}`);
+};
+window.scAddDiff = (amt) => {
+  SC().deds.push({ id: Date.now(), name: 'หักอื่นตามสลิป', amount: amt });
+  document.getElementById('salary-netmode').innerHTML = ''; renderSalaryNet(); saveData();
+};
+window.scAutoMonthly = () => {
+  const assets = S().wallets.filter(w => w.type === 'Asset');
+  if (!assets.length) { alert('เพิ่มบัญชีก่อน'); return; }
+  openForm({
+    title: 'ตั้งเงินเดือนเข้าอัตโนมัติ',
+    fields: [
+      { id: 'day', label: 'เงินเดือนออกทุกวันที่ (1-31)', type: 'number', value: 25 },
+      { id: 'wallet', label: 'เข้าบัญชี (ถ้าเลยวันที่ในเดือนนี้ และเดือนนี้ยังไม่ได้บันทึก ระบบจะบันทึกให้ทันที)', type: 'select', value: String((assets.find(w => String(w.id) === scWalletSel) || assets[0]).id), options: assets.map(w => ({ value: String(w.id), label: `${walletIcon(w)} ${w.name}` })) }
+    ],
+    onSave: (v) => {
+      if (v.day < 1 || v.day > 31) { alert('ตรวจสอบวันที่'); return false; }
+      S().recurring = (S().recurring || []).filter(x => x.src !== 'salary');
+      S().recurring.push({ id: Date.now(), name: 'เงินเดือน (อัตโนมัติ)', kind: 'รายรับ', amount: Math.round(scCompute(SC()).net), day: Math.round(v.day), walletId: Number(v.wallet), savingId: null, last: '', src: 'salary', jar: 'เงินเดือนสุทธิ' });
+      runRecurring(); document.getElementById('salary-netmode').innerHTML = ''; commit();
+    }
+  });
+};
+window.scAutoOff = () => {
+  if (!confirm('ปิดการนำเงินเดือนเข้าอัตโนมัติ? (สลิปที่บันทึกไปแล้วยังอยู่)')) return;
+  S().recurring = (S().recurring || []).filter(x => x.src !== 'salary'); commit();
+};
+function scYear() {
+  const el = document.getElementById('sc-year'); if (!el) return;
+  const c = SC(), r = scCompute(c), sl = S().salary.slips || {}, y = Number(c.year) || new Date().getFullYear();
+  const keys = Object.keys(sl).filter(k => k.startsWith(y + '-')).sort();
+  if (!keys.length && !(r.base > 0)) { el.innerHTML = ''; return; }
+  let taxableSum = 0, ssoSum = 0, pvdSum = 0, withheld = 0, miss = 0;
+  for (let m = 1; m <= 12; m++) {
+    const s = sl[`${y}-${pad(m)}`];
+    if (s) { taxableSum += s.taxable; ssoSum += s.sso; pvdSum += s.pvd; withheld += s.tax; }
+    else { miss++; taxableSum += r.taxableMonthly; ssoSum += c.ssoOn ? r.sso : 0; pvdSum += r.pvd; withheld += r.monthlyTax; }
+  }
+  const bonus = Number(c.bonus) || 0, income = taxableSum + bonus, expense = Math.min(income * 0.5, 100000);
+  const ssoY = c.ssoOn ? Math.min(ssoSum, Number(c.ssoTaxCap) > 0 ? Number(c.ssoTaxCap) : Infinity) : 0;
+  const pvdY = Math.min(pvdSum, r.base * 12 * 0.15, 500000);
+  const funds = Math.min(Number(c.otherFunds) || 0, income * 0.30, Math.max(0, 500000 - pvdY));
+  const netInc = Math.max(0, income - expense - ssoY - pvdY - funds - r.allow);
+  const taxFinal = c.taxOn ? taxOf(netInc) : 0, withheldAll = withheld + (c.taxOn ? r.bonusTax : 0), diff = taxFinal - withheldAll;
+  const chips = Array.from({ length: 12 }, (_, i) => { const has = !!sl[`${y}-${pad(i + 1)}`]; return `<span class="px-2 py-1 rounded-lg text-[11px] ${has ? 'bg-emerald-100 text-emerald-800 font-semibold' : 'bg-slate-100 text-slate-400'}">${i + 1}</span>`; }).join('');
+  const verdict = Math.abs(diff) < 50 ? '<span class="text-emerald-700">ใกล้เคียงกัน ไม่น่าต้องจ่ายเพิ่มหรือขอคืนมาก</span>'
+    : diff > 0 ? `<span class="text-rose-700">คาดว่าต้องจ่ายเพิ่มตอนยื่นภาษี ≈ <b>${fmt0(diff)}</b></span>` : `<span class="text-emerald-700">คาดว่าจะได้คืนภาษี ≈ <b>${fmt0(-diff)}</b> (ต้องยื่นภาษีเพื่อขอคืน)</span>`;
+  const slipRows = keys.map(k => { const s = sl[k]; return `<div class="flex items-center justify-between gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs"><span class="font-semibold text-slate-700">${thDate(s.date, { month: 'long', year: 'numeric' })}</span><span class="text-slate-500">เข้าบัญชี <b class="text-emerald-700">${fmt0(s.net)}</b> · ภาษี ${fmt0(s.tax)} · ประกันสังคม ${fmt0(s.sso)}</span><button onclick="scDeleteSlip('${k}')" class="text-rose-400 hover:text-rose-600" title="ยกเลิกสลิปนี้"><i class="fa-solid fa-rotate-left"></i></button></div>`; }).join('');
+  el.innerHTML = `<div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+    <div class="flex flex-wrap items-center justify-between gap-2"><h3 class="font-bold text-slate-900 text-sm">📆 สรุปภาษีทั้งปี ${y} (พ.ศ. ${y + 543})</h3><div class="flex flex-wrap gap-1">${chips}</div></div>
+    ${c.taxOn ? `<div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+      <div class="bg-slate-50 rounded-xl p-3"><div class="text-slate-500">ภาษีทั้งปีโดยประมาณ</div><div class="text-lg font-bold text-slate-900">${fmt0(taxFinal)}</div></div>
+      <div class="bg-slate-50 rounded-xl p-3"><div class="text-slate-500">ถูกหักแล้ว + คาดว่าจะถูกหักต่อ</div><div class="text-lg font-bold text-slate-900">${fmt0(withheldAll)}</div></div>
+      <div class="bg-slate-50 rounded-xl p-3"><div class="text-slate-500">ผลต่าง</div><div class="text-lg font-bold ${diff > 50 ? 'text-rose-600' : 'text-emerald-600'}">${diff > 0 ? '+' : ''}${fmt0(diff)}</div></div></div>
+    <p class="text-sm">${verdict}</p>
+    <p class="text-[11px] text-slate-400">ใช้ตัวเลขจากสลิปที่บันทึกไว้ ${12 - miss} เดือน และประมาณการอีก ${miss} เดือนด้วยค่าปัจจุบัน · ถ้ากรอก "ภาษีตามสลิป" ตอนบันทึก จะใช้ภาษีที่นายจ้างหักจริง ซึ่งทำให้ผลต่างแม่นขึ้น · ไม่ใช่ผลการยื่นภาษีจริง</p>` : '<p class="text-xs text-slate-400">เปิด "คำนวณภาษีหัก ณ ที่จ่าย" เพื่อดูสรุปภาษีทั้งปี</p>'}
+    ${keys.length ? `<div class="space-y-2">${slipRows}</div>` : '<p class="text-xs text-slate-400">ยังไม่มีสลิปที่บันทึก กดปุ่ม "บันทึกเงินเดือนเดือนนี้" เพื่อเริ่มเก็บ</p>'}
+  </div>`;
+}
 
 // ---------- ผลของรายการต่อยอดบัญชี ----------
 function walletByName(n) { return S().wallets.find(w => w.name === n); }
@@ -1766,6 +1918,12 @@ function runRecurring() {
     if (r.last === cur || t.getDate() < due) return;
     const w = S().wallets.find(x => x.id === r.walletId); if (!w) return;
     const date = `${cur}-${pad(due)}`;
+    if (r.src === 'salary') { // เงินเดือนอัตโนมัติ: ใช้ตัวเลขจากเครื่องคิดเงินเดือน และข้ามถ้าเดือนนี้บันทึกสลิปไปแล้ว
+      const prev = scWalletSel; scWalletSel = String(r.walletId);
+      const ok = scPostMonth(date, true); scWalletSel = prev;
+      if (ok || (S().salary.slips || {})[cur]) { r.last = cur; changed = true; }
+      return;
+    }
     if (r.kind === 'ออม') {
       const sv = S().savings.find(x => x.id === r.savingId); if (!sv) return;
       walletMove(w, -r.amount); sv.current = Number(sv.current) + Number(r.amount);
