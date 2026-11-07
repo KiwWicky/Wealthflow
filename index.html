@@ -130,8 +130,13 @@ header.bg-white{background:#fff!important;border-bottom:2px dashed #f3d9c3!impor
 
   <!-- DASHBOARD -->
   <div id="tab-dashboard" class="tab-content space-y-6">
+    <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
+      <div class="flex gap-2"><input id="qa-input" onkeydown="if(event.key==='Enter')quickAdd()" placeholder="พิมพ์เร็ว เช่น กาแฟ 65 · ข้าวมันไก่ 50 · เงินเดือน 30000" class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm"><button onclick="quickAdd()" class="bg-blue-600 text-white px-4 rounded-xl text-sm font-semibold">เพิ่ม</button></div>
+      <p id="qa-msg" class="text-xs text-slate-500 mt-2 hidden"></p>
+    </div>
     <div class="flex items-start gap-3"><div class="text-4xl wag">🐱</div><div id="cat-say" class="cat-bubble px-4 py-3 text-sm flex-1"></div></div>
     <div id="dash-debts"></div>
+    <div id="dash-summary"></div>
     <div id="health-row" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
       <div onclick="showKpi('networth')" class="cursor-pointer hover:border-blue-300 hover:shadow-md transition bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
@@ -361,6 +366,11 @@ header.bg-white{background:#fff!important;border-bottom:2px dashed #f3d9c3!impor
 
   <!-- TOOLS -->
   <div id="tab-tools" class="tab-content hidden space-y-6">
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+      <h3 class="font-bold text-slate-900">💰 จัดสรรเงินเดือนอัตโนมัติ</h3>
+      <p class="text-xs text-slate-500">เลือกสูตร เช่น 50/30/20 ระบบตั้งงบซองเงินให้ และเติมส่วนออมเข้าเป้าหมายจากบัญชีที่เลือก</p>
+      <button onclick="openAllocate()" class="bg-blue-50 text-blue-700 px-4 py-2 rounded-xl text-sm font-semibold">เริ่มจัดสรร</button>
+    </div>
     <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
       <div class="flex items-center justify-between"><h3 class="font-bold text-slate-900">🔁 รายการประจำอัตโนมัติ</h3><button onclick="openRecurring()" class="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-xl text-xs font-semibold">+ เพิ่ม</button></div>
       <p class="text-xs text-slate-500">เงินเดือนเข้า ค่าเช่า ออมเข้าเป้าหมาย ฯลฯ ระบบสร้างรายการให้เองทุกเดือนเมื่อถึงวันที่กำหนด (ตอนเปิดแอป)</p>
@@ -413,6 +423,7 @@ header.bg-white{background:#fff!important;border-bottom:2px dashed #f3d9c3!impor
       </div>
     </div>
   </div>
+<button onclick="qaFab()" aria-label="เพิ่มรายการเร็ว" class="fixed bottom-5 right-5 z-40 w-14 h-14 rounded-full bg-blue-600 text-white text-2xl shadow-lg">🐾</button>
 <p class="paw">🐾 meow · made with love 🐾</p></main>
 
 <!-- NEW SYSTEM: WORKSPACE MAIN APP -->
@@ -816,7 +827,7 @@ window.switchTab = (tabId) => {
 
 window.renderAll = () => {
   renderDashboard(); renderSalary(); renderTransactions();
-  renderWalletsAndJars(); renderSavings(); renderDebts(); renderDashDebts(); renderRecurring(); renderDebtCompare(); renderInvest();
+  renderWalletsAndJars(); renderSavings(); renderDebts(); renderDashDebts(); renderDashSummary(); renderRecurring(); renderDebtCompare(); renderInvest();
   if (!document.getElementById('tab-calendar').classList.contains('hidden')) renderCalendar();
 };
 
@@ -1942,7 +1953,7 @@ window.ivRefresh = async () => {
 window.ivAddWatch = () => openForm({ title: 'เพิ่มหุ้นที่ติดตาม', fields: [
   { id: 'symbol', label: 'ชื่อย่อหุ้น (เช่น AAPL, NVDA, PTT)', type: 'text', value: '', required: true },
   { id: 'exchange', label: 'ตลาด (เว้นว่าง = สหรัฐ, ไทยใส่ SET)', type: 'text', value: '' }],
-  onSave: (v) => { const sym = v.symbol.trim().toUpperCase(), ex = v.exchange.trim().toUpperCase(); if (IV().watch.some(w => w.symbol === sym && w.exchange === ex)) { alert('มีอยู่แล้ว'); return false; } IV().watch.push({ symbol: sym, exchange: ex, above: 0, below: 0 }); commit(); } });
+  onSave: (v) => { const sym = v.symbol.trim().toUpperCase(), ex = v.exchange.trim().toUpperCase(); if (!/^[A-Z0-9.\-]{1,12}$/.test(sym) || !/^[A-Z]{0,8}$/.test(ex)) { alert('ชื่อย่อหุ้นใช้ได้เฉพาะ A-Z 0-9 . -'); return false; } if (IV().watch.some(w => w.symbol === sym && w.exchange === ex)) { alert('มีอยู่แล้ว'); return false; } IV().watch.push({ symbol: sym, exchange: ex, above: 0, below: 0 }); commit(); } });
 window.ivAlertSet = (i) => { const w = IV().watch[i]; openForm({ title: `ตั้งเตือนราคา ${w.symbol}`, fields: [
   { id: 'above', label: 'เตือนเมื่อราคา ≥ (0 = ปิด)', type: 'number', value: w.above || 0 }, { id: 'below', label: 'เตือนเมื่อราคา ≤ (0 = ปิด)', type: 'number', value: w.below || 0 }],
   onSave: (v) => { w.above = v.above; w.below = v.below; commit(); } }); };
@@ -2055,7 +2066,79 @@ function renderInvest() {
   renderIvAlerts(); renderIvAnalysis(); renderIvScan();
 }
 window.ivNewTrade = () => openForm({ title: 'ซื้อหุ้น', fields: [{ id: 'symbol', label: 'ชื่อย่อหุ้น (เช่น AAPL, PTT)', type: 'text', value: '', required: true }, { id: 'exchange', label: 'ตลาด (เว้นว่าง = สหรัฐ, ไทยใส่ SET)', type: 'text', value: '' }],
-  onSave: (v) => { setTimeout(() => ivTrade(v.symbol.trim().toUpperCase(), v.exchange.trim().toUpperCase(), 'buy'), 50); } });
+  onSave: (v) => { if (!/^[A-Za-z0-9.\-]{1,12}$/.test(v.symbol.trim()) || !/^[A-Za-z]{0,8}$/.test(v.exchange.trim())) { alert('ชื่อย่อหุ้นใช้ได้เฉพาะ A-Z 0-9 . -'); return false; } setTimeout(() => ivTrade(v.symbol.trim().toUpperCase(), v.exchange.trim().toUpperCase(), 'buy'), 50); } });
+
+
+// ---------- พิมพ์เร็ว ----------
+const QA_JARS = [[/กาแฟ|ข้าว|อาหาร|กิน|น้ำ|ขนม|ชา|ส้มตำ|ก๋วยเตี๋ยว|เครื่องดื่ม|ซูเปอร์|ของใช้|7-?11|หมู|ไก่/i, 'กิน'], [/แท็กซี่|รถ|น้ำมัน|bts|mrt|วิน|เดินทาง|grab|ทางด่วน|จอด/i, 'เดินทาง'], [/ค่าน้ำ|ค่าไฟ|เช่า|เน็ต|ประกัน|โทรศัพท์|ผ่อน/i, 'ประจำ'], [/หนัง|เที่ยว|เกม|ช้อป|เสื้อ|ปาร์ตี้|ของขวัญ|คาเฟ่/i, 'ตามใจ']];
+const QA_IN = /เงินเดือน|รับ|ได้|โบนัส|ขายของ|ค่าจ้าง|ดอกเบี้ย|ปันผล|คืนเงิน|หวย/;
+window.qaFab = () => { switchTab('dashboard'); window.scrollTo({ top: 0, behavior: 'smooth' }); setTimeout(() => document.getElementById('qa-input').focus(), 300); };
+window.quickAdd = () => {
+  const el = document.getElementById('qa-input'), msg = document.getElementById('qa-msg'), txt = el.value.trim(); if (!txt) return;
+  const say = (h) => { msg.innerHTML = h; msg.classList.remove('hidden'); };
+  const m = txt.match(/(\d[\d,]*(?:\.\d+)?)\s*(?:บาท|฿)?\s*$/) || txt.match(/(\d[\d,]*(?:\.\d+)?)/);
+  if (!m) { say('ไม่พบจำนวนเงิน ลองพิมพ์ เช่น "กาแฟ 65"'); return; }
+  const amount = Number(m[1].replace(/,/g, '')), note = txt.replace(m[0], '').trim() || txt;
+  if (!(amount > 0)) { say('จำนวนเงินต้องมากกว่า 0'); return; }
+  if (!S().wallets.length) { say('เพิ่มบัญชีก่อนในแท็บ "กระเป๋า & ซองเงิน"'); return; }
+  const type = QA_IN.test(note) ? 'รายรับ' : 'รายจ่าย';
+  const prev = S().transactions.find(t => t.type === type && t.note && (t.note.includes(note) || note.includes(t.note)));
+  const last = S().transactions[0];
+  const w = (prev && walletByName(prev.from)) || (last && walletByName(last.from)) || S().wallets.find(x => x.type !== 'Liability') || S().wallets[0];
+  let jar = prev ? prev.jar : '';
+  if (!jar && type === 'รายจ่าย') { const hit = QA_JARS.find(([re]) => re.test(note)); const j = hit && S().jars.find(x => x.name.includes(hit[1])); jar = j ? j.name : ''; }
+  const tx = { id: Date.now(), date: localISO(), type, from: w.name, to: '', jar, amount, note };
+  applyTx(tx, 1); S().transactions.unshift(tx); S().transactions.sort((a, b) => b.date.localeCompare(a.date));
+  el.value = ''; commit();
+  const m2 = document.getElementById('qa-msg'); m2.classList.remove('hidden');
+  m2.innerHTML = `✓ บันทึก${type} ${money(amount)} · ${esc(jar || 'ไม่ระบุซอง')} · ${esc(w.name)} <button onclick="qaUndo(${tx.id})" class="underline text-blue-600 ml-1">ย้อนกลับ</button> <button onclick="editTransaction(${tx.id})" class="underline text-blue-600 ml-1">แก้ไข</button>`;
+};
+window.qaUndo = (id) => {
+  const i = S().transactions.findIndex(t => t.id === id); if (i < 0) return;
+  applyTx(S().transactions[i], -1); S().transactions.splice(i, 1); commit();
+  const m = document.getElementById('qa-msg'); m.innerHTML = 'ย้อนกลับแล้ว'; m.classList.remove('hidden');
+};
+
+// ---------- สรุปเดือน + เตือนงบซอง ----------
+const ymShift = (ym, n) => { const [y, m] = ym.split('-').map(Number), d = new Date(y, m - 1 + n, 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); };
+const ymSum = (ym, type, jar) => sum(S().transactions.filter(t => t.type === type && monthKey(t.date) === ym && (jar === undefined || t.jar === jar)), t => t.amount);
+function renderDashSummary() {
+  const el = document.getElementById('dash-summary'); if (!el) return;
+  const cur = nowKey(), prv = ymShift(cur, -1), inc = ymSum(cur, 'รายรับ'), exp = ymSum(cur, 'รายจ่าย'), pinc = ymSum(prv, 'รายรับ'), pexp = ymSum(prv, 'รายจ่าย');
+  if (!S().transactions.length) { el.innerHTML = ''; return; }
+  const dl = (a, b, good) => { if (!b) return ''; const p = (a - b) / b * 100, up = p >= 0; return `<span class="${(up === good) ? 'text-emerald-600' : 'text-rose-600'}">${up ? '▲' : '▼'} ${Math.abs(p).toFixed(0)}% จากเดือนก่อน</span>`; };
+  const jars = S().jars.map(j => { const sp = ymSum(cur, 'รายจ่าย', j.name), last = ymSum(prv, 'รายจ่าย', j.name), pct = j.budget > 0 ? sp / j.budget * 100 : 0; return { j, sp, last, pct }; });
+  const warn = jars.filter(x => x.j.budget > 0 && x.pct >= 80);
+  const other = Math.max(0, exp - sum(jars, x => x.sp));
+  const months = [5, 4, 3, 2, 1, 0].map(n => ymShift(cur, -n)), vals = months.map(m => ymSum(m, 'รายจ่าย')), mx = Math.max(...vals, 1);
+  el.innerHTML = `<div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+    <h3 class="font-bold text-slate-900">📊 สรุปเดือนนี้เทียบเดือนก่อน</h3>
+    ${warn.length ? `<div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm space-y-1">${warn.map(x => `<div class="${x.pct >= 100 ? 'text-rose-700' : 'text-amber-800'}">${x.pct >= 100 ? '🚨 เกินงบ' : '⚠️ ใกล้เต็ม'} ${esc(x.j.name)} ใช้ไป ${x.pct.toFixed(0)}% (${fmt0(x.sp)}/${fmt0(x.j.budget)})</div>`).join('')}</div>` : ''}
+    <div class="grid grid-cols-3 gap-2 text-center text-xs"><div class="bg-emerald-50 rounded-xl p-2.5">รายรับ<br><b class="text-sm text-emerald-700">${money(inc)}</b><br>${dl(inc, pinc, true)}</div><div class="bg-rose-50 rounded-xl p-2.5">รายจ่าย<br><b class="text-sm text-rose-700">${money(exp)}</b><br>${dl(exp, pexp, false)}</div><div class="bg-slate-50 rounded-xl p-2.5">เหลือเก็บ<br><b class="text-sm">${money(inc - exp)}</b></div></div>
+    <div class="space-y-2">${jars.map(x => `<div><div class="flex justify-between text-xs"><span>${esc(x.j.name)}</span><span>${fmt0(x.sp)}${x.j.budget > 0 ? ' / ' + fmt0(x.j.budget) : ''} <span class="text-slate-400">(เดือนก่อน ${fmt0(x.last)})</span></span></div>${x.j.budget > 0 ? `<div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden"><div class="h-full rounded-full ${x.pct >= 100 ? 'bg-rose-500' : x.pct >= 80 ? 'bg-amber-400' : 'bg-emerald-400'}" style="width:${Math.min(100, x.pct)}%"></div></div>` : ''}</div>`).join('')}${other > 0 ? `<div class="flex justify-between text-xs text-slate-500"><span>รายจ่ายนอกซอง</span><span>${fmt0(other)}</span></div>` : ''}</div>
+    <div><p class="text-xs text-slate-500 mb-1">รายจ่าย 6 เดือนล่าสุด</p><div class="flex items-end gap-2 h-24">${vals.map((v, i) => `<div class="flex-1 flex flex-col items-center justify-end h-full"><div class="text-[10px] text-slate-400">${v ? fmt0(v) : ''}</div><div class="w-full rounded-t-lg ${i === 5 ? 'bg-blue-600' : 'bg-slate-200'}" style="height:${Math.max(2, v / mx * 70)}%"></div><div class="text-[10px] text-slate-500">${months[i].slice(5)}</div></div>`).join('')}</div></div></div>`;
+}
+
+// ---------- จัดสรรเงินเดือน ----------
+window.openAllocate = () => {
+  if (!S().jars.length) { alert('ยังไม่มีซองเงิน'); return; }
+  const net = salaryNet();
+  openForm({ title: '💰 จัดสรรเงินเดือน', fields: [
+    { id: 'net', label: 'เงินเดือนสุทธิ (บาท)', type: 'number', value: net > 0 ? Math.round(net) : 0 },
+    { id: 'preset', label: 'สูตร (จำเป็น / ตามใจ / ออม)', type: 'select', value: '50,30,20', options: [['50,30,20', '50 / 30 / 20 (มาตรฐาน)'], ['60,20,20', '60 / 20 / 20'], ['70,20,10', '70 / 20 / 10 (ค่าใช้จ่ายสูง)'], ['50,20,30', '50 / 20 / 30 (เน้นออม)']].map(([value, label]) => ({ value, label })) },
+    { id: 'goal', label: 'เติมส่วนออมเข้าเป้าหมาย', type: 'select', value: '', options: [{ value: '', label: '— ไม่เติม (ตั้งงบซองอย่างเดียว) —' }, ...S().savings.map((x, i) => ({ value: String(i), label: x.name }))] },
+    { id: 'wallet', label: 'ตัดเงินส่วนออมจากบัญชี', type: 'select', value: String(S().wallets[0].id), options: S().wallets.map(w => ({ value: String(w.id), label: `${walletIcon(w)} ${w.name}` })) }],
+  onSave: (v) => {
+    if (v.net <= 0) { alert('ใส่เงินเดือนสุทธิ'); return false; }
+    const [a, b, c] = v.preset.split(',').map(x => Number(x) / 100), jars = S().jars, wantJ = jars.filter(j => /ตามใจ|ท่องเที่ยว/.test(j.name)), needJ = jars.filter(j => !wantJ.includes(j));
+    const spread = (list, total) => { const base = sum(list, j => j.budget) || list.length; list.forEach(j => { j.budget = Math.round(total * ((sum(list, x => x.budget) ? j.budget : 1) / base)); }); };
+    const saveAmt = Math.round(v.net * c), sv = v.goal !== '' ? S().savings[Number(v.goal)] : null, w = S().wallets.find(x => String(x.id) === v.wallet);
+    if (!confirm(`ตั้งงบซองจำเป็น ${fmt0(v.net * a)} และซองตามใจ ${fmt0(v.net * b)}${sv ? `\nเติม ${fmt0(saveAmt)} เข้า "${sv.name}" จาก "${w.name}"` : `\nส่วนออม ${fmt0(saveAmt)} (ยังไม่เติมเข้าเป้าหมาย)`}\nดำเนินการ?`)) return false;
+    if (wantJ.length) { spread(needJ, v.net * a); spread(wantJ, v.net * b); } else spread(needJ, v.net * (a + b));
+    if (sv && w) (sv.history = sv.history || []).push(savingApply(sv, w, saveAmt, localISO(), false));
+    commit();
+  } });
+};
 
 // ---------- เครื่องมือ ----------
 window.runSimulator = () => {
@@ -2675,7 +2758,15 @@ renderAll();
   const docs = () => (S2().wsDocs = S2().wsDocs || {});
   const listeners = []; let lastSig = '';
   const snapDocs = () => { try { const x = localStorage.getItem('ws_snapdoc'); return x ? [JSON.parse(x)] : []; } catch (e) { return []; } };
-  const allDocs = () => [...Object.values(docs()), ...snapDocs()].map(o => ({ data: () => o }));
+  const finEvents = () => { // วันครบกำหนดหนี้จากโหมดการเงิน แสดงในปฏิทินงาน (อ่านอย่างเดียว ไม่บันทึกซ้ำ)
+    const out = [], t = new Date(), has = new Set(Object.keys(docs()));
+    (S2().debts || []).forEach(d => { if (!d.dueDay || !(Number(d.remaining) > 0)) return;
+      for (let n = 0; n < 3; n++) { const dim = new Date(t.getFullYear(), t.getMonth() + n + 1, 0).getDate(), dt = new Date(t.getFullYear(), t.getMonth() + n, Math.min(d.dueDay, dim)), ds = dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0'), id = 'fin_' + d.id + '_' + ds;
+        if (has.has('e_' + id)) continue; out.push({ id, col: 'events', uid: 'me', half: false, tin: '', tout: '', date: ds, type: 'plan', title: '💸 จ่าย ' + d.name + (d.monthly ? ' ' + Math.round(d.monthly).toLocaleString() : '') }); } });
+    return out;
+  };
+  const allDocs = () => [...Object.values(docs()), ...finEvents(), ...snapDocs()].map(o => ({ data: () => o }));
+  const CAT = '<style>:root,:root:not([data-theme="light"]),:root[data-theme="dark"]{color-scheme:light!important;--bg:#fff8f0!important;--surface:#fff!important;--text:#4a3b32!important;--muted:#a08c7d!important;--line:#f3d9c3!important;--accent:#f0925f!important;--on-accent:#fff!important;--work:#ffe6d3!important;--wfh:#dcf1df!important;--leave:#fde2c8!important;--plan:#fff0c9!important;--holiday:#ece3f8!important;--due:#ffe9a8!important}body{background-image:radial-gradient(#f6e3d2 1px,transparent 1px)!important;background-size:22px 22px}.card,.task{border-radius:18px!important}</style>';
   const notify = () => { lastSig = JSON.stringify(docs()); listeners.forEach(cb => { try { cb({ docs: allDocs() }); } catch (e) {} }); };
   function migrateOld() { // ย้ายงาน/วันลา/เวลาเข้างานจากโหมดเดิมมาไว้ในพื้นที่ทำงานใหม่ (ทำครั้งเดียว, ข้อมูลเดิมไม่ถูกลบ)
     const s = S2(); if (!s || s.wsMigrated || !s.workspace) return false;
@@ -2702,7 +2793,7 @@ renderAll();
       try { localStorage.setItem('ws_user', 'main'); } catch (e) {}
       const bin = atob(document.getElementById('ws-full-src').textContent.trim());
       const html = new TextDecoder('utf-8').decode(Uint8Array.from(bin, c => c.charCodeAt(0)));
-      fr.srcdoc = html.replace('<head>', '<head><scr' + 'ipt>' + SHIM + '</scr' + 'ipt>');
+      fr.srcdoc = html.replace('<head>', '<head>' + CAT + '<scr' + 'ipt>' + SHIM + '</scr' + 'ipt>');
       fr.dataset.loaded = '1';
     } catch (e) { console.error('load workspace failed', e); }
   }
