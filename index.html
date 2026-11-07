@@ -130,6 +130,7 @@ header.bg-white{background:#fff!important;border-bottom:2px dashed #f3d9c3!impor
 
   <!-- DASHBOARD -->
   <div id="tab-dashboard" class="tab-content space-y-6">
+    <div id="storage-warn"></div>
     <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
       <div class="flex gap-2"><input id="qa-input" onkeydown="if(event.key==='Enter')quickAdd()" placeholder="พิมพ์เร็ว เช่น กาแฟ 65 · ข้าวมันไก่ 50 · เงินเดือน 30000" class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm"><button onclick="quickAdd()" class="bg-blue-600 text-white px-4 rounded-xl text-sm font-semibold">เพิ่ม</button></div>
       <p id="qa-msg" class="text-xs text-slate-500 mt-2 hidden"></p>
@@ -366,6 +367,12 @@ header.bg-white{background:#fff!important;border-bottom:2px dashed #f3d9c3!impor
 
   <!-- TOOLS -->
   <div id="tab-tools" class="tab-content hidden space-y-6">
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+      <h3 class="font-bold text-slate-900">🗄️ พื้นที่เก็บข้อมูล</h3>
+      <div id="storage-card" class="space-y-3 text-sm"></div>
+      <div class="flex flex-wrap gap-2 text-xs font-semibold"><button onclick="openArchive()" class="bg-blue-50 text-blue-700 px-3 py-2 rounded-xl">📦 เก็บถาวรรายปี</button><button onclick="document.getElementById('arch-file').click()" class="bg-slate-100 px-3 py-2 rounded-xl">📥 นำเข้าไฟล์เก็บถาวร</button><input type="file" id="arch-file" accept=".json,application/json" class="hidden" onchange="restoreArchive(this)"></div>
+      <div id="archive-list" class="space-y-1 text-xs text-slate-600"></div>
+    </div>
     <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-2">
       <h3 class="font-bold text-slate-900">💰 จัดสรรเงินเดือนอัตโนมัติ</h3>
       <p class="text-xs text-slate-500">เลือกสูตร เช่น 50/30/20 ระบบตั้งงบซองเงินให้ และเติมส่วนออมเข้าเป้าหมายจากบัญชีที่เลือก</p>
@@ -827,7 +834,7 @@ window.switchTab = (tabId) => {
 
 window.renderAll = () => {
   renderDashboard(); renderSalary(); renderTransactions();
-  renderWalletsAndJars(); renderSavings(); renderDebts(); renderDashDebts(); renderDashSummary(); renderRecurring(); renderDebtCompare(); renderInvest();
+  renderWalletsAndJars(); renderSavings(); renderDebts(); renderDashDebts(); renderDashSummary(); renderStorage(); renderRecurring(); renderDebtCompare(); renderInvest();
   if (!document.getElementById('tab-calendar').classList.contains('hidden')) renderCalendar();
 };
 
@@ -2101,7 +2108,8 @@ window.qaUndo = (id) => {
 
 // ---------- สรุปเดือน + เตือนงบซอง ----------
 const ymShift = (ym, n) => { const [y, m] = ym.split('-').map(Number), d = new Date(y, m - 1 + n, 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); };
-const ymSum = (ym, type, jar) => sum(S().transactions.filter(t => t.type === type && monthKey(t.date) === ym && (jar === undefined || t.jar === jar)), t => t.amount);
+const archPart = (ym, type, jar) => { const m = ((S().archive || {}).months || {})[ym]; if (!m) return 0; return type === 'รายรับ' ? (jar === undefined ? m.income : 0) : (jar === undefined ? m.expense : (m.jars[jar] || 0)); };
+const ymSum = (ym, type, jar) => sum(S().transactions.filter(t => t.type === type && monthKey(t.date) === ym && (jar === undefined || t.jar === jar)), t => t.amount) + archPart(ym, type, jar);
 function renderDashSummary() {
   const el = document.getElementById('dash-summary'); if (!el) return;
   const cur = nowKey(), prv = ymShift(cur, -1), inc = ymSum(cur, 'รายรับ'), exp = ymSum(cur, 'รายจ่าย'), pinc = ymSum(prv, 'รายรับ'), pexp = ymSum(prv, 'รายจ่าย');
@@ -2138,6 +2146,62 @@ window.openAllocate = () => {
     if (sv && w) (sv.history = sv.history || []).push(savingApply(sv, w, saveAmt, localISO(), false));
     commit();
   } });
+};
+
+
+// ---------- พื้นที่เก็บข้อมูล + เก็บถาวรรายปี ----------
+const FS_LIMIT = 1048576, byteLen = (x) => new TextEncoder().encode(JSON.stringify(x) || '').length;
+function storageInfo() {
+  const st = window.appState || {}, total = byteLen(st);
+  const parts = [['รายการรับ-จ่าย', st.transactions], ['พื้นที่ทำงาน', [st.wsDocs, st.workspace]], ['เป้าหมายออม/หนี้/หุ้น', [st.savings, st.debts, st.invest]], ['สรุปที่เก็บถาวร', st.archive]].map(([n, v]) => [n, byteLen(v || 0)]);
+  return { total, pct: total / FS_LIMIT * 100, parts };
+}
+function renderStorage() {
+  const info = storageInfo(), pct = info.pct, col = pct >= 90 ? 'rose' : pct >= 70 ? 'amber' : 'emerald';
+  const w = document.getElementById('storage-warn');
+  if (w) w.innerHTML = pct >= 70 ? `<div class="bg-${col}-50 border border-${col}-200 text-${col}-800 rounded-2xl p-3 text-sm flex items-center justify-between gap-2"><span>${pct >= 90 ? '🚨' : '⚠️'} พื้นที่เก็บข้อมูลใช้ไป ${pct.toFixed(0)}% ${pct >= 90 ? 'ใกล้เต็ม รายการใหม่อาจบันทึกไม่ได้' : 'ควรเก็บถาวรรายการปีเก่า'}</span><button onclick="switchTab('tools')" class="underline font-semibold whitespace-nowrap">จัดการ</button></div>` : '';
+  const c = document.getElementById('storage-card'), l = document.getElementById('archive-list');
+  if (c) c.innerHTML = `<div><div class="flex justify-between text-xs"><span>ใช้ไป ${(info.total / 1024).toFixed(0)} KB จาก ${(FS_LIMIT / 1024).toFixed(0)} KB (ประมาณ)</span><b>${pct.toFixed(1)}%</b></div><div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden mt-1"><div class="h-full rounded-full bg-${col}-400" style="width:${Math.min(100, pct)}%"></div></div></div><div class="grid grid-cols-2 gap-1 text-xs text-slate-500">${info.parts.map(([n, b]) => `<div class="flex justify-between bg-slate-50 rounded-lg px-2 py-1"><span>${n}</span><span>${(b / 1024).toFixed(0)} KB</span></div>`).join('')}</div>`;
+  if (l) { const f = (S().archive || {}).files || []; l.innerHTML = f.length ? '<p class="font-semibold text-slate-700">ที่เก็บถาวรแล้ว</p>' + f.map(x => `<div>📦 ถึงสิ้นปี ${x.upTo} (พ.ศ. ${x.upTo + 543}) · ${x.count} รายการ · รับ ${fmt0(x.income)} / จ่าย ${fmt0(x.expense)} · เก็บเมื่อ ${esc(x.at.slice(0, 10))}</div>`).join('') + '<p class="text-slate-400">ยอดสรุปรายเดือนของปีเหล่านี้ยังนับในกราฟ/สรุปเทียบเดือน ส่วนรายการละเอียดอยู่ในไฟล์ที่ดาวน์โหลดไว้</p>' : ''; }
+}
+function archSummary(tx, sign) {
+  const a = (S().archive = S().archive || { months: {}, files: [] }), ym = monthKey(tx.date), m = (a.months[ym] = a.months[ym] || { income: 0, expense: 0, jars: {} });
+  if (tx.type === 'รายรับ') m.income += sign * tx.amount; else if (tx.type === 'รายจ่าย') { m.expense += sign * tx.amount; m.jars[tx.jar || ''] = (m.jars[tx.jar || ''] || 0) + sign * tx.amount; }
+  if (Math.abs(m.income) < 0.005 && Math.abs(m.expense) < 0.005) delete a.months[ym];
+}
+function dlFile(name, text) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' })); a.download = name; document.body.appendChild(a); a.click(); a.remove(); }
+const linkedTxIds = () => new Set([...S().savings.flatMap(x => (x.history || []).map(e => e.txId)), ...S().debts.flatMap(d => (d.payments || []).map(p => p.txId))].filter(Boolean));
+window.openArchive = () => {
+  const cur = new Date().getFullYear(), linked = linkedTxIds(), yrs = [...new Set(S().transactions.map(t => Number(t.date.slice(0, 4))))].filter(y => y < cur).sort();
+  if (!yrs.length) { alert('ยังไม่มีรายการของปีก่อนหน้าให้เก็บถาวร'); return; }
+  const cnt = (y) => S().transactions.filter(t => Number(t.date.slice(0, 4)) <= y && !linked.has(t.id)).length;
+  openForm({ title: '📦 เก็บถาวรรายปี', fields: [{ id: 'year', label: 'เก็บถาวรทุกรายการถึงสิ้นปี', type: 'select', value: String(yrs[yrs.length - 1]), options: yrs.map(y => ({ value: String(y), label: `${y} (พ.ศ. ${y + 543}) · ${cnt(y)} รายการ` })) }],
+    onSave: (v) => {
+      const Y = Number(v.year), old = S().transactions.filter(t => Number(t.date.slice(0, 4)) <= Y && !linked.has(t.id));
+      if (!old.length) { alert('ไม่มีรายการให้เก็บ'); return false; }
+      dlFile(`wealthflow-archive-${Y}.json`, JSON.stringify({ type: 'wealthflow-archive', version: 1, upTo: Y, createdAt: new Date().toISOString(), transactions: old }));
+      setTimeout(() => {
+        if (!confirm(`ดาวน์โหลดไฟล์ wealthflow-archive-${Y}.json แล้ว และเก็บไว้ในที่ปลอดภัยแล้วใช่ไหม?\nกด "ตกลง" เพื่อลบ ${old.length} รายการนี้ออกจากระบบ\n(ยอดบัญชีไม่เปลี่ยน ยอดสรุปรายเดือนยังคงอยู่)`)) return;
+        const ids = new Set(old.map(t => t.id)); old.forEach(t => archSummary(t, 1));
+        const a = S().archive; a.files.push({ upTo: Y, count: old.length, income: sum(old.filter(t => t.type === 'รายรับ'), t => t.amount), expense: sum(old.filter(t => t.type === 'รายจ่าย'), t => t.amount), at: new Date().toISOString() });
+        S().transactions = S().transactions.filter(t => !ids.has(t.id)); commit();
+      }, 400);
+    } });
+};
+window.restoreArchive = (inp) => {
+  const f = inp.files[0]; if (!f) return; const rd = new FileReader();
+  rd.onload = () => {
+    try {
+      const j = JSON.parse(rd.result); if (j.type !== 'wealthflow-archive' || !Array.isArray(j.transactions)) throw new Error('ไม่ใช่ไฟล์เก็บถาวรของแอปนี้');
+      const have = new Set(S().transactions.map(t => t.id)), add = j.transactions.filter(t => t && t.id && t.date && !have.has(t.id));
+      if (!confirm(`นำเข้า ${add.length} รายการกลับเข้าระบบ? (ยอดบัญชีไม่เปลี่ยน)`)) return;
+      add.forEach(t => archSummary(t, -1)); S().transactions.push(...add); S().transactions.sort((a, b) => b.date.localeCompare(a.date));
+      const a = S().archive; if (a && a.files) { const i = a.files.findIndex(x => x.upTo === j.upTo); if (i >= 0) a.files.splice(i, 1); }
+      commit(); alert('นำเข้าเรียบร้อย');
+    } catch (e) { alert('นำเข้าไม่สำเร็จ: ' + e.message); }
+    inp.value = '';
+  };
+  rd.readAsText(f);
 };
 
 // ---------- เครื่องมือ ----------
