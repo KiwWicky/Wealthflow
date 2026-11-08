@@ -1,6 +1,6 @@
 // WealthFlow Pro - Service Worker
 // เปลี่ยนเลขเวอร์ชันนี้ทุกครั้งที่อัปเดตไฟล์ เพื่อให้เครื่องผู้ใช้ล้างแคชเก่า
-const VER = 'wealthflow-v1';
+const VER = 'wealthflow-v2';
 const SHELL = ['./', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 const CDN = ['cdn.tailwindcss.com', 'fonts.googleapis.com', 'fonts.gstatic.com', 'cdnjs.cloudflare.com', 'www.gstatic.com'];
 
@@ -17,7 +17,7 @@ self.addEventListener('fetch', (e) => {
   // หน้าเว็บ: ลองออนไลน์ก่อนเพื่อได้เวอร์ชันล่าสุด ถ้าออฟไลน์ใช้ของที่เก็บไว้
   if (req.mode === 'navigate') {
     e.respondWith(
-      fetch(req).then((r) => { const cp = r.clone(); caches.open(VER).then((c) => { c.put(req, cp); }); return r; })
+      fetch(req.url, { cache: 'no-cache', credentials: 'same-origin' }).then((r) => { const cp = r.clone(); caches.open(VER).then((c) => { c.put(req, cp); }); return r; })
         .catch(() => caches.match(req).then((h) => h || caches.match('./')))
     );
     return;
