@@ -59,6 +59,7 @@ header.bg-white{background:#fff!important;border-bottom:2px dashed #f3d9c3!impor
     <div class="flex items-center space-x-3">
       <button id="sync-status" onclick="syncNow(true)" title="แตะเพื่อซิงก์ตอนนี้" class="text-[11px] sm:text-xs text-slate-500 hover:text-slate-800 underline decoration-dotted"></button>
       <div id="auth-status" class="text-sm font-medium text-slate-600 hidden sm:block">กำลังตรวจสอบ...</div>
+      <button id="account-btn" onclick="openAccount()" class="hidden bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-xl text-sm font-medium transition items-center" title="บัญชีของฉัน"><i class="fa-solid fa-user-gear"></i></button>
       <button id="logout-btn" onclick="logoutUser()" class="hidden bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-xl text-sm font-medium transition items-center space-x-1" title="ออกจากระบบ">
         <i class="fa-solid fa-right-from-bracket"></i><span class="hidden sm:inline ml-1">ออก</span>
       </button>
@@ -68,16 +69,48 @@ header.bg-white{background:#fff!important;border-bottom:2px dashed #f3d9c3!impor
 
 <!-- Login screen -->
 <section id="login-screen" class="flex-grow flex items-center justify-center p-4">
-  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 max-w-sm w-full text-center space-y-5">
-    <div class="bg-blue-600 text-white w-16 h-16 rounded-3xl flex items-center justify-center mx-auto shadow-md text-3xl wag">🐱</div>
-    <div>
-      <h2 class="text-xl font-bold text-slate-900">เข้าสู่ระบบ</h2>
-      <p class="text-sm text-slate-500 mt-1">จัดการทั้งเรื่องการเงินและชีวิตการทำงานในที่เดียว ซิงก์ข้ามอุปกรณ์อัตโนมัติ</p>
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-7 max-w-sm w-full space-y-5">
+    <div class="text-center space-y-3">
+      <div class="bg-blue-600 text-white w-16 h-16 rounded-3xl flex items-center justify-center mx-auto shadow-md text-3xl wag">🐱</div>
+      <div>
+        <h2 class="text-xl font-bold text-slate-900">ยินดีต้อนรับ</h2>
+        <p class="text-sm text-slate-500 mt-1">จัดการทั้งเรื่องการเงินและชีวิตการทำงานในที่เดียว ซิงก์ข้ามอุปกรณ์อัตโนมัติ</p>
+      </div>
     </div>
-    <button id="login-btn" onclick="loginWithGoogle()" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-xl text-sm font-medium transition shadow-sm flex items-center justify-center space-x-2">
-      <i class="fa-brands fa-google"></i><span class="ml-2">เข้าสู่ระบบด้วย Google</span>
-    </button>
-    <p id="login-error" class="text-xs text-rose-600 hidden"></p>
+    <div class="grid grid-cols-2 gap-1 bg-slate-100 rounded-xl p-1 text-sm font-semibold">
+      <button type="button" id="auth-tab-login" onclick="authTab('login')" class="py-2 rounded-lg bg-white shadow-sm text-slate-900">เข้าสู่ระบบ</button>
+      <button type="button" id="auth-tab-signup" onclick="authTab('signup')" class="py-2 rounded-lg text-slate-500">สมัครสมาชิก</button>
+    </div>
+    <form id="auth-form" onsubmit="return authSubmit(event)" novalidate class="space-y-3 text-sm">
+      <label class="block space-y-1">
+        <span class="text-xs font-medium text-slate-600">ชื่อผู้ใช้</span>
+        <input id="auth-user" name="username" type="text" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="เช่น kiw.money" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5" style="font-size:16px">
+      </label>
+      <label class="block space-y-1">
+        <span class="text-xs font-medium text-slate-600">รหัสผ่าน</span>
+        <div class="relative">
+          <input id="auth-pass" name="password" type="password" autocomplete="current-password" placeholder="••••••••" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5" style="font-size:16px" >
+          <button type="button" onclick="authToggleEye()" id="auth-eye" class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-700">แสดง</button>
+        </div>
+      </label>
+      <label id="auth-pass2-wrap" class="hidden block space-y-1">
+        <span class="text-xs font-medium text-slate-600">ยืนยันรหัสผ่าน</span>
+        <input id="auth-pass2" name="password2" type="password" autocomplete="new-password" placeholder="พิมพ์รหัสผ่านอีกครั้ง" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5" style="font-size:16px">
+      </label>
+      <label class="flex items-center gap-2 text-xs text-slate-600 select-none">
+        <input id="auth-remember" type="checkbox" checked class="w-4 h-4 rounded"> จำการเข้าสู่ระบบในเครื่องนี้
+      </label>
+      <p id="auth-hint" class="hidden text-[11px] leading-relaxed text-slate-500 bg-slate-50 rounded-xl p-3">ชื่อผู้ใช้ 3-20 ตัว ใช้ a-z, 0-9, จุด, ขีดล่าง หรือขีดกลาง · รหัสผ่านอย่างน้อย 8 ตัว<br><b>ถ้าลืมรหัสผ่านจะกู้คืนไม่ได้</b> จึงควรจดไว้ และสำรองข้อมูลเป็นระยะ</p>
+      <button id="auth-submit" type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-xl text-sm font-semibold transition shadow-sm">เข้าสู่ระบบ</button>
+      <p id="login-error" class="text-xs text-rose-600 hidden"></p>
+    </form>
+    <details class="text-xs text-slate-500">
+      <summary class="cursor-pointer select-none">มีบัญชีเดิมที่เคยเข้าด้วย Google?</summary>
+      <div class="pt-2 space-y-2">
+        <p>เข้าด้วย Google ครั้งเดียว (ในเครื่องที่ทำได้) แล้วกดปุ่ม 👤 มุมบนเพื่อตั้งชื่อผู้ใช้และรหัสผ่านให้บัญชีเดิม ข้อมูลเดิมจะอยู่ครบ จากนั้นเครื่องอื่นเข้าด้วยชื่อผู้ใช้ได้เลย</p>
+        <button type="button" id="login-btn" onclick="loginWithGoogle()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl text-xs font-medium transition flex items-center justify-center"><i class="fa-brands fa-google mr-2"></i>เข้าสู่ระบบด้วย Google</button>
+      </div>
+    </details>
   </div>
 </section>
 
@@ -643,7 +676,7 @@ header.bg-white{background:#fff!important;border-bottom:2px dashed #f3d9c3!impor
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, signInWithPopup, signInWithRedirect, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getAuth, signInWithPopup, signInWithRedirect, GoogleAuthProvider, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, setPersistence, browserLocalPersistence, browserSessionPersistence, updateProfile, EmailAuthProvider, linkWithCredential, reauthenticateWithCredential, updatePassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { initializeFirestore, doc, runTransaction, getDocFromServer, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -903,17 +936,141 @@ window.loginWithGoogle = async () => {
 };
 window.logoutUser = () => signOut(auth);
 
+// ---------- ล็อกอินด้วยชื่อผู้ใช้ + รหัสผ่าน ----------
+// Firebase รองรับแบบอีเมลเท่านั้น จึงแปลงชื่อผู้ใช้เป็นอีเมลภายใน (ไม่มีการส่งอีเมลจริง)
+const AUTH_SUFFIX = '@wealthflow.example.com';
+const USER_RE = /^[a-z0-9][a-z0-9._-]{2,19}$/;
+const toEmail = (u) => u + AUTH_SUFFIX;
+const nameOf = (email) => (email || '').endsWith(AUTH_SUFFIX) ? email.slice(0, -AUTH_SUFFIX.length) : (email || '');
+const aEl = (id) => document.getElementById(id);
+let authMode = 'login';
+
+function authErr(e) {
+  const m = {
+    'auth/invalid-credential': 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง',
+    'auth/wrong-password': 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง',
+    'auth/user-not-found': 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง',
+    'auth/email-already-in-use': 'ชื่อผู้ใช้นี้ถูกใช้แล้ว ลองชื่ออื่น',
+    'auth/weak-password': 'รหัสผ่านง่ายเกินไป ลองใช้อย่างน้อย 8 ตัว',
+    'auth/invalid-email': 'รูปแบบชื่อผู้ใช้ไม่ถูกต้อง',
+    'auth/too-many-requests': 'ลองผิดหลายครั้งเกินไป กรุณารอสักครู่แล้วลองใหม่',
+    'auth/network-request-failed': 'เชื่อมต่ออินเทอร์เน็ตไม่ได้ ตรวจสอบสัญญาณแล้วลองใหม่',
+    'auth/operation-not-allowed': 'ยังไม่ได้เปิดการล็อกอินแบบอีเมล/รหัสผ่านใน Firebase (Authentication → Sign-in method → Email/Password)',
+    'auth/requires-recent-login': 'เพื่อความปลอดภัย กรุณาออกจากระบบแล้วเข้าสู่ระบบใหม่ จากนั้นลองอีกครั้ง',
+    'auth/provider-already-linked': 'บัญชีนี้มีชื่อผู้ใช้และรหัสผ่านอยู่แล้ว',
+    'auth/credential-already-in-use': 'ชื่อผู้ใช้นี้ถูกใช้แล้ว ลองชื่ออื่น'
+  };
+  return m[e && e.code] || ('เกิดข้อผิดพลาด: ' + ((e && e.message) || e));
+}
+function authShowErr(msg) { const el = aEl('login-error'); el.innerText = msg || ''; el.classList.toggle('hidden', !msg); }
+
+window.authTab = (mode) => {
+  authMode = mode === 'signup' ? 'signup' : 'login';
+  const su = authMode === 'signup';
+  aEl('auth-tab-login').className = 'py-2 rounded-lg ' + (su ? 'text-slate-500' : 'bg-white shadow-sm text-slate-900');
+  aEl('auth-tab-signup').className = 'py-2 rounded-lg ' + (su ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500');
+  aEl('auth-pass2-wrap').classList.toggle('hidden', !su);
+  aEl('auth-hint').classList.toggle('hidden', !su);
+  aEl('auth-pass').setAttribute('autocomplete', su ? 'new-password' : 'current-password');
+  aEl('auth-submit').innerText = su ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ';
+  authShowErr('');
+};
+window.authToggleEye = () => {
+  const p = aEl('auth-pass'), show = p.type === 'password';
+  p.type = show ? 'text' : 'password'; if (aEl('auth-pass2')) aEl('auth-pass2').type = p.type;
+  aEl('auth-eye').innerText = show ? 'ซ่อน' : 'แสดง';
+};
+window.authSubmit = async (ev) => {
+  if (ev && ev.preventDefault) ev.preventDefault();
+  authShowErr('');
+  const u = aEl('auth-user').value.trim().toLowerCase(), pw = aEl('auth-pass').value, remember = aEl('auth-remember').checked;
+  if (!USER_RE.test(u)) { authShowErr('ชื่อผู้ใช้ 3-20 ตัว ใช้ได้เฉพาะ a-z, 0-9, จุด, ขีดล่าง และขีดกลาง (ขึ้นต้นด้วยตัวอักษรหรือตัวเลข)'); return false; }
+  if (authMode === 'signup') {
+    if (pw.length < 8) { authShowErr('รหัสผ่านต้องมีอย่างน้อย 8 ตัว'); return false; }
+    if (pw !== aEl('auth-pass2').value) { authShowErr('รหัสผ่านสองช่องไม่ตรงกัน'); return false; }
+  } else if (!pw) { authShowErr('กรุณากรอกรหัสผ่าน'); return false; }
+  const btn = aEl('auth-submit'), label = btn.innerText;
+  btn.disabled = true; btn.innerText = 'กำลังดำเนินการ...';
+  try {
+    try { await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence); } catch (e) { /* โหมดส่วนตัวบางเบราว์เซอร์ ใช้ค่าเริ่มต้น */ }
+    if (authMode === 'signup') {
+      const cred = await createUserWithEmailAndPassword(auth, toEmail(u), pw);
+      try { await updateProfile(cred.user, { displayName: u }); aEl('auth-status').innerText = u; } catch (e) {}
+    } else {
+      await signInWithEmailAndPassword(auth, toEmail(u), pw);
+    }
+    try { localStorage.setItem('wf_last_user', u); localStorage.setItem('wf_remember', remember ? '1' : '0'); } catch (e) {}
+    aEl('auth-pass').value = ''; aEl('auth-pass2').value = '';
+  } catch (e) {
+    authShowErr(authErr(e));
+  } finally {
+    btn.disabled = false; btn.innerText = label;
+  }
+  return false;
+};
+try {
+  const lu = localStorage.getItem('wf_last_user'); if (lu) aEl('auth-user').value = lu;
+  if (localStorage.getItem('wf_remember') === '0') aEl('auth-remember').checked = false;
+} catch (e) {}
+
+// ---------- บัญชีของฉัน: ตั้งชื่อผู้ใช้ให้บัญชีเดิม / เปลี่ยนรหัสผ่าน ----------
+const hasPassword = () => !!(currentUser && currentUser.providerData.some(p => p.providerId === 'password'));
+window.openAccount = () => {
+  if (!currentUser) return;
+  if (!hasPassword()) {
+    openForm({
+      title: 'ตั้งชื่อผู้ใช้และรหัสผ่านให้บัญชีนี้',
+      fields: [
+        { id: 'u', label: 'ชื่อผู้ใช้ (3-20 ตัว: a-z 0-9 . _ -)', type: 'text', value: '', placeholder: 'เช่น kiw.money', lower: true },
+        { id: 'p', label: 'รหัสผ่าน (อย่างน้อย 8 ตัว)', type: 'password', value: '' },
+        { id: 'p2', label: 'ยืนยันรหัสผ่าน', type: 'password', value: '' }
+      ],
+      onSave: (v) => {
+        const u = v.u.toLowerCase();
+        if (!USER_RE.test(u)) { alert('ชื่อผู้ใช้ไม่ถูกต้อง: 3-20 ตัว ใช้ a-z, 0-9, จุด, ขีดล่าง, ขีดกลาง'); return false; }
+        if (v.p.length < 8) { alert('รหัสผ่านต้องมีอย่างน้อย 8 ตัว'); return false; }
+        if (v.p !== v.p2) { alert('รหัสผ่านสองช่องไม่ตรงกัน'); return false; }
+        linkWithCredential(currentUser, EmailAuthProvider.credential(toEmail(u), v.p))
+          .then(() => { closeForm(); try { localStorage.setItem('wf_last_user', u); } catch (e) {} alert(`สำเร็จ! ตอนนี้เข้าสู่ระบบด้วยชื่อผู้ใช้ "${u}" ได้ทุกเครื่อง ข้อมูลเดิมยังอยู่ครบ`); })
+          .catch((e) => alert(authErr(e)));
+        return false;
+      }
+    });
+    return;
+  }
+  openForm({
+    title: `เปลี่ยนรหัสผ่าน (ชื่อผู้ใช้: ${nameOf(currentUser.email)})`,
+    fields: [
+      { id: 'c', label: 'รหัสผ่านปัจจุบัน', type: 'password', value: '', auto: 'current-password' },
+      { id: 'p', label: 'รหัสผ่านใหม่ (อย่างน้อย 8 ตัว)', type: 'password', value: '' },
+      { id: 'p2', label: 'ยืนยันรหัสผ่านใหม่', type: 'password', value: '' }
+    ],
+    onSave: (v) => {
+      if (!v.c) { alert('กรุณากรอกรหัสผ่านปัจจุบัน'); return false; }
+      if (v.p.length < 8) { alert('รหัสผ่านใหม่ต้องมีอย่างน้อย 8 ตัว'); return false; }
+      if (v.p !== v.p2) { alert('รหัสผ่านใหม่สองช่องไม่ตรงกัน'); return false; }
+      reauthenticateWithCredential(currentUser, EmailAuthProvider.credential(currentUser.email, v.c))
+        .then(() => updatePassword(currentUser, v.p))
+        .then(() => { closeForm(); alert('เปลี่ยนรหัสผ่านเรียบร้อย'); })
+        .catch((e) => alert(e && (e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password') ? 'รหัสผ่านปัจจุบันไม่ถูกต้อง' : authErr(e)));
+      return false;
+    }
+  });
+};
+
 onAuthStateChanged(auth, (user) => {
   currentUser = user;
   if (unsubscribe) { unsubscribe(); unsubscribe = null; }
   loaded = false; clearTimeout(saveTimer); saveTimer = null; baseDoc = null; baseRev = 0; baseBy = ''; saving = false; resave = false;
   if (user) {
-    document.getElementById('auth-status').innerText = user.displayName || user.email;
+    document.getElementById('auth-status').innerText = user.displayName || nameOf(user.email);
     document.getElementById('login-screen').classList.add('hidden');
     document.getElementById('hub-screen').classList.remove('hidden');
     document.getElementById('mode-switcher').classList.remove('hidden');
     document.getElementById('logout-btn').classList.remove('hidden');
     document.getElementById('logout-btn').classList.add('flex');
+    document.getElementById('account-btn').classList.remove('hidden');
+    document.getElementById('account-btn').classList.add('flex');
     setSyncStatus('กำลังโหลดข้อมูล...');
     unsubscribe = onSnapshot(doc(db, "users", user.uid), (snap) => {
       if (snap.metadata.hasPendingWrites) return;
@@ -935,6 +1092,8 @@ onAuthStateChanged(auth, (user) => {
     document.getElementById('mode-switcher').classList.add('hidden');
     document.getElementById('logout-btn').classList.add('hidden');
     document.getElementById('logout-btn').classList.remove('flex');
+    document.getElementById('account-btn').classList.add('hidden');
+    document.getElementById('account-btn').classList.remove('flex');
     setSyncStatus('');
   }
 });
@@ -2654,7 +2813,7 @@ window.openForm = (cfg) => {
       input = `<input type="text" id="${id}" maxlength="4" value="${esc(f.value)}" class="${inputCls} text-center text-lg w-24"><div class="flex flex-wrap gap-1.5 mt-2">${f.options.map(e =>
         `<button type="button" onclick="document.getElementById('${id}').value='${e}'" class="w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200 text-lg">${e}</button>`).join('')}</div>`;
     } else {
-      input = `<input type="${f.type === 'number' ? 'number' : 'text'}" ${f.type === 'number' ? 'step="any"' : ''} id="${id}" value="${esc(f.value)}" placeholder="${esc(f.placeholder || '')}" class="${inputCls}">`;
+      input = `<input type="${f.type === 'number' ? 'number' : f.type === 'password' ? 'password' : 'text'}" ${f.type === 'number' ? 'step="any"' : ''} ${f.type === 'password' ? `autocomplete="${f.auto || 'new-password'}"` : (f.lower ? 'autocapitalize="none" autocorrect="off" spellcheck="false"' : '')} id="${id}" value="${esc(f.value)}" placeholder="${esc(f.placeholder || '')}" class="${inputCls}">`;
     }
     return `<div><label class="block text-xs font-medium text-slate-600 mb-1">${esc(f.label)}</label>${input}</div>`;
   }).join('');
@@ -2678,7 +2837,7 @@ window.submitForm = () => {
     if (f.type === 'number') {
       if (val === '' || !isFinite(Number(val))) { alert('กรุณากรอกตัวเลขให้ถูกต้อง'); return; }
       val = Number(val);
-    } else val = val.trim();
+    } else val = (f.type === 'password' ? val : val.trim());
     if (f.required && !val) { alert('กรุณากรอกชื่อ'); return; }
     v[f.id] = val;
   }
