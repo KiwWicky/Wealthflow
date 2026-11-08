@@ -1,0 +1,17 @@
+{
+  "name": "WealthFlow Pro",
+  "short_name": "WealthFlow",
+  "description": "แมวเหมียวช่วยดูแลเงินของคุณ: รายรับ-รายจ่าย เงินเดือน ภาษี หนี้ และการลงทุน",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fff8f0",
+  "theme_color": "#f0925f",
+  "lang": "th",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
