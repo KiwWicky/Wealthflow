@@ -82,8 +82,8 @@ header.bg-white{background:#fff!important;border-bottom:2px dashed #f3d9c3!impor
   button[onclick="qaFab()"]{bottom:calc(80px + env(safe-area-inset-bottom))!important;right:14px!important;width:3rem!important;height:3rem!important;font-size:1.3rem!important}
   #ws-full-frame{height:calc(100dvh - 140px)!important;min-height:520px!important}
 }
-#bnav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:.45rem 0;font-size:10.5px;font-weight:600}
-#bnav button span:first-child{font-size:1.3rem;line-height:1.2}
+#bnav button,#wnav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:.45rem 0;font-size:10.5px;font-weight:600}
+#bnav button span:first-child,#wnav button span:first-child{font-size:1.3rem;line-height:1.2}
 </style>
 </head>
 <body class="bg-slate-50 font-sans text-slate-800 antialiased min-h-screen flex flex-col" style="padding-bottom:env(safe-area-inset-bottom)">
@@ -3816,6 +3816,24 @@ dialog{width:100vw!important;max-width:none!important;margin:auto 0 0 0!importan
   const m = document.getElementById('app-main'); if (m) new MutationObserver(bSync).observe(m, { attributes: true, subtree: true, attributeFilter: ['class'] });
   bSync();
 </script>
+<nav id="wnav" class="md:hidden hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-slate-200 grid grid-cols-5" style="padding-bottom:env(safe-area-inset-bottom)">
+  <button data-a="view" data-id="home" data-nav="home"><span>🏡</span><span>ภาพรวม</span></button>
+  <button data-a="view" data-id="tasks" data-nav="tasks"><span>✅</span><span>งาน</span></button>
+  <button data-a="view" data-id="cal" data-nav="cal"><span>🗓️</span><span>ปฏิทิน</span></button>
+  <button data-a="view" data-id="me" data-nav="me"><span>🌱</span><span>นิสัย</span></button>
+  <button data-a="wmore" data-id="1" data-nav="more"><span>☰</span><span>เมนู</span></button>
+</nav>
+<div id="wmore" class="hidden md:hidden fixed inset-0 z-50 bg-slate-900/40" onclick="if(event.target===this)this.classList.add('hidden')">
+  <div class="absolute bottom-0 inset-x-0 bg-white rounded-t-3xl p-4" style="padding-bottom:calc(1rem + env(safe-area-inset-bottom))">
+    <div class="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-3"></div>
+    <div class="grid grid-cols-2 gap-2 text-sm font-semibold">
+      <button data-a="view" data-id="notes" class="bg-slate-50 border border-slate-200 rounded-2xl py-3">📓 โน้ต</button>
+      <button data-a="view" data-id="career" class="bg-slate-50 border border-slate-200 rounded-2xl py-3">🧭 อาชีพ</button>
+      <button data-a="search" class="bg-slate-50 border border-slate-200 rounded-2xl py-3">🔍 ค้นหา</button>
+      <button data-a="view" data-id="set" class="bg-slate-50 border border-slate-200 rounded-2xl py-3">⚙️ ตั้งค่า</button>
+    </div>
+  </div>
+</div>
 <div id="ws-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[70] hidden items-end sm:items-center justify-center sm:p-4"></div>
 <script>
 (function () {
@@ -3896,7 +3914,7 @@ function top() {
   return `<div class="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100"><div><h2 class="text-lg font-bold text-slate-900">🌷 พื้นที่ทำงานของฉัน</h2><p class="text-xs text-slate-500">จัดการงาน ปฏิทิน นิสัย โน้ต และอาชีพ — บันทึกอัตโนมัติและซิงก์พร้อมข้อมูลการเงิน</p></div>
     <div class="flex flex-wrap gap-2">${btnS('search', '<i class="fa-solid fa-magnifying-glass mr-1.5"></i>ค้นหา')}${btnS('clock', clockLabel())}${btnP('t-new', 'เพิ่มงาน')}</div></div>
-    <div class="flex gap-2 overflow-x-auto pb-1 text-sm -mx-1 px-1">${V.map(([k, l]) => `<button data-a="view" data-id="${k}" class="whitespace-nowrap px-3 py-2 rounded-xl font-semibold transition ${view === k ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">${l}</button>`).join('')}</div></div>`;
+    <div class="hidden md:flex gap-2 overflow-x-auto pb-1 text-sm -mx-1 px-1">${V.map(([k, l]) => `<button data-a="view" data-id="${k}" class="whitespace-nowrap px-3 py-2 rounded-xl font-semibold transition ${view === k ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">${l}</button>`).join('')}</div></div>`;
 }
 
 // ---------- การ์ดงาน ----------
@@ -4033,10 +4051,15 @@ function render() {
   const root = $('#ws-native'); if (!root || !WS()) return;
   const keep = window.scrollY;
   root.innerHTML = top() + ({ home: vHome, tasks: vTasks, cal: vCal, me: vMe, notes: vNotes, career: vCareer, set: vSet }[view] || vHome)();
-  sig = JSON.stringify(D());
+  sig = JSON.stringify(D()); syncNav();
   if (view === 'cal' || view === 'tasks') window.scrollTo(0, keep);
 }
 
+function syncNav() {
+  const nav = $('#wnav'); if (!nav) return; const on = mmOpen(); nav.classList.toggle('hidden', !on); if (!on) { const wm = $('#wmore'); if (wm) wm.classList.add('hidden'); }
+  const main = ['home', 'tasks', 'cal', 'me'];
+  nav.querySelectorAll('[data-nav]').forEach(b => { const a = b.dataset.nav === view || (b.dataset.nav === 'more' && !main.includes(view)); b.classList.toggle('text-indigo-600', a); b.classList.toggle('text-slate-400', !a); });
+}
 // ---------- ฟอร์ม/หน้าต่าง ----------
 function modal(html) { const m = $('#ws-modal'); m.innerHTML = `<div class="bg-white rounded-t-3xl sm:rounded-2xl w-full sm:max-w-md p-6 space-y-4 shadow-xl max-h-[92vh] overflow-y-auto" style="padding-bottom:calc(1.5rem + env(safe-area-inset-bottom))">${html}</div>`; m.classList.remove('hidden'); m.classList.add('flex'); return m; }
 function closeModal() { const m = $('#ws-modal'); m.classList.add('hidden'); m.classList.remove('flex'); m.innerHTML = ''; }
@@ -4103,8 +4126,9 @@ function exportCsv() { const q = v => '"' + String(v ?? '').replace(/"/g, '""') 
 // ---------- การกระทำ ----------
 const find = (c, id) => C(c).find(x => String(x.id) === String(id));
 const ACT = {
-  view: (d) => { view = d.id; closeModal(); render(); window.scrollTo({ top: 0 }); },
-  search: searchModal, 'm-close': closeModal, 'm-del': () => { const f = modalDel; closeModal(); if (f) f(); },
+  view: (d) => { view = d.id; closeModal(); const wm = $('#wmore'); if (wm) wm.classList.add('hidden'); render(); window.scrollTo({ top: 0 }); },
+  wmore: (d) => { $('#wmore').classList.toggle('hidden', d.id !== '1'); },
+  search: () => { const wm = $('#wmore'); if (wm) wm.classList.add('hidden'); searchModal(); }, 'm-close': closeModal, 'm-del': () => { const f = modalDel; closeModal(); if (f) f(); },
   clock: () => { const e = evts().find(x => x.date === today() && x.type === 'work' && x.uid === UID); if (!e) put('events', { id: nid(), uid: UID, date: today(), type: 'work', title: '', tin: nowT() }); else if (!e.tout) put('events', { ...e, tout: nowT() }); },
   'ck-add': () => $('#ws-cl').insertAdjacentHTML('beforeend', ckRow({})),
   't-new': (d) => { closeModal(); taskForm(d.d ? { status: 'todo', priority: 'mid', due: d.d } : null); }, 't-edit': (d) => { closeModal(); taskForm(find('tasks', d.id)); }, 't-del': (d) => { const t = find('tasks', d.id); if (t) del('tasks', t); },
@@ -4150,6 +4174,8 @@ function init() {
   root.addEventListener('click', onClick); root.addEventListener('submit', onSubmit); root.addEventListener('input', onInput); root.addEventListener('change', onChange);
   root.addEventListener('dragstart', onDragStart); root.addEventListener('dragover', onDragOver); root.addEventListener('drop', onDrop);
   const m = $('#ws-modal'); m.addEventListener('click', (e) => { if (e.target === m) closeModal(); else onClick(e); });
+  ['#wnav', '#wmore'].forEach(q => { const el = $(q); if (el) el.addEventListener('click', onClick); });
+  const wmain = $('#workspace-main'); if (wmain && window.MutationObserver) new MutationObserver(syncNav).observe(wmain, { attributes: true, attributeFilter: ['class'] });
   const prev = window.switchAppMode; if (prev) window.switchAppMode = (mode) => { prev(mode); if (mode === 'workspace') setTimeout(open, 0); };
   setInterval(() => { const mm = $('#workspace-main'); if (!mm || mm.classList.contains('hidden') || !WS()) return; const a = document.activeElement; if (a && root.contains(a) && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) return; if ($('#ws-modal').classList.contains('flex')) return; if (JSON.stringify(D()) !== sig) render(); }, 2000);
   if (mmOpen()) open();
