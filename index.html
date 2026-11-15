@@ -80,7 +80,7 @@ header.bg-white{background:#fff!important;border-bottom:2px dashed #f3d9c3!impor
   #tx-modal>div,#form-modal>div,#detail-modal>div{max-width:none!important;width:100%;border-radius:1.5rem 1.5rem 0 0!important;max-height:92vh!important;padding-bottom:calc(1.25rem + env(safe-area-inset-bottom))}
   /* ปุ่มลอยอยู่เหนือแถบเมนูล่าง */
   button[onclick="qaFab()"]{bottom:calc(80px + env(safe-area-inset-bottom))!important;right:14px!important;width:3rem!important;height:3rem!important;font-size:1.3rem!important}
-  #ws-full-frame{height:calc(100dvh - 140px)!important;min-height:520px!important}
+  #ws-full-frame{height:calc(100dvh - 120px)!important;min-height:520px!important;background:transparent}
 }
 #bnav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:.45rem 0;font-size:10.5px;font-weight:600}
 #bnav button span:first-child{font-size:1.3rem;line-height:1.2}
@@ -661,10 +661,22 @@ header.bg-white{background:#fff!important;border-bottom:2px dashed #f3d9c3!impor
   </div>
 
   <!-- WORKSPACE TAB 5: FULL WORKSPACE (embedded file, unchanged) -->
-  <div id="wtab-full" class="work-tab-content">
-    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-      <iframe id="ws-full-frame" title="พื้นที่ทำงานของฉัน" style="width:100%;height:calc(100vh - 210px);min-height:640px;border:0;display:block"></iframe>
+  <div id="wtab-full" class="work-tab-content space-y-6">
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-4">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">🌷 พื้นที่ทำงานของฉัน</h2>
+          <p class="text-xs text-slate-500">จัดการงาน ปฏิทิน แผนงาน นิสัย โน้ต และอาชีพ — เลือกหัวข้อด้านล่างได้เลย</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button onclick="wsCmd('search')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-xl text-sm font-medium transition"><i class="fa-solid fa-magnifying-glass mr-1.5"></i> ค้นหา</button>
+          <button onclick="wsCmd('save')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-xl text-sm font-medium transition"><i class="fa-solid fa-floppy-disk mr-1.5"></i> บันทึกสำรอง</button>
+          <button onclick="wsCmd('newtask')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-medium shadow-sm transition"><i class="fa-solid fa-plus mr-2"></i> เพิ่มงาน</button>
+        </div>
+      </div>
+      <div id="ws-view-chips" class="flex flex-wrap gap-2 text-xs"><button data-wsv="home" onclick="wsView('home')" class="px-3 py-1.5 rounded-xl font-semibold transition bg-indigo-600 text-white">🏡 ภาพรวม</button><button data-wsv="tasks" onclick="wsView('tasks')" class="px-3 py-1.5 rounded-xl font-semibold transition bg-slate-100 text-slate-600 hover:bg-slate-200">✅ งาน</button><button data-wsv="cal" onclick="wsView('cal')" class="px-3 py-1.5 rounded-xl font-semibold transition bg-slate-100 text-slate-600 hover:bg-slate-200">🗓️ ปฏิทิน</button><button data-wsv="plan" onclick="wsView('plan')" class="px-3 py-1.5 rounded-xl font-semibold transition bg-slate-100 text-slate-600 hover:bg-slate-200">🚀 แผนงาน</button><button data-wsv="me" onclick="wsView('me')" class="px-3 py-1.5 rounded-xl font-semibold transition bg-slate-100 text-slate-600 hover:bg-slate-200">🌱 นิสัย</button><button data-wsv="notes" onclick="wsView('notes')" class="px-3 py-1.5 rounded-xl font-semibold transition bg-slate-100 text-slate-600 hover:bg-slate-200">📓 โน้ต</button><button data-wsv="career" onclick="wsView('career')" class="px-3 py-1.5 rounded-xl font-semibold transition bg-slate-100 text-slate-600 hover:bg-slate-200">🧭 อาชีพ</button><button data-wsv="set" onclick="wsView('set')" class="px-3 py-1.5 rounded-xl font-semibold transition bg-slate-100 text-slate-600 hover:bg-slate-200">⚙️ ตั้งค่า</button></div>
     </div>
+    <iframe id="ws-full-frame" title="พื้นที่ทำงานของฉัน" style="width:100%;height:calc(100dvh - 120px);min-height:520px;border:0;display:block;background:transparent" allowtransparency="true"></iframe>
   </div>
 
 <p class="paw">🐾 Workspace Hub · Organishing your work life 💼</p></main>
@@ -3774,13 +3786,22 @@ dialog{width:100vw!important;max-width:none!important;margin:auto 0 0 0!importan
 </style>`;
   const WSNAV = `<nav class="bn"><button class="tab on" data-v="home"><span>🏡</span>ภาพรวม</button><button class="tab" data-v="tasks"><span>✅</span>งาน</button><button class="tab" data-v="cal"><span>🗓️</span>ปฏิทิน</button><button class="tab" data-v="me"><span>🌱</span>นิสัย</button><button data-more><span>☰</span>เมนู</button></nav><div class="bm" hidden><div><button class="tab" data-v="plan"><span>🚀</span>แผนงาน</button><button class="tab" data-v="notes"><span>📓</span>โน้ต</button><button class="tab" data-v="career"><span>🧭</span>อาชีพ</button><button class="tab" data-v="set"><span>⚙️</span>ตั้งค่า</button></div></div>` +
     '<scr' + 'ipt>(function(){var bm=document.querySelector(".bm"),bn=document.querySelector(".bn"),mb=bn.querySelector("[data-more]");document.addEventListener("click",function(e){var t=e.target;if(t.closest&&t.closest("[data-more]")){bm.hidden=!bm.hidden;return}if(!bm.hidden&&(t===bm||(t.closest&&t.closest(".bm .tab"))))bm.hidden=true});new MutationObserver(function(){mb.classList.toggle("on",!bn.querySelector(".tab.on"))}).observe(bn,{attributes:true,subtree:true,attributeFilter:["class"]})})();</scr' + 'ipt>';
+  const WSLIFT = '<style>header,.fab,.bn,.bm{display:none!important}html,body{background:transparent!important}main#app{padding-top:0!important}</style>';
+  window.wsFrameDoc = () => { const fr = document.getElementById('ws-full-frame'); try { return fr && fr.contentDocument; } catch (e) { return null; } };
+  window.wsCmd = (c) => { const d = wsFrameDoc(); if (!d) return; const el = d.querySelector(c === 'newtask' ? '[data-newtask]' : c === 'search' ? '[data-search]' : '[data-save]'); if (el) el.click(); };
+  window.wsView = (v) => { const d = wsFrameDoc(); if (!d) return; const t = d.querySelector('header .tab[data-v="' + v + '"]'); if (t) t.click(); wsSyncChips(); };
+  function wsSyncChips() {
+    const d = wsFrameDoc(), cur = d && d.querySelector('header .tab.on'), v = cur ? cur.dataset.v : 'home';
+    document.querySelectorAll('[data-wsv]').forEach(b => { const on = b.dataset.wsv === v; b.classList.toggle('bg-indigo-600', on); b.classList.toggle('text-white', on); b.classList.toggle('bg-slate-100', !on); b.classList.toggle('text-slate-600', !on); });
+  }
+  setInterval(() => { const m = document.getElementById('workspace-main'); if (m && !m.classList.contains('hidden')) wsSyncChips(); }, 600);
   function loadFull() {
     const fr = document.getElementById('ws-full-frame'); if (!fr || fr.dataset.loaded) return;
     try {
       try { localStorage.setItem('ws_user', 'main'); } catch (e) {}
       const bin = atob(document.getElementById('ws-full-src').textContent.trim());
       const html = new TextDecoder('utf-8').decode(Uint8Array.from(bin, c => c.charCodeAt(0)));
-      fr.srcdoc = html.replace('<head>', '<head>' + CAT + WSMOB + '<scr' + 'ipt>' + SHIM + '</scr' + 'ipt>').replace('</body>', WSNAV + '</body>');
+      fr.srcdoc = html.replace('<head>', '<head>' + CAT + WSMOB + WSLIFT + '<scr' + 'ipt>' + SHIM + '</scr' + 'ipt>').replace('</body>', WSNAV + '</body>');
       fr.dataset.loaded = '1';
     } catch (e) { console.error('load workspace failed', e); }
   }
