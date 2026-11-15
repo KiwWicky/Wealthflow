@@ -3744,13 +3744,43 @@ function planResult() {
   }) };
   setInterval(() => { if (listeners.length && S2() && JSON.stringify(docs()) !== lastSig) notify(); }, 2000);
   const SHIM = "window.claude={use:async n=>n==='db'?parent.__wsDb:n==='user'?{id:async()=>'me'}:n==='downloads'?{save:async({filename,data})=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'application/json'}));a.download=filename;a.click()}}:null};";
+  const WSMOB = `<style>
+.bn,.bm{display:none}
+.bn{position:fixed;bottom:0;left:0;right:0;z-index:30;grid-template-columns:repeat(5,1fr);background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+.bn button,.bn .tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;border:0;border-radius:0;padding:8px 0;font-size:10.5px;font-weight:600;background:none;color:var(--muted)}
+.bn button span,.bm .tab span{font-size:1.3rem;line-height:1.2}
+.bn .tab.on,.bn [data-more].on{background:none;color:var(--accent)}
+.bm{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.35)}
+.bm>div{position:absolute;bottom:0;left:0;right:0;background:var(--surface);border-radius:24px 24px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.bm .tab{border:1px solid var(--line);border-radius:16px;padding:12px;background:var(--bg);display:flex;gap:6px;justify-content:center}
+.bm .tab.on{background:var(--accent);color:var(--on-accent)}
+@media(max-width:700px){
+header .tab{display:none}
+header{gap:6px}
+body{padding-bottom:calc(66px + env(safe-area-inset-bottom))}
+main{padding:12px 10px 24px}
+.fab{bottom:calc(78px + env(safe-area-inset-bottom));right:14px;width:48px;height:48px}
+.toast{bottom:calc(84px + env(safe-area-inset-bottom))}
+input,select,textarea{font-size:16px}
+dialog{width:100vw!important;max-width:none!important;margin:auto 0 0 0!important;border-radius:24px 24px 0 0!important;max-height:92vh;padding:16px 16px calc(16px + env(safe-area-inset-bottom))}
+.cols{display:flex!important;overflow-x:auto;scroll-snap-type:x mandatory;gap:10px;padding-bottom:6px}
+.cols>.col{flex:0 0 86%;scroll-snap-align:start}
+.cal{min-width:0!important}.wrap{overflow:visible}
+.day{min-height:52px;padding:3px;border-radius:10px}
+.day .chip{font-size:0;width:7px;height:7px;padding:0;border-radius:50%;display:inline-block;margin:1px;vertical-align:middle}
+.wk{grid-template-columns:repeat(2,minmax(0,1fr))}
+.bn{display:grid}.bm:not([hidden]){display:block}
+}
+</style>`;
+  const WSNAV = `<nav class="bn"><button class="tab on" data-v="home"><span>🏡</span>ภาพรวม</button><button class="tab" data-v="tasks"><span>✅</span>งาน</button><button class="tab" data-v="cal"><span>🗓️</span>ปฏิทิน</button><button class="tab" data-v="me"><span>🌱</span>นิสัย</button><button data-more><span>☰</span>เมนู</button></nav><div class="bm" hidden><div><button class="tab" data-v="plan"><span>🚀</span>แผนงาน</button><button class="tab" data-v="notes"><span>📓</span>โน้ต</button><button class="tab" data-v="career"><span>🧭</span>อาชีพ</button><button class="tab" data-v="set"><span>⚙️</span>ตั้งค่า</button></div></div>` +
+    '<scr' + 'ipt>(function(){var bm=document.querySelector(".bm"),bn=document.querySelector(".bn"),mb=bn.querySelector("[data-more]");document.addEventListener("click",function(e){var t=e.target;if(t.closest&&t.closest("[data-more]")){bm.hidden=!bm.hidden;return}if(!bm.hidden&&(t===bm||(t.closest&&t.closest(".bm .tab"))))bm.hidden=true});new MutationObserver(function(){mb.classList.toggle("on",!bn.querySelector(".tab.on"))}).observe(bn,{attributes:true,subtree:true,attributeFilter:["class"]})})();</scr' + 'ipt>';
   function loadFull() {
     const fr = document.getElementById('ws-full-frame'); if (!fr || fr.dataset.loaded) return;
     try {
       try { localStorage.setItem('ws_user', 'main'); } catch (e) {}
       const bin = atob(document.getElementById('ws-full-src').textContent.trim());
       const html = new TextDecoder('utf-8').decode(Uint8Array.from(bin, c => c.charCodeAt(0)));
-      fr.srcdoc = html.replace('<head>', '<head>' + CAT + '<scr' + 'ipt>' + SHIM + '</scr' + 'ipt>');
+      fr.srcdoc = html.replace('<head>', '<head>' + CAT + WSMOB + '<scr' + 'ipt>' + SHIM + '</scr' + 'ipt>').replace('</body>', WSNAV + '</body>');
       fr.dataset.loaded = '1';
     } catch (e) { console.error('load workspace failed', e); }
   }
