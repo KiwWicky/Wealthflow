@@ -32,6 +32,59 @@ header.bg-white{background:#fff!important;border-bottom:2px dashed #f3d9c3!impor
 .paw{opacity:.5;font-size:.7rem;text-align:center;padding:1rem}
 @keyframes tail{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}.wag{display:inline-block;animation:tail 2s infinite;transform-origin:70% 80%}
 </style>
+<style id="mobile-ui">
+.cal-due,.cal-inc,.cal-exp{}
+@media (max-width:767px){
+  html,body{overflow-x:hidden}
+  body{padding-bottom:calc(72px + env(safe-area-inset-bottom))!important;font-size:15px}
+  button,a,select{touch-action:manipulation}
+  input,select,textarea{font-size:16px!important}
+  /* header: ไม่แออัด — โลโก้+ปุ่มบนแถวแรก, สลับโหมดเต็มแถวที่สอง */
+  header>div{height:auto!important;min-height:3.25rem;flex-wrap:wrap;row-gap:.4rem;padding-top:.45rem;padding-bottom:.45rem}
+  #header-app-subtitle,#auth-status{display:none!important}
+  #header-app-title{font-size:1rem}
+  #mode-switcher{order:3;width:100%}
+  #mode-switcher button{flex:1;justify-content:center;padding-top:.45rem;padding-bottom:.45rem}
+  main{padding:.75rem .75rem 1rem!important}
+  main .p-6{padding:1rem!important} main .p-5{padding:.875rem!important}
+  main h2{font-size:1rem}
+  /* ภาพรวม: การ์ดตัวเลข 2 คอลัมน์ ไม่ยาวเกินจอ */
+  #tab-dashboard .lg\:grid-cols-5{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:.5rem!important}
+  #tab-dashboard .lg\:grid-cols-5>div{padding:.7rem .75rem!important}
+  #tab-dashboard .lg\:grid-cols-5>div>div:last-child{display:none}
+  #tab-dashboard h3[id^=kpi-]{font-size:1.05rem!important;line-height:1.3}
+  #tab-dashboard .space-y-6>*{min-width:0}
+  /* ตารางรายการ → การ์ดต่อรายการ */
+  #tab-transactions thead{display:none}
+  #tab-transactions table,#tab-transactions tbody{display:block;width:100%}
+  #transactions-table-body tr{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:.7rem .25rem;align-items:center}
+  #transactions-table-body td{padding:0!important;min-width:0;text-align:left!important;font-size:.8rem}
+  #transactions-table-body td:nth-child(1){grid-area:1/1;color:#94a3b8}
+  #transactions-table-body td:nth-child(5){grid-area:1/2;text-align:right!important;font-size:1rem;font-weight:700}
+  #transactions-table-body td:nth-child(2){grid-area:2/1}
+  #transactions-table-body td:nth-child(3){grid-area:2/2;text-align:right!important;color:#64748b}
+  #transactions-table-body td:nth-child(4){grid-area:3/1/4/3;color:#64748b}
+  #transactions-table-body td:nth-child(6){grid-area:4/1;color:#64748b}
+  #transactions-table-body td:nth-child(7){grid-area:4/2;text-align:right!important}
+  #transactions-table-body td:empty{display:none}
+  #transactions-table-body td:nth-child(7) button{padding:.4rem .5rem}
+  /* ปฏิทิน: ช่องกะทัดรัด ใช้จุดสีแทนตัวเลข กดดูรายละเอียดวัน */
+  #tab-calendar .min-w-\[560px\]{min-width:0!important}
+  #tab-calendar .grid-cols-7{gap:3px!important}
+  .cal-cell{height:auto!important;min-height:54px;padding:4px!important;border-radius:.6rem!important}
+  .cal-cell>div{display:flex;flex-wrap:wrap;gap:2px;font-size:0!important}
+  .cal-inc,.cal-exp,.cal-due{font-size:0!important;width:7px;height:7px;border-radius:50%;padding:0!important;overflow:hidden;display:inline-block}
+  .cal-inc{background:#10b981}.cal-exp{background:#f43f5e}.cal-due{background:#f59e0b!important}
+  /* หน้าต่างป๊อปอัป → แผ่นล่าง (bottom sheet) */
+  #tx-modal,#form-modal,#detail-modal{align-items:flex-end!important;padding:0!important}
+  #tx-modal>div,#form-modal>div,#detail-modal>div{max-width:none!important;width:100%;border-radius:1.5rem 1.5rem 0 0!important;max-height:92vh!important;padding-bottom:calc(1.25rem + env(safe-area-inset-bottom))}
+  /* ปุ่มลอยอยู่เหนือแถบเมนูล่าง */
+  button[onclick="qaFab()"]{bottom:calc(80px + env(safe-area-inset-bottom))!important;right:14px!important;width:3rem!important;height:3rem!important;font-size:1.3rem!important}
+  #ws-full-frame{height:calc(100dvh - 140px)!important;min-height:520px!important}
+}
+#bnav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:.45rem 0;font-size:10.5px;font-weight:600}
+#bnav button span:first-child{font-size:1.3rem;line-height:1.2}
+</style>
 </head>
 <body class="bg-slate-50 font-sans text-slate-800 antialiased min-h-screen flex flex-col" style="padding-bottom:env(safe-area-inset-bottom)">
 
@@ -158,7 +211,7 @@ header.bg-white{background:#fff!important;border-bottom:2px dashed #f3d9c3!impor
 <!-- App Finance (WealthFlow Main) -->
 <main id="app-main" class="hidden flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
-  <div class="flex overflow-x-auto space-x-2 pb-2 border-b border-slate-200">
+  <div id="fin-tabs" class="hidden md:flex overflow-x-auto space-x-2 pb-2 border-b border-slate-200">
     <button onclick="switchTab('dashboard')" class="tab-btn px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition bg-blue-600 text-white shadow-sm" data-target="dashboard"><span class="mr-1">🐾 </span><i class="hidden"></i> ภาพรวม</button>
     <button onclick="switchTab('salary')" class="tab-btn px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition bg-white text-slate-600 hover:bg-slate-100" data-target="salary"><span class="mr-1">💌 </span><i class="hidden"></i> เงินเดือน & Payslip</button>
     <button onclick="switchTab('transactions')" class="tab-btn px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition bg-white text-slate-600 hover:bg-slate-100" data-target="transactions"><span class="mr-1">🧾 </span><i class="hidden"></i> บันทึกรับ-จ่าย</button>
@@ -175,9 +228,11 @@ header.bg-white{background:#fff!important;border-bottom:2px dashed #f3d9c3!impor
     <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
       <div class="flex gap-2"><input id="qa-input" onkeydown="if(event.key==='Enter')quickAdd()" placeholder="พิมพ์เร็ว เช่น กาแฟ 65 · ข้าวมันไก่ 50 · เงินเดือน 30000" class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm"><button onclick="quickAdd()" class="bg-blue-600 text-white px-4 rounded-xl text-sm font-semibold">เพิ่ม</button></div>
       <p id="qa-msg" class="text-xs text-slate-500 mt-2 hidden"></p>
+      <p class="text-[11px] text-slate-400 mt-1.5">ใส่ชื่อบัญชี/วันที่ได้ เช่น <b>กาแฟ 65 กสิกร เมื่อวาน</b> · <b>ออม ทริปญี่ปุ่น 500</b> · <b>จ่ายหนี้ ผ่อนรถ 5000 วันที่ 5</b> · <b>ถอน กองทุนฉุกเฉิน 1000</b></p>
     </div>
     <div class="flex items-start gap-3"><div class="text-4xl wag">🐱</div><div id="cat-say" class="cat-bubble px-4 py-3 text-sm flex-1"></div></div>
     <div id="dash-debts"></div>
+    <div id="dash-savings"></div>
     <div id="dash-summary"></div>
     <div id="health-row" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -358,8 +413,10 @@ header.bg-white{background:#fff!important;border-bottom:2px dashed #f3d9c3!impor
           <button onclick="openLoanWizard('shop')" class="bg-amber-100 hover:bg-amber-200 text-amber-800 px-3 py-1.5 rounded-xl text-sm font-medium">🛒 ผ่อนออนไลน์</button>
           <button onclick="openLoanWizard('loan')" class="bg-amber-100 hover:bg-amber-200 text-amber-800 px-3 py-2 rounded-xl text-sm font-medium">🏠 สินเชื่อ</button></div>
       </div>
+      <div id="debt-filter" class="flex flex-wrap gap-2 text-xs"></div>
       <div id="debt-summary" class="grid grid-cols-1 sm:grid-cols-3 gap-3"></div>
       <div id="debts-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+      <div id="debt-archive"></div>
     </div>
   </div>
 
@@ -1224,7 +1281,7 @@ window.switchTab = (tabId) => {
 
 window.renderAll = () => {
   renderDashboard(); renderSalary(); renderTransactions();
-  renderWalletsAndJars(); renderSavings(); renderDebts(); renderDashDebts(); renderDashSummary(); renderStorage(); renderRecurring(); renderDebtCompare(); renderInvest();
+  renderWalletsAndJars(); renderSavings(); renderDebts(); renderDebtExtras(); renderDashDebts(); renderDashSummary(); renderDashSavings(); renderStorage(); renderRecurring(); renderDebtCompare(); renderInvest();
   if (!document.getElementById('tab-calendar').classList.contains('hidden')) renderCalendar();
 };
 
@@ -1781,11 +1838,11 @@ window.renderCalendar = () => {
       const tx = S().transactions.filter(t => t.date === key);
       const inc = tot(tx, 'รายรับ'), exp = tot(tx, 'รายจ่าย');
       const isToday = key === localISO();
-      html += `<div onclick="showDay('${key}')" class="cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 transition bg-slate-50 border ${isToday ? 'border-blue-500 ring-1 ring-blue-500' : 'border-slate-200'} rounded-xl p-2 h-24 flex flex-col justify-between overflow-hidden">
+      html += `<div onclick="showDay('${key}')" class="cal-cell cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 transition bg-slate-50 border ${isToday ? 'border-blue-500 ring-1 ring-blue-500' : 'border-slate-200'} rounded-xl p-2 h-24 flex flex-col justify-between overflow-hidden">
         <span class="font-bold text-xs ${isToday ? 'text-blue-600' : 'text-slate-700'}">${d}${tx.length ? ` <span class="font-normal text-slate-400">· ${tx.length}</span>` : ''}</span>
         <div class="text-[10px] space-y-0.5">
-          ${inc > 0 ? `<div class="text-emerald-600 font-semibold">+฿${inc.toLocaleString()}</div>` : ''}
-          ${exp > 0 ? `<div class="text-rose-600 font-semibold">-฿${exp.toLocaleString()}</div>` : ''}
+          ${inc > 0 ? `<div class="cal-inc text-emerald-600 font-semibold">+฿${inc.toLocaleString()}</div>` : ''}
+          ${exp > 0 ? `<div class="cal-exp text-rose-600 font-semibold">-฿${exp.toLocaleString()}</div>` : ''}
           ${tx.length && !inc && !exp ? `<div class="text-blue-500">โอนเงิน</div>` : ''}${dueBadge(year, month, d, days)}
         </div></div>`;
     }
@@ -2031,7 +2088,8 @@ function renderDashDebts() {
   const el = document.getElementById('dash-debts'); if (!el) return;
   const list = S().debts || [], ym = localISO().slice(0, 7), today = new Date().getDate();
   if (!list.length) { el.innerHTML = ''; return; }
-  const rows = list.map((d, idx) => ({ d, idx, ...monthNeed(d, ym) })), rem = debtRemaining();
+  const rows = list.map((d, idx) => ({ d, idx, ...monthNeed(d, ym) })).filter(r => !r.d.archivedAt && !(Number(r.d.remaining) <= 0 && r.paid <= 0)), rem = debtRemaining();
+  if (!rows.length) { el.innerHTML = ''; return; }
   const nominal = sum(rows, r => r.nominal), paid = sum(rows, r => Math.min(r.paid, r.nominal || r.paid)), need = sum(rows, r => r.need);
   el.innerHTML = `<div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
     <div class="flex items-center justify-between gap-2"><h3 class="font-bold text-slate-900">💸 หนี้ทั้งหมด</h3><button onclick="switchTab('savings')" class="text-xs bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl font-semibold">จัดการหนี้</button></div>
@@ -2048,13 +2106,13 @@ function renderDebts() {
   const g = document.getElementById('debts-grid'), sm = document.getElementById('debt-summary');
   if (!g) return;
   const list = S().debts || [];
-  const totalRem = debtRemaining(), totalAll = sum(list, d => d.total);
+  const totalRem = debtRemaining(), totalAll = sum(list.filter(d => !d.archivedAt), d => d.total);
   sm.innerHTML = list.length ? `
     <div class="bg-rose-50 border border-rose-100 rounded-xl p-3"><p class="text-xs text-rose-700">หนี้คงเหลือรวม</p><p class="font-bold text-rose-700">${money(totalRem)}</p></div>
     <div class="bg-slate-50 border border-slate-200 rounded-xl p-3"><p class="text-xs text-slate-500">ยอดหนี้ทั้งหมด</p><p class="font-bold text-slate-800">${money(totalAll)}</p></div>
     <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-3"><p class="text-xs text-emerald-700">ชำระแล้ว</p><p class="font-bold text-emerald-700">${money(Math.max(0, totalAll - totalRem))}</p></div>` : '';
   if (!list.length) { g.innerHTML = '<p class="text-sm text-slate-400">ยังไม่มีหนี้สิน กด "เพิ่มหนี้สิน"</p>'; return; }
-  g.innerHTML = list.map((d, idx) => {
+  g.innerHTML = list.map((d, idx) => [d, idx]).filter(([d]) => debtShow(d)).map(([d, idx]) => {
     const paid = Math.max(0, Number(d.total) - Number(d.remaining));
     const pct = d.total > 0 ? Math.min(100, paid / d.total * 100) : 0;
     const pays = (d.payments || []).slice().reverse().slice(0, 5);
@@ -2072,12 +2130,12 @@ function renderDebts() {
         <div class="text-right text-xs text-slate-500">ชำระแล้ว ${pct.toFixed(1)}%</div>
       </div>
       <div class="text-xs text-slate-600 space-y-0.5">
-        ${metaLines(d)}${d.rate ? `<div>ดอกเบี้ย ${d.rate}% ต่อปี</div>` : ''}${d.monthly ? `<div>ค่างวด ${money(d.monthly)} / เดือน</div>` : ''}
+        ${d.jar ? `<div>🫙 ตัดงบซอง ${esc(d.jar)}</div>` : ''}${metaLines(d)}${d.rate ? `<div>ดอกเบี้ย ${d.rate}% ต่อปี</div>` : ''}${d.monthly ? `<div>ค่างวด ${money(d.monthly)} / เดือน</div>` : ''}
         ${nextDue(d) && Number(d.remaining) > 0 ? `<div class="${nextDue(d).days <= 3 ? 'text-rose-600 font-semibold' : ''}">📅 ครบกำหนดทุกวันที่ ${d.dueDay} (อีก ${nextDue(d).days} วัน)</div>` : ''}
         <div class="${payoffInfo(d).bad ? 'text-rose-600' : 'text-emerald-700'}">${payoffInfo(d).txt}</div>
       </div>
       <div class="flex flex-wrap gap-2">
-        ${d.monthly && d.walletId ? `<button onclick="quickPay(${idx})" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold">🐟 จ่ายงวดนี้ ${fmt0(d.monthly)}</button>` : ''}<button onclick="payDebt(${idx})" class="bg-rose-500 hover:bg-rose-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold">จ่ายหนี้</button>
+        ${Number(d.remaining) <= 0 ? `<button onclick="archiveDebt(${idx})" class="bg-slate-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold">📦 จัดเก็บ (หมดหนี้แล้ว)</button>` : ''}${d.monthly && d.walletId ? `<button onclick="quickPay(${idx})" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold">🐟 จ่ายงวดนี้ ${fmt0(d.monthly)}</button>` : ''}<button onclick="payDebt(${idx})" class="bg-rose-500 hover:bg-rose-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold">จ่ายหนี้</button>
         <button onclick="adjustDebt(${idx}, 1)" class="bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold">+ เพิ่มหนี้</button>
         <button onclick="adjustDebt(${idx}, -1)" class="bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold">− ลดหนี้</button>
       </div>
@@ -2085,7 +2143,7 @@ function renderDebts() {
         <div class="flex items-center justify-between text-xs text-slate-600"><span>${esc(p.date)} · ${esc(p.walletName || 'ไม่ระบุบัญชี')}</span>
         <span class="flex items-center space-x-2"><b>${money(p.amount)}</b><button onclick="editDebtPayment(${idx}, ${p.id})" class="text-slate-400 hover:text-blue-600" title="แก้ไข"><i class="fa-solid fa-pen"></i></button><button onclick="undoDebtPayment(${idx}, ${p.id})" class="text-slate-400 hover:text-rose-600" title="ยกเลิก (คืนเงินเข้าบัญชี)"><i class="fa-solid fa-rotate-left"></i></button></span></div>`).join('')}</div></details>` : ''}
     </div>`;
-  }).join('');
+  }).join('') || '<p class="text-sm text-slate-400 md:col-span-2">ไม่มีรายการในหมวดนี้</p>';
 }
 const KIND_ICON = { student: '🎓', car: '🚗', phone: '📱', other: '🛍️', house: '🏠', personal: '💼' };
 const kindIcon0 = (d) => d.meta && KIND_ICON[d.meta.kind] ? KIND_ICON[d.meta.kind] : '';
@@ -2106,8 +2164,9 @@ function metaLines(d) {
 }
 window.openLoanWizard = (type) => {
   const wopts = [{ value: '', label: '— เลือกตอนจ่าย —' }, ...S().wallets.map(w => ({ value: String(w.id), label: `${walletIcon(w)} ${w.name}` }))];
-  const common = [{ id: 'dueDay', label: 'ครบกำหนดจ่ายทุกวันที่ (1-31)', type: 'number', value: 1 }, { id: 'wallet', label: 'บัญชีที่จ่ายเป็นประจำ', type: 'select', value: '', options: wopts }];
-  const save = (o, meta) => { S().debts.push({ id: Date.now(), payments: [], asExpense: true, note: '', dueDay: Math.round(o.dueDay), walletId: o.wallet ? Number(o.wallet) : null, meta, ...o.debt }); commit(); };
+  const jarOpt = { id: 'jar', label: 'ตัดงบจากซองเงินใช้จ่าย', type: 'select', value: '', options: [{ value: '', label: '— ไม่ผูกซอง —' }, ...S().jars.map(j => ({ value: j.name, label: j.name }))] };
+  const common = [jarOpt, { id: 'dueDay', label: 'ครบกำหนดจ่ายทุกวันที่ (1-31)', type: 'number', value: 1 }, { id: 'wallet', label: 'บัญชีที่จ่ายเป็นประจำ', type: 'select', value: '', options: wopts }];
+  const save = (o, meta) => { S().debts.push({ id: Date.now(), payments: [], asExpense: true, note: '', dueDay: Math.round(o.dueDay), walletId: o.wallet ? Number(o.wallet) : null, jar: o.jar || '', meta, ...o.debt }); commit(); };
   if (type === 'student') openForm({ title: '🎓 เพิ่มหนี้ กยศ./กรอ.', fields: [
     { id: 'name', label: 'ชื่อ', type: 'text', value: 'กยศ.', required: true },
     { id: 'principal', label: 'ยอดหนี้คงเหลือ (เงินต้น+ดอกเบี้ยที่ค้าง)', type: 'number', value: 100000 },
@@ -2171,12 +2230,13 @@ window.openDebtModal = (idx) => {
       { id: 'monthly', label: 'ค่างวดต่อเดือน (บาท)', type: 'number', value: d ? Number(d.monthly || 0) : 0 },
       { id: 'dueDay', label: 'ครบกำหนดจ่ายทุกวันที่ (1-31, 0 = ไม่ระบุ)', type: 'number', value: d ? Number(d.dueDay || 0) : 0 },
       { id: 'wallet', label: 'บัญชีที่จ่ายเป็นประจำ', type: 'select', value: d ? String(d.walletId || '') : '', options: [{ value: '', label: '— เลือกตอนจ่าย —' }, ...S().wallets.map(w => ({ value: String(w.id), label: `${walletIcon(w)} ${w.name}` }))] },
+      { id: 'jar', label: 'ตัดงบจากซองเงินใช้จ่าย (นับค่างวดเป็นรายจ่ายของซองนี้)', type: 'select', value: d ? (d.jar || '') : '', options: [{ value: '', label: '— ไม่ผูกซอง —' }, ...S().jars.map(j => ({ value: j.name, label: j.name }))] },
       { id: 'asExp', label: 'บันทึกการจ่ายเป็นรายจ่ายในบันทึกรับ-จ่ายด้วยไหม', type: 'select', value: d && d.asExpense === false ? 'n' : 'y', options: [{ value: 'y', label: 'บันทึก (นับเป็นรายจ่ายเดือนนี้)' }, { value: 'n', label: 'ไม่บันทึก' }] },
       { id: 'note', label: 'หมายเหตุ (ไม่บังคับ)', type: 'text', value: d ? (d.note || '') : '' }
     ],
     onSave: (v) => {
       if (v.total < 0 || v.remaining < 0 || v.rate < 0 || v.monthly < 0 || v.dueDay < 0 || v.dueDay > 31) { alert('กรุณาตรวจสอบตัวเลข'); return false; }
-      const o = { name: v.name, total: v.total, remaining: v.remaining, rate: v.rate, monthly: v.monthly, dueDay: Math.round(v.dueDay), walletId: v.wallet ? Number(v.wallet) : null, asExpense: v.asExp === 'y', note: v.note };
+      const o = { name: v.name, total: v.total, remaining: v.remaining, rate: v.rate, monthly: v.monthly, dueDay: Math.round(v.dueDay), walletId: v.wallet ? Number(v.wallet) : null, asExpense: v.asExp === 'y', jar: v.jar || '', note: v.note };
       if (isEdit) Object.assign(d, o); else S().debts.push({ id: Date.now(), payments: [], ...o });
       commit();
     }
@@ -2220,7 +2280,7 @@ function debtDuesOn(key) {
 function dueBadge(y, m, day, dim) {
   const list = debtDuesOn(`${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`); if (!list.length) return '';
   const key = `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-  return list.slice(0, 2).map(x => `<div onclick="event.stopPropagation(); showDueDay('${key}')" class="rounded px-1 truncate ${x.done ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-800'}">${x.done ? '✅' : '💸'} ${esc(x.d.name)} ${fmt0(x.amt)}</div>`).join('') + (list.length > 2 ? `<div onclick="event.stopPropagation(); showDueDay('${key}')" class="text-amber-700">+${list.length - 2} รายการ</div>` : '');
+  return list.slice(0, 2).map(x => `<div onclick="event.stopPropagation(); showDueDay('${key}')" class="cal-due rounded px-1 truncate ${x.done ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-800'}">${x.done ? '✅' : '💸'} ${esc(x.d.name)} ${fmt0(x.amt)}</div>`).join('') + (list.length > 2 ? `<div onclick="event.stopPropagation(); showDueDay('${key}')" class="cal-due text-amber-700">+${list.length - 2} รายการ</div>` : '');
 }
 window.showDueDay = (key) => {
   const list = debtDuesOn(key), total = sum(list, x => x.amt), done = sum(list, x => x.paid);
@@ -2238,7 +2298,7 @@ function doDebtPay(d, w, amount, date, note, forceTx) {
   walletMove(w, -amount);
   d.remaining = Math.max(0, Number(d.remaining) - amount);
   let txId = null;
-  if (d.asExpense !== false || forceTx) { txId = Date.now() + Math.random(); S().transactions.push({ id: txId, date, type: 'รายจ่าย', from: w.name, to: '', jar: '', amount, note: note || ('ชำระหนี้: ' + d.name) }); S().transactions.sort((a, b) => b.date.localeCompare(a.date)); }
+  if (d.asExpense !== false || forceTx) { txId = Date.now() + Math.random(); S().transactions.push({ id: txId, date, type: 'รายจ่าย', from: w.name, to: '', jar: d.jar || '', amount, note: note || ('ชำระหนี้: ' + d.name) }); S().transactions.sort((a, b) => b.date.localeCompare(a.date)); }
   (d.payments = d.payments || []).push({ id: Date.now(), date, amount, walletId: w.id, walletName: w.name, txId });
 }
 window.payDebt = (idx) => {
@@ -2642,25 +2702,79 @@ window.ivNewTrade = () => openForm({ title: 'ซื้อหุ้น', fields: 
 const QA_JARS = [[/กาแฟ|ข้าว|อาหาร|กิน|น้ำ|ขนม|ชา|ส้มตำ|ก๋วยเตี๋ยว|เครื่องดื่ม|ซูเปอร์|ของใช้|7-?11|หมู|ไก่/i, 'กิน'], [/แท็กซี่|รถ|น้ำมัน|bts|mrt|วิน|เดินทาง|grab|ทางด่วน|จอด/i, 'เดินทาง'], [/ค่าน้ำ|ค่าไฟ|เช่า|เน็ต|ประกัน|โทรศัพท์|ผ่อน/i, 'ประจำ'], [/หนัง|เที่ยว|เกม|ช้อป|เสื้อ|ปาร์ตี้|ของขวัญ|คาเฟ่/i, 'ตามใจ']];
 const QA_IN = /เงินเดือน|รับ|ได้|โบนัส|ขายของ|ค่าจ้าง|ดอกเบี้ย|ปันผล|คืนเงิน|หวย/;
 window.qaFab = () => { switchTab('dashboard'); window.scrollTo({ top: 0, behavior: 'smooth' }); setTimeout(() => document.getElementById('qa-input').focus(), 300); };
+const qaClean = (x) => (x || '').toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+const QA_MON = { มค: 1, กพ: 2, มีค: 3, เมย: 4, พค: 5, มิย: 6, กค: 7, สค: 8, กย: 9, ตค: 10, พย: 11, ธค: 12 };
+function qaParseDate(txt) {
+  const t = new Date(), ok = (y, m, d) => m >= 1 && m <= 12 && d >= 1 && d <= new Date(y, m, 0).getDate(), pad2 = (n) => String(n).padStart(2, '0'), fmt = (y, m, d) => `${y}-${pad2(m)}-${pad2(d)}`;
+  let m;
+  if ((m = txt.match(/(\d{4})-(\d{1,2})-(\d{1,2})/)) && ok(+m[1], +m[2], +m[3])) return { date: fmt(+m[1], +m[2], +m[3]), rest: txt.replace(m[0], ' ').trim() };
+  const rel = [['เมื่อวานซืน', -2], ['เมื่อวานนี้', -1], ['เมื่อวาน', -1], ['วานนี้', -1], ['วันนี้', 0], ['พรุ่งนี้', 1]].find(([k]) => txt.includes(k));
+  if (rel) { const d = new Date(t.getFullYear(), t.getMonth(), t.getDate() + rel[1]); return { date: localISO(d), rest: txt.replace(rel[0], ' ').trim() }; }
+  if ((m = txt.match(/วันที่\s*(\d{1,2})(?:\s*\/\s*(\d{1,2}))?/))) { const mo = m[2] ? +m[2] : t.getMonth() + 1; if (ok(t.getFullYear(), mo, +m[1])) return { date: fmt(t.getFullYear(), mo, +m[1]), rest: txt.replace(m[0], ' ').trim() }; }
+  if ((m = txt.match(/(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/))) { let y = m[3] ? +m[3] : t.getFullYear(); if (y < 100) y += 2000; if (y > 2400) y -= 543; if (ok(y, +m[2], +m[1])) return { date: fmt(y, +m[2], +m[1]), rest: txt.replace(m[0], ' ').trim() }; }
+  if ((m = txt.match(/(\d{1,2})\s*(มีค|มค|กพ|เมย|พค|มิย|กค|สค|กย|ตค|พย|ธค)\.?/)) && ok(t.getFullYear(), QA_MON[m[2]], +m[1])) return { date: fmt(t.getFullYear(), QA_MON[m[2]], +m[1]), rest: txt.replace(m[0], ' ').trim() };
+  const t2 = txt.replace(/(\d{1,2})\s*(ม\.ค\.|ก\.พ\.|มี\.ค\.|เม\.ย\.|พ\.ค\.|มิ\.ย\.|ก\.ค\.|ส\.ค\.|ก\.ย\.|ต\.ค\.|พ\.ย\.|ธ\.ค\.)/, (_, d, mo) => `${d}${mo.replace(/\./g, '')}`);
+  if (t2 !== txt) return qaParseDate(t2);
+  return { date: localISO(), rest: txt };
+}
+function qaFindWallet(txt) {
+  const lower = txt.toLowerCase(), ws = S().wallets.slice().sort((a, b) => b.name.length - a.name.length);
+  for (const w of ws) { const i = lower.indexOf(w.name.toLowerCase()); if (i >= 0 && w.name.trim().length >= 2) return { w, rest: (txt.slice(0, i) + ' ' + txt.slice(i + w.name.length)).replace(/(^|\s)(จาก|ด้วย|ใส่|เข้า)(?=\s|$)/g, ' ').trim() }; }
+  const toks = txt.split(/\s+/), cands = ws.map(w => ({ w, n: qaClean(w.name) })).filter(x => x.n.length >= 2).sort((a, b) => b.n.length - a.n.length);
+  for (const c of cands) { const i = toks.findIndex(k => { const q = qaClean(k); return q.length >= 2 && (q === c.n || (q.length >= 3 && c.n.includes(q))); }); if (i >= 0) { toks.splice(i, 1); return { w: c.w, rest: toks.join(' ').replace(/(^|\s)(จาก|ด้วย|ใส่|เข้า)(?=\s|$)/g, ' ').trim() }; } }
+  return { w: null, rest: txt };
+}
+function qaPick(list, name) {
+  const q = qaClean(name); if (!q) return list.length === 1 ? list[0] : null;
+  return list.map(x => ({ x, n: qaClean(x.name) })).filter(o => o.n && (o.n.includes(q) || q.includes(o.n))).sort((a, b) => b.n.length - a.n.length).map(o => o.x)[0] || null;
+}
 window.quickAdd = () => {
-  const el = document.getElementById('qa-input'), msg = document.getElementById('qa-msg'), txt = el.value.trim(); if (!txt) return;
+  const el = document.getElementById('qa-input'), msg = document.getElementById('qa-msg'), raw = el.value.trim(); if (!raw) return;
   const say = (h) => { msg.innerHTML = h; msg.classList.remove('hidden'); };
-  const m = txt.match(/(\d[\d,]*(?:\.\d+)?)\s*(?:บาท|฿)?\s*$/) || txt.match(/(\d[\d,]*(?:\.\d+)?)/);
-  if (!m) { say('ไม่พบจำนวนเงิน ลองพิมพ์ เช่น "กาแฟ 65"'); return; }
-  const amount = Number(m[1].replace(/,/g, '')), note = txt.replace(m[0], '').trim() || txt;
-  if (!(amount > 0)) { say('จำนวนเงินต้องมากกว่า 0'); return; }
   if (!S().wallets.length) { say('เพิ่มบัญชีก่อนในแท็บ "กระเป๋า & ซองเงิน"'); return; }
-  const type = QA_IN.test(note) ? 'รายรับ' : 'รายจ่าย';
-  const prev = S().transactions.find(t => t.type === type && t.note && (t.note.includes(note) || note.includes(t.note)));
-  const last = S().transactions[0];
-  const w = (prev && walletByName(prev.from)) || (last && walletByName(last.from)) || S().wallets.find(x => x.type !== 'Liability') || S().wallets[0];
+  const pd = qaParseDate(raw), date = pd.date, wf = qaFindWallet(pd.rest); let txt = wf.rest;
+  const dtxt = date === localISO() ? '' : ` · ${date}`;
+  const amountOf = (t) => { const m = t.match(/(\d[\d,]*(?:\.\d+)?)\s*(?:บาท|฿)?\s*$/) || t.match(/(\d[\d,]*(?:\.\d+)?)/); return m ? { amount: Number(m[1].replace(/,/g, '')), rest: t.replace(m[0], '').trim() } : { amount: null, rest: t.trim() }; };
+  const undoBtn = ' <button onclick="qaUndoLast()" class="underline text-blue-600 ml-1">ย้อนกลับ</button>';
+  const cmd = txt.match(/^(ออม|เติม|ฝาก|ถอน|จ่ายหนี้|ลดหนี้|ชำระหนี้|ชำระ|ผ่อน)\s*(.*)$/);
+  if (cmd) {
+    const strict = /^(ออม|ถอน|จ่ายหนี้|ลดหนี้|ชำระหนี้)$/.test(cmd[1]), isDebt = /หนี้|ชำระ|ผ่อน/.test(cmd[1]), { amount, rest } = amountOf(cmd[2]);
+    if (!isDebt) {
+      const sv = qaPick(S().savings, rest);
+      if (sv && amount > 0) {
+        const amt = cmd[1] === 'ถอน' ? -amount : amount, e = savingApply(sv, wf.w, amt, date, false);
+        (sv.history = sv.history || []).push(e); window.__qaLast = { kind: 'save', sv, e }; commit();
+        say(`✓ ${amt > 0 ? 'เติม' : 'ถอน'} ${money(amount)} ${amt > 0 ? 'เข้า' : 'จาก'}เป้าหมาย "${esc(sv.name)}"${wf.w ? ` · ${esc(wf.w.name)}` : ' · ไม่ได้ตัดจากบัญชี (ใส่ชื่อบัญชีท้ายประโยคได้)'}${dtxt}` + undoBtn); el.value = ''; return;
+      }
+      if (strict) { say(`ไม่พบเป้าหมาย${rest ? ` "${esc(rest)}"` : ''} หรือไม่ได้ใส่จำนวนเงิน · มี: ${S().savings.map(x => esc(x.name)).join(', ') || 'ยังไม่มีเป้าหมาย'}`); return; }
+    } else {
+      const d = qaPick(S().debts.filter(x => Number(x.remaining) > 0), rest), amt = amount > 0 ? amount : (d && d.monthly ? Math.min(Number(d.monthly), Number(d.remaining)) : 0);
+      if (d && amt > 0) {
+        const w = wf.w || S().wallets.find(x => x.id === d.walletId) || S().wallets.find(x => x.type !== 'Liability') || S().wallets[0];
+        doDebtPay(d, w, amt, date); const p = d.payments[d.payments.length - 1]; window.__qaLast = { kind: 'debt', d, p }; commit();
+        say(`✓ จ่ายหนี้ "${esc(d.name)}" ${money(amt)} · ${esc(w.name)} · คงเหลือ ${money(d.remaining)}${dtxt}` + undoBtn); el.value = ''; return;
+      }
+      if (strict) { say(`ไม่พบหนี้${rest ? ` "${esc(rest)}"` : ''} · มี: ${S().debts.filter(x => Number(x.remaining) > 0).map(x => esc(x.name)).join(', ') || 'ไม่มีหนี้ค้าง'}`); return; }
+    }
+  }
+  const { amount, rest } = amountOf(txt);
+  if (!(amount > 0)) { say('ไม่พบจำนวนเงิน ลองพิมพ์ เช่น "กาแฟ 65"'); return; }
+  const note = rest || txt, type = QA_IN.test(note) ? 'รายรับ' : 'รายจ่าย';
+  const prev = S().transactions.find(t => t.type === type && t.note && (t.note.includes(note) || note.includes(t.note))), last = S().transactions[0];
+  const w = wf.w || (prev && walletByName(prev.from)) || (last && walletByName(last.from)) || S().wallets.find(x => x.type !== 'Liability') || S().wallets[0];
   let jar = prev ? prev.jar : '';
   if (!jar && type === 'รายจ่าย') { const hit = QA_JARS.find(([re]) => re.test(note)); const j = hit && S().jars.find(x => x.name.includes(hit[1])); jar = j ? j.name : ''; }
-  const tx = { id: Date.now(), date: localISO(), type, from: w.name, to: '', jar, amount, note };
+  const tx = { id: Date.now(), date, type, from: w.name, to: '', jar, amount, note };
   applyTx(tx, 1); S().transactions.unshift(tx); S().transactions.sort((a, b) => b.date.localeCompare(a.date));
   el.value = ''; commit();
   const m2 = document.getElementById('qa-msg'); m2.classList.remove('hidden');
-  m2.innerHTML = `✓ บันทึก${type} ${money(amount)} · ${esc(jar || 'ไม่ระบุซอง')} · ${esc(w.name)} <button onclick="qaUndo(${tx.id})" class="underline text-blue-600 ml-1">ย้อนกลับ</button> <button onclick="editTransaction(${tx.id})" class="underline text-blue-600 ml-1">แก้ไข</button>`;
+  m2.innerHTML = `✓ บันทึก${type} ${money(amount)} · ${esc(jar || 'ไม่ระบุซอง')} · ${esc(w.name)}${dtxt} <button onclick="qaUndo(${tx.id})" class="underline text-blue-600 ml-1">ย้อนกลับ</button> <button onclick="editTransaction(${tx.id})" class="underline text-blue-600 ml-1">แก้ไข</button>`;
+};
+window.qaUndoLast = () => {
+  const L = window.__qaLast; if (!L) return; window.__qaLast = null;
+  if (L.kind === 'save') { const i = (L.sv.history || []).indexOf(L.e); if (i >= 0) { savingRevert(L.sv, L.e); L.sv.history.splice(i, 1); } }
+  else { const i = (L.d.payments || []).indexOf(L.p); if (i >= 0) debtRevert(L.d, i); }
+  commit(); const m = document.getElementById('qa-msg'); m.innerHTML = 'ย้อนกลับแล้ว'; m.classList.remove('hidden');
 };
 window.qaUndo = (id) => {
   const i = S().transactions.findIndex(t => t.id === id); if (i < 0) return;
@@ -2765,6 +2879,53 @@ window.restoreArchive = (inp) => {
   };
   rd.readAsText(f);
 };
+
+
+// ---------- เงินไปไหนบ้างเดือนนี้ (ออม/เป้าหมาย/หนี้/ลงทุน) ----------
+function renderDashSavings() {
+  const el = document.getElementById('dash-savings'); if (!el) return;
+  const cur = nowKey(), inM = (d) => (d || '').slice(0, 7) === cur, iv = IV();
+  const goals = S().savings.map(sv => { const es = (sv.history || []).filter(e => inM(e.date)), inn = sum(es.filter(e => e.amount > 0), e => e.amount), out = -sum(es.filter(e => e.amount < 0), e => e.amount); return { sv, es, inn, out, net: inn - out }; });
+  const debts = S().debts.map(d => { const ps = (d.payments || []).filter(p => inM(p.date)); return { d, ps, amt: sum(ps, p => p.amount) }; }).filter(x => x.amt > 0);
+  const trades = iv.positions.map(p => { const ts = p.trades.filter(t => inM(t.date)); return { p, buy: sum(ts.filter(t => t.side === 'buy'), t => t.qty * t.price + t.fee), sell: sum(ts.filter(t => t.side === 'sell'), t => t.qty * t.price - t.fee) }; }).filter(x => x.buy || x.sell);
+  const saved = sum(goals, g => g.net), debtTotal = sum(debts, x => x.amt), invest = sum(trades, x => x.buy - x.sell);
+  const linked = linkedTxIds(), income = ymSum(cur, 'รายรับ');
+  const general = sum(S().transactions.filter(t => t.type === 'รายจ่าย' && monthKey(t.date) === cur && !linked.has(t.id)), t => t.amount);
+  if (!goals.length && !debts.length && !trades.length) { el.innerHTML = ''; return; }
+  const left = income - general - saved - debtTotal - invest;
+  const pc = (v) => income > 0 ? ` (${(v / income * 100).toFixed(0)}%)` : '';
+  const row = (icon, name, v, cls) => `<div class="flex justify-between text-sm"><span>${icon} ${name}</span><b class="${cls}">${v < 0 ? '−' : ''}${money(Math.abs(v))}<span class="text-xs font-normal text-slate-400">${pc(Math.abs(v))}</span></b></div>`;
+  const wl = (es) => { const n = [...new Set(es.filter(e => e.wallet).map(e => e.wallet))]; return n.length ? ` · จาก ${n.map(esc).join(', ')}` : ''; };
+  el.innerHTML = `<div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+    <h3 class="font-bold text-slate-900">🧭 เงินไปไหนบ้างเดือนนี้</h3>
+    <div class="space-y-1.5 bg-slate-50 rounded-xl p-3">${row('💌', 'รายรับ', income, 'text-emerald-700')}${row('🧾', 'รายจ่ายทั่วไป', general, 'text-rose-600')}${row('🐟', 'เงินออม/เป้าหมาย (สุทธิ)', saved, 'text-blue-700')}${row('💸', 'จ่ายหนี้', debtTotal, 'text-amber-700')}${trades.length ? row('📈', 'ลงทุนหุ้น (สุทธิ)', invest, 'text-indigo-700') : ''}<div class="border-t border-slate-200 pt-1.5">${row('✨', left >= 0 ? 'ที่เหลือ' : 'ใช้เกินรายรับ', left, left >= 0 ? 'text-emerald-700' : 'text-rose-600')}</div></div>
+    ${goals.length ? `<div class="space-y-2"><p class="text-xs font-semibold text-slate-500">เป้าหมายเงินออม/ลงทุน</p>${goals.map(g => { const pct = g.sv.goal > 0 ? Math.min(100, g.sv.current / g.sv.goal * 100) : 0; return `<div class="border border-slate-200 rounded-xl p-3"><div class="flex justify-between text-sm"><b>${esc(g.sv.name)}</b><span class="${g.net > 0 ? 'text-emerald-600' : g.net < 0 ? 'text-rose-600' : 'text-slate-400'} font-semibold">${g.net > 0 ? '+' : g.net < 0 ? '−' : ''}${fmt0(Math.abs(g.net))} เดือนนี้</span></div><div class="text-xs text-slate-500">เติม ${fmt0(g.inn)} · ถอน ${fmt0(g.out)}${wl(g.es)}</div><div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mt-1.5"><div class="bg-blue-500 h-full" style="width:${pct}%"></div></div><div class="text-[11px] text-slate-400 mt-0.5">สะสม ${fmt0(g.sv.current)} / ${fmt0(g.sv.goal)} (${pct.toFixed(0)}%)</div></div>`; }).join('')}</div>` : ''}
+    ${debts.length ? `<div class="space-y-1"><p class="text-xs font-semibold text-slate-500">จ่ายหนี้เดือนนี้</p>${debts.map(x => `<div class="flex justify-between text-sm border border-slate-200 rounded-xl px-3 py-2"><span>${esc(x.d.name)}<span class="text-xs text-slate-400"> · จาก ${[...new Set(x.ps.map(p => esc(p.walletName || '-')))].join(', ')}</span></span><b class="text-amber-700">${money(x.amt)}</b></div>`).join('')}</div>` : ''}
+    ${trades.length ? `<div class="space-y-1"><p class="text-xs font-semibold text-slate-500">ซื้อขายหุ้นเดือนนี้</p>${trades.map(x => `<div class="flex justify-between text-sm border border-slate-200 rounded-xl px-3 py-2"><span>${esc(x.p.symbol)}</span><span class="text-xs">ซื้อ ${fmt0(x.buy)} · ขาย ${fmt0(x.sell)}</span></div>`).join('')}</div>` : ''}
+  </div>`;
+}
+
+
+// ---------- หนี้: หมดแล้ว / จัดเก็บรายเดือน ----------
+let debtFilter = 'active';
+const debtDone = (d) => Number(d.remaining) <= 0;
+function debtShow(d) { if (d.archivedAt) return false; return debtFilter === 'all' ? true : debtFilter === 'done' ? debtDone(d) : !debtDone(d); }
+const TH_MON = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+const ymLabel = (ym) => `${TH_MON[Number(ym.slice(5, 7)) - 1]} ${Number(ym.slice(0, 4)) + 543}`;
+const payoffYm = (d) => { const last = (d.payments || []).map(p => p.date).sort().pop(); return (last || d.archivedAt || localISO()).slice(0, 7); };
+window.setDebtFilter = (f) => { debtFilter = f; renderDebts(); renderDebtExtras(); };
+window.archiveDebt = (idx) => { const d = S().debts[idx]; if (!d || !debtDone(d)) { alert('จัดเก็บได้เฉพาะหนี้ที่หมดแล้ว'); return; } d.archivedAt = localISO(); commit(); };
+window.archiveAllDone = () => { const l = S().debts.filter(d => !d.archivedAt && debtDone(d)); if (!l.length) return; if (!confirm(`จัดเก็บหนี้ที่หมดแล้ว ${l.length} รายการ?`)) return; l.forEach(d => { d.archivedAt = localISO(); }); commit(); };
+window.unarchiveDebt = (idx) => { const d = S().debts[idx]; if (d) { delete d.archivedAt; commit(); } };
+function renderDebtExtras() {
+  const f = document.getElementById('debt-filter'), a = document.getElementById('debt-archive'); if (!f || !a) return;
+  const all = S().debts || [], live = all.filter(d => !d.archivedAt), n = { active: live.filter(d => !debtDone(d)).length, done: live.filter(debtDone).length, all: live.length };
+  f.innerHTML = all.length ? [['active', 'ค้างอยู่'], ['done', 'หมดแล้ว'], ['all', 'ทั้งหมด']].map(([k, t]) => `<button onclick="setDebtFilter('${k}')" class="px-3 py-1.5 rounded-full font-semibold ${debtFilter === k ? 'bg-rose-500 text-white' : 'bg-slate-100 text-slate-600'}">${t} (${n[k]})</button>`).join('') + (n.done ? '<button onclick="archiveAllDone()" class="px-3 py-1.5 rounded-full font-semibold bg-slate-700 text-white">📦 จัดเก็บที่หมดแล้วทั้งหมด</button>' : '') : '';
+  const arch = all.map((d, idx) => [d, idx]).filter(([d]) => d.archivedAt);
+  if (!arch.length) { a.innerHTML = ''; return; }
+  const g = {}; arch.forEach(([d, idx]) => { (g[payoffYm(d)] = g[payoffYm(d)] || []).push([d, idx]); });
+  a.innerHTML = `<details class="border border-slate-200 rounded-xl p-3"><summary class="text-sm font-semibold text-slate-600 cursor-pointer">📦 หนี้ที่จัดเก็บแล้ว (${arch.length})</summary><div class="space-y-3 mt-3">${Object.keys(g).sort().reverse().map(ym => `<div><p class="text-xs font-semibold text-slate-500 mb-1">ปิดหนี้เดือน ${ymLabel(ym)}</p>${g[ym].map(([d, idx]) => `<div class="flex items-center justify-between gap-2 text-sm border border-slate-100 rounded-lg px-3 py-2"><span>${kindIcon(d)} ${esc(d.name)} <span class="text-xs text-slate-400">· ยอดรวม ${money(d.total)} · ${(d.payments || []).length} ครั้ง</span></span><span class="flex gap-2 text-xs"><button onclick="unarchiveDebt(${idx})" class="text-blue-600 underline">นำกลับ</button><button onclick="removeDebt(${idx})" class="text-rose-500 underline">ลบถาวร</button></span></div>`).join('')}</div>`).join('')}</div></details>`;
+}
 
 // ---------- เครื่องมือ ----------
 window.runSimulator = () => {
@@ -3562,7 +3723,7 @@ function planResult() {
     return out;
   };
   const allDocs = () => [...Object.values(docs()), ...finEvents(), ...snapDocs()].map(o => ({ data: () => o }));
-  const CAT = '<style>:root,:root:not([data-theme="light"]),:root[data-theme="dark"]{color-scheme:light!important;--bg:#fff8f0!important;--surface:#fff!important;--text:#4a3b32!important;--muted:#a08c7d!important;--line:#f3d9c3!important;--accent:#f0925f!important;--on-accent:#fff!important;--work:#ffe6d3!important;--wfh:#dcf1df!important;--leave:#fde2c8!important;--plan:#fff0c9!important;--holiday:#ece3f8!important;--due:#ffe9a8!important}body{background-image:radial-gradient(#f6e3d2 1px,transparent 1px)!important;background-size:22px 22px}.card,.task{border-radius:18px!important}</style>';
+  const CAT = '<style>:root,:root:not([data-theme="light"]),:root[data-theme="dark"]{color-scheme:light!important;--bg:#fff8f0!important;--surface:#fff!important;--text:#4a3b32!important;--muted:#a08c7d!important;--line:#f3d9c3!important;--accent:#f0925f!important;--on-accent:#fff!important;--work:#ffe6d3!important;--wfh:#dcf1df!important;--leave:#fde2c8!important;--plan:#fff0c9!important;--holiday:#ece3f8!important;--due:#ffe9a8!important}body{background-image:radial-gradient(#f6e3d2 1px,transparent 1px)!important;background-size:22px 22px}@media(max-width:600px){.cal{min-width:0}.day{min-height:56px;font-size:10px;padding:3px}.chip{font-size:9px;padding:0 4px}main{padding:12px 10px 96px}header{padding:8px 10px}h2{margin:18px 0 8px}.hi{font-size:20px}dialog{width:96vw;padding:16px}}.card,.task{border-radius:18px!important}</style>';
   const notify = () => { lastSig = JSON.stringify(docs()); listeners.forEach(cb => { try { cb({ docs: allDocs() }); } catch (e) {} }); };
   function migrateOld() { // ย้ายงาน/วันลา/เวลาเข้างานจากโหมดเดิมมาไว้ในพื้นที่ทำงานใหม่ (ทำครั้งเดียว, ข้อมูลเดิมไม่ถูกลบ)
     const s = S2(); if (!s || s.wsMigrated || !s.workspace) return false;
@@ -3595,6 +3756,37 @@ function planResult() {
   }
   const prevMode = window.switchAppMode;
   window.switchAppMode = (mode) => { prevMode(mode); if (mode === 'workspace') loadFull(); };
+</script>
+<nav id="bnav" class="md:hidden hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-slate-200 grid grid-cols-5" style="padding-bottom:env(safe-area-inset-bottom)">
+  <button data-bn="dashboard" onclick="bGo('dashboard')"><span>🐾</span><span>ภาพรวม</span></button>
+  <button data-bn="transactions" onclick="bGo('transactions')"><span>🧾</span><span>รายการ</span></button>
+  <button data-bn="calendar" onclick="bGo('calendar')"><span>📅</span><span>ปฏิทิน</span></button>
+  <button data-bn="savings" onclick="bGo('savings')"><span>🐟</span><span>ออม &amp; หนี้</span></button>
+  <button data-bn="more" onclick="bMore(true)"><span>☰</span><span>เมนู</span></button>
+</nav>
+<div id="bmore" class="hidden md:hidden fixed inset-0 z-50 bg-slate-900/40" onclick="if(event.target===this)bMore(false)">
+  <div class="absolute bottom-0 inset-x-0 bg-white rounded-t-3xl p-4" style="padding-bottom:calc(1rem + env(safe-area-inset-bottom))">
+    <div class="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-3"></div>
+    <div class="grid grid-cols-2 gap-2 text-sm font-semibold">
+      <button onclick="bGo('salary')" class="bg-slate-50 border border-slate-200 rounded-2xl py-3">💌 เงินเดือน</button>
+      <button onclick="bGo('wallets')" class="bg-slate-50 border border-slate-200 rounded-2xl py-3">👛 กระเป๋า &amp; ซองเงิน</button>
+      <button onclick="bGo('invest')" class="bg-slate-50 border border-slate-200 rounded-2xl py-3">📊 ลงทุน</button>
+      <button onclick="bGo('tools')" class="bg-slate-50 border border-slate-200 rounded-2xl py-3">🧶 เครื่องมือ</button>
+    </div>
+  </div>
+</div>
+<script type="module">
+  const MAIN = ['dashboard', 'transactions', 'calendar', 'savings'];
+  window.bMore = (on) => document.getElementById('bmore').classList.toggle('hidden', !on);
+  window.bGo = (t) => { bMore(false); switchTab(t); window.scrollTo({ top: 0 }); };
+  function bSync() {
+    const m = document.getElementById('app-main'), nav = document.getElementById('bnav'); if (!m || !nav) return;
+    nav.classList.toggle('hidden', m.classList.contains('hidden'));
+    const act = [...document.querySelectorAll('#fin-tabs .tab-btn')].find(b => b.classList.contains('bg-blue-600')), id = act && act.dataset.target;
+    nav.querySelectorAll('[data-bn]').forEach(b => { const on = b.dataset.bn === id || (b.dataset.bn === 'more' && id && !MAIN.includes(id)); b.classList.toggle('text-blue-600', on); b.classList.toggle('text-slate-400', !on); });
+  }
+  const m = document.getElementById('app-main'); if (m) new MutationObserver(bSync).observe(m, { attributes: true, subtree: true, attributeFilter: ['class'] });
+  bSync();
 </script>
 </body>
 </html>
